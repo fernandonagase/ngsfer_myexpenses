@@ -1,5 +1,8 @@
 {
   "appId": "com.ngsfer.myexpenses",
   "appName": "My Expenses",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorSQLite": {}
+  }
 }
