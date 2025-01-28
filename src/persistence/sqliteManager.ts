@@ -65,7 +65,7 @@ async function save(
 
 async function findAll(database: SQLiteDBConnection, table: string, values: string[]) {
   const stmt: string = `SELECT ${values.toString()} FROM ${table};`
-  const retValues = (await database.query(stmt)).values
+  const retValues = (await database.query(stmt)).values ?? []
   return retValues
 }
 
