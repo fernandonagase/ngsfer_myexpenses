@@ -3,4 +3,12 @@ type CentroFinanceiro = {
   nome: string
 }
 
-export type { CentroFinanceiro }
+type OperacaoFinanceira = {
+  id: number
+  description: string
+  valueInCents: number
+  date: string
+  centro_financeiro_id: number
+}
+
+export type { CentroFinanceiro, OperacaoFinanceira }
