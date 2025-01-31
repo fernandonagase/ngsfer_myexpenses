@@ -10,6 +10,6 @@ export class Center {
   @Column({ name: 'nome', type: 'text', length: 25 })
   name!: string
 
-  @OneToMany(() => Operation, (operation) => operation.center, { eager: true })
+  @OneToMany(() => Operation, (operation) => operation.center)
   operations!: Operation[]
 }
