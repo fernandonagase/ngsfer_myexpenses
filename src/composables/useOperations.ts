@@ -7,8 +7,11 @@ function useOperations() {
   const operations = ref<Operation[]>([])
   const repository = expensesDataSource.dataSource.getRepository(Operation)
 
-  async function findAllOperations() {
-    operations.value = await repository.find()
+  async function findAllOperationsBy(centerId: number) {
+    operations.value = await repository
+      .createQueryBuilder('operation')
+      .where('operation.centro_financeiro_id = :centerId', { centerId })
+      .getMany()
   }
 
   async function addOperation(operation: Operation) {
@@ -21,7 +24,12 @@ function useOperations() {
     operations.value = operations.value.filter((operation) => operation.id !== id)
   }
 
-  return { operations: readonly(operations), findAllOperations, addOperation, removeOperationById }
+  return {
+    operations: readonly(operations),
+    findAllOperationsBy,
+    addOperation,
+    removeOperationById,
+  }
 }
 
 export { useOperations }
