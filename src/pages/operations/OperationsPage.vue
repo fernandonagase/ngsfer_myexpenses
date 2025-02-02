@@ -1,6 +1,5 @@
 <template>
   <q-page>
-    OPERAÇÕES FINANCEIRAS
     <q-list separator>
       <q-item v-for="operation in operationStore.operations" :key="operation.id">
         <q-item-section>
