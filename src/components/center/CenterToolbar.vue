@@ -2,7 +2,7 @@
   <q-toolbar>
     <q-select
       v-model="operationStore.center"
-      :options="centers"
+      :options="centerStore.centers"
       option-label="name"
       borderless
       @update:model-value="
@@ -15,7 +15,7 @@
     <q-btn icon="more_vert" flat round dense>
       <q-menu>
         <q-list style="min-width: 100px">
-          <q-item clickable v-close-popup @click="showCenters()">
+          <q-item clickable v-close-popup @click="centerStore.showCenters()">
             <q-item-section>Centros financeiros</q-item-section>
             <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>
           </q-item>
@@ -26,15 +26,15 @@
 </template>
 
 <script setup lang="ts">
-import { useCenters } from 'src/composables/useCenters'
+import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
 
+const centerStore = useCenterStore()
 const operationStore = useOperationStore()
-const { centers, findAllCenters, showCenters } = useCenters()
 
-await findAllCenters()
+await centerStore.fetchCenters()
 
-if (centers.value ? centers.value.length > 0 : false) {
-  operationStore.center = centers.value[0] ?? null
+if (centerStore.centers ? centerStore.centers.length > 0 : false) {
+  operationStore.center = centerStore.centers[0] ?? null
 }
 </script>
