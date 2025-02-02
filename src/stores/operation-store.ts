@@ -8,7 +8,7 @@ import OperationDialog from 'src/components/operation/OperationDialog.vue'
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 
-export const useCenterStore = defineStore('center', () => {
+export const useOperationStore = defineStore('operation', () => {
   const $q = useQuasar()
   const center = ref<Center | null>(null)
 

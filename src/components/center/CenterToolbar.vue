@@ -1,13 +1,13 @@
 <template>
   <q-toolbar>
     <q-select
-      v-model="centerStore.center"
+      v-model="operationStore.center"
       :options="centers"
       option-label="name"
       borderless
       @update:model-value="
         (value) => {
-          centerStore.setCenter(value)
+          operationStore.setCenter(value)
         }
       "
     />
@@ -27,14 +27,14 @@
 
 <script setup lang="ts">
 import { useCenters } from 'src/composables/useCenters'
-import { useCenterStore } from 'src/stores/center-store'
+import { useOperationStore } from 'src/stores/operation-store'
 
-const centerStore = useCenterStore()
+const operationStore = useOperationStore()
 const { centers, findAllCenters, showCenters } = useCenters()
 
 await findAllCenters()
 
 if (centers.value ? centers.value.length > 0 : false) {
-  centerStore.center = centers.value[0] ?? null
+  operationStore.center = centers.value[0] ?? null
 }
 </script>
