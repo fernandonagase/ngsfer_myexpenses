@@ -88,6 +88,7 @@ export const useCenterStore = defineStore('center', () => {
       const operations = await operationRepository
         .createQueryBuilder('operation')
         .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
+        .orderBy('operation.date', 'DESC')
         .getMany()
       center.value.operations = operations
     }
