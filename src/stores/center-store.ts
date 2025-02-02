@@ -2,11 +2,12 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 
-import { Center } from 'src/databases/entities/expenses'
+import { Center, Operation } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import CenterDialog from 'src/components/center/CenterDialog.vue'
 
 const centerRepository = expensesDataSource.dataSource.getRepository(Center)
+const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 
 export const useCenterStore = defineStore('center', () => {
   const $q = useQuasar()
@@ -87,5 +88,23 @@ export const useCenterStore = defineStore('center', () => {
     })
   }
 
-  return { centers, fetchCenters, showCenters, addCenter, editCenter, removeCenter }
+  async function getSummary() {
+    const summary = await centerRepository
+      .createQueryBuilder('center')
+      .leftJoinAndSelect('center.operations', 'operation')
+      .select('center.name', 'center')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .groupBy('center.name')
+      .orderBy('center.id')
+      .getRawMany()
+    const total = await operationRepository
+      .createQueryBuilder('operation')
+      .select("'Total'", 'center')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .getRawMany()
+
+    return summary.concat(total)
+  }
+
+  return { centers, fetchCenters, showCenters, addCenter, editCenter, removeCenter, getSummary }
 })

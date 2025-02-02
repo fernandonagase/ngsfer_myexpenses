@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <q-list separator>
+    <q-list separator class="operations-list">
       <q-item v-for="operation in operationStore.operations" :key="operation.id">
         <q-item-section>
           <q-item-label v-if="operation.description">{{ operation.description }}</q-item-label>
@@ -52,3 +52,9 @@ import { useOperationStore } from 'src/stores/operation-store'
 
 const operationStore = useOperationStore()
 </script>
+
+<style lang="scss" scoped>
+.operations-list {
+  padding-bottom: 82px;
+}
+</style>

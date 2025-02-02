@@ -11,17 +11,14 @@
             borderless
             label-color="negative"
             hide-dropdown-icon
-            @update:model-value="
-              (value) => {
-                operationStore.setCenter(value)
-              }
-            "
+            @update:model-value="operationStore.setCenter"
           >
             <template #after> <q-icon name="arrow_drop_down" color="white" /> </template>
           </q-select>
         </div>
       </div>
       <div class="col-xs-4 flex justify-end">
+        <q-btn icon="description" flat round dense @click="showSummary()" />
         <q-btn icon="more_vert" flat round dense>
           <q-menu>
             <q-list style="min-width: 100px">
@@ -38,9 +35,13 @@
 </template>
 
 <script setup lang="ts">
+import { useQuasar } from 'quasar'
+
 import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
+import SummaryDialog from '../summary/SummaryDialog.vue'
 
+const $q = useQuasar()
 const centerStore = useCenterStore()
 const operationStore = useOperationStore()
 
@@ -48,6 +49,12 @@ await centerStore.fetchCenters()
 
 if (centerStore.centers ? centerStore.centers.length > 0 : false) {
   operationStore.center = centerStore.centers[0] ?? null
+}
+
+function showSummary() {
+  $q.dialog({
+    component: SummaryDialog,
+  })
 }
 </script>
 

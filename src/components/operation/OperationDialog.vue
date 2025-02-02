@@ -1,26 +1,37 @@
 <template>
   <q-dialog ref="dialogRef" persistent @hide="onDialogHide">
     <q-card class="q-dialog-plugin">
-      <q-form @submit="onSubmit" class="q-gutter-md">
-        <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules>
-          <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
-            <input
-              :id="id"
-              class="q-field__input"
-              :value="modelValue"
-              @change="(e) => emitValue((e.target as HTMLInputElement)!.value)"
-              v-money3="moneyFormatForDirective"
-              v-show="floatingLabel"
+      <q-card-section>
+        <div class="text-h6">Nova operação</div>
+      </q-card-section>
+      <q-card-section>
+        <q-form @submit="onSubmit" class="q-gutter-md">
+          <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules>
+            <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
+              <input
+                :id="id"
+                class="q-field__input"
+                :value="modelValue"
+                @change="(e) => emitValue((e.target as HTMLInputElement)!.value)"
+                v-money3="moneyFormatForDirective"
+                v-show="floatingLabel"
+              />
+            </template>
+          </q-field>
+          <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules />
+          <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter />
+          <div class="flex justify-end">
+            <q-btn
+              label="Cancelar"
+              color="negative"
+              flat
+              class="q-ml-sm"
+              @click="onDialogCancel()"
             />
-          </template>
-        </q-field>
-        <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules />
-        <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter />
-        <div>
-          <q-btn label="Confirmar" type="submit" color="primary" />
-          <q-btn label="Cancelar" color="negative" flat class="q-ml-sm" @click="onDialogCancel()" />
-        </div>
-      </q-form>
+            <q-btn label="Confirmar" type="submit" color="primary" />
+          </div>
+        </q-form>
+      </q-card-section>
     </q-card>
   </q-dialog>
 </template>
