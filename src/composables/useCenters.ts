@@ -2,8 +2,12 @@ import { ref } from 'vue'
 
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import { Center } from 'src/databases/entities/expenses'
+import { useQuasar } from 'quasar'
+import CenterDialog from 'src/components/center/CenterDialog.vue'
 
 function useCenters() {
+  const $q = useQuasar()
+
   const centers = ref<Center[]>([])
   const repository = expensesDataSource.dataSource.getRepository(Center)
 
@@ -21,7 +25,35 @@ function useCenters() {
     centers.value = centers.value.filter((center) => center.id !== id)
   }
 
-  return { centers: centers, findAllCenters, addCenter, removeCenterById }
+  function showCenters() {
+    $q.dialog({
+      component: CenterDialog,
+      persistent: true,
+    })
+  }
+
+  function showNewCenterDialog() {
+    $q.dialog({
+      title: 'Novo centro financeiro',
+      prompt: {
+        model: '',
+        type: 'text',
+      },
+    }).onOk((payload) => {
+      const center = new Center()
+      center.name = payload
+      void addCenter(center)
+    })
+  }
+
+  return {
+    centers: centers,
+    findAllCenters,
+    addCenter,
+    removeCenterById,
+    showCenters,
+    showNewCenterDialog,
+  }
 }
 
 export { useCenters }

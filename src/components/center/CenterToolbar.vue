@@ -11,6 +11,17 @@
         }
       "
     />
+    <q-space />
+    <q-btn icon="more_vert" flat round dense>
+      <q-menu>
+        <q-list style="min-width: 100px">
+          <q-item clickable v-close-popup @click="showCenters()">
+            <q-item-section>Centros financeiros</q-item-section>
+            <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>
+          </q-item>
+        </q-list>
+      </q-menu>
+    </q-btn>
   </q-toolbar>
 </template>
 
@@ -19,7 +30,7 @@ import { useCenters } from 'src/composables/useCenters'
 import { useCenterStore } from 'src/stores/center-store'
 
 const centerStore = useCenterStore()
-const { centers, findAllCenters } = useCenters()
+const { centers, findAllCenters, showCenters } = useCenters()
 
 await findAllCenters()
 
