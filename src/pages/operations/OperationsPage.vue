@@ -1,33 +1,19 @@
 <template>
   <q-page>
-    OPERACOES FINANCEIRAS
+    OPERAÇÕES FINANCEIRAS
     <ul>
-      <li v-for="operation in operations" :key="operation.id">
+      <li v-for="operation in centerStore.operations" :key="operation.id">
         {{ operation.description }} {{ operation.valueInCents }}
       </li>
     </ul>
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-btn fab icon="add" color="accent" @click="centerStore.addOperation()" />
+    </q-page-sticky>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-
-import { useOperations } from 'src/composables/useOperations'
 import { useCenterStore } from 'src/stores/center-store'
 
 const centerStore = useCenterStore()
-const { operations, findAllOperationsBy } = useOperations()
-
-if (centerStore.center) {
-  await findAllOperationsBy(centerStore.center.id)
-}
-
-watch(
-  () => centerStore.center,
-  async (newCenter) => {
-    if (newCenter) {
-      await findAllOperationsBy(newCenter.id)
-    }
-  },
-)
 </script>

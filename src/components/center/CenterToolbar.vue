@@ -1,6 +1,16 @@
 <template>
   <q-toolbar>
-    <q-select v-model="centerStore.center" :options="centers" option-label="name" borderless />
+    <q-select
+      v-model="centerStore.center"
+      :options="centers"
+      option-label="name"
+      borderless
+      @update:model-value="
+        (value) => {
+          centerStore.setCenter(value)
+        }
+      "
+    />
   </q-toolbar>
 </template>
 
