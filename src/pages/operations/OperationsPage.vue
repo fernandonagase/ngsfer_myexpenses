@@ -11,6 +11,26 @@
         <q-item-section side :class="operation.isExpense ? 'text-negative' : 'text-positive'">
           {{ operation.valueString }}
         </q-item-section>
+        <q-item-section side>
+          <q-btn icon="more_vert" size="12px" flat dense round>
+            <q-menu>
+              <q-list style="min-width: 100px">
+                <q-item clickable v-close-popup @click="centerStore.editOperation(operation)">
+                  <q-item-section>Editar</q-item-section>
+                  <q-item-section side>
+                    <q-icon name="edit" size="xs" />
+                  </q-item-section>
+                </q-item>
+                <q-item clickable v-close-popup @click="centerStore.removeOperation(operation)">
+                  <q-item-section>Excluir</q-item-section>
+                  <q-item-section side>
+                    <q-icon name="delete" size="xs" />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </q-item-section>
       </q-item>
       <q-item>
         <q-item-section>

@@ -32,9 +32,11 @@ import { ref } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
 
-// const props = defineProps({
-//   // ...your custom props
-// })
+const props = defineProps<{
+  value?: string
+  date?: string
+  description?: string
+}>()
 
 defineEmits([...useDialogPluginComponent.emits])
 
@@ -50,9 +52,9 @@ const moneyFormatForDirective = {
 const valueRules = [(val: string) => BRL(val).value !== 0 || 'Informe um valor diferente de 0']
 const dateRules = [(val: string) => !!val || 'Informe a data da operação']
 
-const value = ref<string>('')
-const date = ref<string>(dayjs().format('YYYY-MM-DD'))
-const description = ref<string>('')
+const value = ref<string>(props.value ?? '')
+const date = ref<string>(props.date ?? dayjs().format('YYYY-MM-DD'))
+const description = ref<string>(props.description ?? '')
 
 function onSubmit() {
   onDialogOK({

@@ -4,7 +4,7 @@ import { useQuasar } from 'quasar'
 
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
-import NewOperationDialog from 'src/components/operation/NewOperationDialog.vue'
+import OperationDialog from 'src/components/operation/OperationDialog.vue'
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 
@@ -25,7 +25,7 @@ export const useCenterStore = defineStore('center', () => {
 
   function addOperation() {
     $q.dialog({
-      component: NewOperationDialog,
+      component: OperationDialog,
       persistent: true,
     }).onOk((payload: { value: number; date: string; description: string }) => {
       const operation = new Operation()
@@ -41,6 +41,48 @@ export const useCenterStore = defineStore('center', () => {
     })
   }
 
+  function editOperation(operation: Operation) {
+    $q.dialog({
+      component: OperationDialog,
+      componentProps: {
+        value: operation.valueInCents,
+        date: operation.date,
+        description: operation.description,
+      },
+      persistent: true,
+    }).onOk((payload: { value: number; date: string; description: string }) => {
+      operation.valueInCents = payload.value
+      operation.date = payload.date
+      operation.description = payload.description
+      void operationRepository.save(operation)
+    })
+  }
+
+  function removeOperation(operation: Operation) {
+    $q.dialog({
+      title: 'Excluir operação?',
+      message: 'Esta operação é irreversível',
+      ok: {
+        label: 'Confirmar',
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'negative',
+        flat: true,
+      },
+    }).onOk(() => {
+      const operationId = operation.id
+      void operationRepository.remove(operation)
+      if (!center.value) {
+        // se nao ha centro nem operacoes, nao ha nada para fazer
+        return
+      }
+      center.value.operations = center.value.operations.filter(
+        (operation) => operation.id !== operationId,
+      )
+    })
+  }
+
   watch(center, async () => {
     if (center.value) {
       const operations = await operationRepository
@@ -51,5 +93,13 @@ export const useCenterStore = defineStore('center', () => {
     }
   })
 
-  return { center, operations, totalInCents, setCenter, addOperation }
+  return {
+    center,
+    operations,
+    totalInCents,
+    setCenter,
+    addOperation,
+    editOperation,
+    removeOperation,
+  }
 })
