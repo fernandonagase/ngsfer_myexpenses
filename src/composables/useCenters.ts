@@ -39,10 +39,39 @@ function useCenters() {
         model: '',
         type: 'text',
       },
+      ok: {
+        label: 'Confirmar',
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'negative',
+        flat: true,
+      },
     }).onOk((payload) => {
       const center = new Center()
       center.name = payload
       void addCenter(center)
+    })
+  }
+
+  function showEditCenterDialog(center: Center) {
+    $q.dialog({
+      title: 'Centro financeiro',
+      prompt: {
+        model: '',
+        type: 'text',
+      },
+      ok: {
+        label: 'Confirmar',
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'negative',
+        flat: true,
+      },
+    }).onOk((payload) => {
+      center.name = payload
+      void repository.save(center)
     })
   }
 
@@ -53,6 +82,7 @@ function useCenters() {
     removeCenterById,
     showCenters,
     showNewCenterDialog,
+    showEditCenterDialog,
   }
 }
 
