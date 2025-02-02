@@ -1,6 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import dayjs from 'dayjs'
 
 import { Center } from './center'
+import { BRL } from 'src/helpers/currency'
 
 @Entity('operacao_financeira')
 export class Operation {
@@ -22,4 +24,20 @@ export class Operation {
     referencedColumnName: 'id',
   })
   center!: Center
+
+  get valueString() {
+    return BRL(this.valueInCents / 100).format()
+  }
+
+  get dateString() {
+    return dayjs(this.date).format('DD/MM/YYYY')
+  }
+
+  get isIncome() {
+    return this.valueInCents > 0
+  }
+
+  get isExpense() {
+    return this.valueInCents < 0
+  }
 }

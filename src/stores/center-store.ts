@@ -13,6 +13,11 @@ export const useCenterStore = defineStore('center', () => {
   const center = ref<Center | null>(null)
 
   const operations = computed(() => center.value?.operations ?? [])
+  const totalInCents = computed(() =>
+    center.value?.operations
+      ? center.value.operations.reduce((acc, next) => acc + next.valueInCents, 0)
+      : 0,
+  )
 
   function setCenter(newCenter: Center) {
     center.value = newCenter
@@ -46,5 +51,5 @@ export const useCenterStore = defineStore('center', () => {
     }
   })
 
-  return { center, operations, setCenter, addOperation }
+  return { center, operations, totalInCents, setCenter, addOperation }
 })
