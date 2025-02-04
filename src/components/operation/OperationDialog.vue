@@ -6,20 +6,14 @@
       </q-card-section>
       <q-card-section>
         <q-form @submit="onSubmit" class="q-gutter-md">
-          <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules>
-            <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
-              <input
-                :id="id"
-                class="q-field__input"
-                :value="modelValue"
-                @change="(e) => emitValue((e.target as HTMLInputElement)!.value)"
-                v-money3="moneyFormatForDirective"
-                v-show="floatingLabel"
-              />
-            </template>
-          </q-field>
-          <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules />
-          <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter />
+          <Suspense>
+            <OperationForm
+              v-model:value="value"
+              v-model:date="date"
+              v-model:description="description"
+            />
+            <template #fallback>Carregando...</template>
+          </Suspense>
           <div class="flex justify-end">
             <q-btn
               label="Cancelar"
@@ -42,6 +36,7 @@ import { useDialogPluginComponent } from 'quasar'
 import { ref } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
+import OperationForm from './OperationForm.vue'
 
 const props = defineProps<{
   value?: string
@@ -52,16 +47,6 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-
-const moneyFormatForDirective = {
-  prefix: 'R$',
-  thousands: '.',
-  decimal: ',',
-  precision: 2,
-  focusOnRight: true,
-}
-const valueRules = [(val: string) => BRL(val).value !== 0 || 'Informe um valor diferente de 0']
-const dateRules = [(val: string) => !!val || 'Informe a data da operação']
 
 const value = ref<string>(props.value ?? '')
 const date = ref<string>(props.date ?? dayjs().format('YYYY-MM-DD'))
