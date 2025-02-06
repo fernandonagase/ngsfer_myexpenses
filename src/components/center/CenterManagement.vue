@@ -1,7 +1,11 @@
 <template>
   <q-list separator>
     <q-item v-for="center in centerStore.centers" :key="center.id">
-      <q-item-section>{{ center.name }}</q-item-section>
+      <q-item-section>
+        <q-item-label>
+          {{ center.name }} <q-badge v-if="center.isDefaultCenter" label="Padrão" class="q-ml-xs" />
+        </q-item-label>
+      </q-item-section>
       <q-item-section side>
         <q-btn icon="more_vert" size="12px" flat dense round>
           <q-menu>
@@ -12,7 +16,12 @@
                   <q-icon name="edit" size="xs" />
                 </q-item-section>
               </q-item>
-              <q-item clickable v-close-popup @click="centerStore.removeCenter(center)">
+              <q-item
+                v-if="!center.isDefaultCenter"
+                clickable
+                v-close-popup
+                @click="centerStore.removeCenter(center)"
+              >
                 <q-item-section>Excluir</q-item-section>
                 <q-item-section side>
                   <q-icon name="delete" size="xs" />

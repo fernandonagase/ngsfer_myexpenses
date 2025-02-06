@@ -10,6 +10,9 @@ export class Center {
   @Column({ name: 'nome', type: 'text', length: 25 })
   name!: string
 
+  @Column({ name: 'is_default_center', type: 'boolean' })
+  isDefaultCenter!: boolean
+
   @OneToMany(() => Operation, (operation) => operation.center)
   operations!: Operation[]
 }

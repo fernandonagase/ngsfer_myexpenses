@@ -43,8 +43,19 @@ export const useCenterStore = defineStore('center', () => {
     }).onOk((payload) => {
       const center = new Center()
       center.name = payload
-      void centerRepository.save(center)
-      centers.value = [...centers.value, center]
+      center.isDefaultCenter = false
+      centerRepository
+        .save(center)
+        .then(() => {
+          centers.value = [...centers.value, center]
+        })
+        .catch((error) => {
+          $q.notify({
+            type: 'negative',
+            message: `Falha ao cadastrar centro financeiro`,
+            caption: error.message,
+          })
+        })
     })
   }
 
@@ -82,9 +93,27 @@ export const useCenterStore = defineStore('center', () => {
         flat: true,
       },
     }).onOk(() => {
-      const centerId = center.id
-      void centerRepository.remove(center)
-      centers.value = centers.value.filter((center) => center.id !== centerId)
+      if (center.isDefaultCenter) {
+        $q.notify({
+          type: 'negative',
+          message: `Falha ao excluir centro financeiro`,
+          caption: 'Não é permitido excluir o centro financeiro padrão',
+        })
+        return
+      }
+      const centerIndex = centers.value.findIndex((element) => element.id === center.id)
+      centerRepository
+        .remove(center)
+        .then(() => {
+          centers.value = centers.value.filter((_, index) => index !== centerIndex)
+        })
+        .catch((error) => {
+          $q.notify({
+            type: 'negative',
+            message: `Falha ao excluir centro financeiro`,
+            caption: error.message,
+          })
+        })
     })
   }
 
