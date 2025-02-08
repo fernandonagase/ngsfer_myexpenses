@@ -1,5 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
+import type { CategoryType } from './types/category.types'
+
 @Entity('category')
 export class Category {
   @PrimaryGeneratedColumn()
@@ -9,5 +11,5 @@ export class Category {
   name!: string
 
   @Column({ type: 'text' })
-  type!: 'Entrada' | 'Saída'
+  type!: CategoryType
 }

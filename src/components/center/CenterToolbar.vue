@@ -26,6 +26,10 @@
                 <q-item-section>Centros financeiros</q-item-section>
                 <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>
               </q-item>
+              <q-item clickable v-close-popup @click="categoryStore.showCategories()">
+                <q-item-section>Categorias</q-item-section>
+                <q-item-section side><q-icon name="label" size="xs" /></q-item-section>
+              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
@@ -40,12 +44,15 @@ import { useQuasar } from 'quasar'
 import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
 import SummaryDialog from '../summary/SummaryDialog.vue'
+import { useCategoryStore } from 'src/stores/category-store'
 
 const $q = useQuasar()
 const centerStore = useCenterStore()
+const categoryStore = useCategoryStore()
 const operationStore = useOperationStore()
 
 await centerStore.fetchCenters()
+await categoryStore.fetch()
 
 if (centerStore.centers ? centerStore.centers.length > 0 : false) {
   operationStore.center = centerStore.centers[0] ?? null
