@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 
+import type { Category } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
@@ -27,10 +28,11 @@ export const useOperationStore = defineStore('operation', () => {
     $q.dialog({
       component: OperationDialog,
       persistent: true,
-    }).onOk((payload: { value: number; date: string; description: string }) => {
+    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
       const operation = new Operation()
       operation.valueInCents = payload.value
       operation.date = payload.date
+      operation.category = payload.category
       operation.description = payload.description
       if (!center.value) {
         throw new Error('Centro financeiro não informado')
@@ -45,14 +47,16 @@ export const useOperationStore = defineStore('operation', () => {
     $q.dialog({
       component: OperationDialog,
       componentProps: {
-        value: operation.valueInCents,
+        value: operation.valueString,
         date: operation.date,
+        category: operation.category,
         description: operation.description,
       },
       persistent: true,
-    }).onOk((payload: { value: number; date: string; description: string }) => {
+    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
       operation.valueInCents = payload.value
       operation.date = payload.date
+      operation.category = payload.category
       operation.description = payload.description
       void operationRepository.save(operation)
     })
@@ -87,6 +91,7 @@ export const useOperationStore = defineStore('operation', () => {
     if (center.value) {
       const operations = await operationRepository
         .createQueryBuilder('operation')
+        .leftJoinAndSelect('operation.category', 'category')
         .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
         .orderBy('operation.date', 'DESC')
         .getMany()

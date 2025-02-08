@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 
 import { Center } from './center'
 import { BRL } from 'src/helpers/currency'
+import { Category } from './category'
 
 @Entity('operacao_financeira')
 export class Operation {
@@ -24,6 +25,13 @@ export class Operation {
     referencedColumnName: 'id',
   })
   center!: Center
+
+  @ManyToOne(() => Category)
+  @JoinColumn({
+    name: 'category_id',
+    referencedColumnName: 'id',
+  })
+  category!: Category
 
   get valueString() {
     return BRL(this.valueInCents / 100).format()

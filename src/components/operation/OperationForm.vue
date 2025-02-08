@@ -28,12 +28,12 @@
 import { computed, ref, watch } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
-import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
-import { Category } from 'src/databases/entities/expenses'
+import type { Category } from 'src/databases/entities/expenses'
+import { useCategoryStore } from 'src/stores/category-store'
 
 const value = defineModel<string>('value')
 const date = defineModel<string>('date')
-const category = defineModel<Category>('category')
+const category = defineModel<Category | null>('category')
 const description = defineModel<string>('description')
 
 const operationType = computed(() => (BRL(value.value).value > 0 ? 'Entrada' : 'Saída'))
@@ -49,16 +49,17 @@ const valueRules = [(val: string) => BRL(val).value !== 0 || 'Informe um valor d
 const dateRules = [(val: string) => !!val || 'Informe a data da operação']
 const categoryRules = [(val: string) => !!val || 'Informe a categoria da operação']
 
-const categories = await expensesDataSource.dataSource.getRepository(Category).find()
-const filteredCategories = ref<Array<Category>>()
-watch(
-  operationType,
-  () => {
-    filteredCategories.value = categories.filter(
-      (category) => category.type === operationType.value,
-    )
-    category.value = filteredCategories.value[0]
-  },
-  { immediate: true },
+const categoryStore = useCategoryStore()
+
+const filteredCategories = ref<Array<Category>>(
+  operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
 )
+watch(operationType, () => {
+  if (operationType.value === 'Entrada') {
+    filteredCategories.value = categoryStore.datasetInput
+  } else {
+    filteredCategories.value = categoryStore.datasetOutput
+  }
+  category.value = filteredCategories.value[0]
+})
 </script>

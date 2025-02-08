@@ -10,6 +10,7 @@
             <OperationForm
               v-model:value="value"
               v-model:date="date"
+              v-model:category="category"
               v-model:description="description"
             />
             <template #fallback>Carregando...</template>
@@ -37,10 +38,12 @@ import { ref } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
 import OperationForm from './OperationForm.vue'
+import type { Category } from 'src/databases/entities/expenses'
 
 const props = defineProps<{
   value?: string
   date?: string
+  category?: Category
   description?: string
 }>()
 
@@ -50,12 +53,14 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginC
 
 const value = ref<string>(props.value ?? '')
 const date = ref<string>(props.date ?? dayjs().format('YYYY-MM-DD'))
+const category = ref<Category | null>(props.category ?? null)
 const description = ref<string>(props.description ?? '')
 
 function onSubmit() {
   onDialogOK({
     value: BRL(value.value).multiply(100).value,
     date: date.value,
+    category: category.value,
     description: description.value,
   })
 }

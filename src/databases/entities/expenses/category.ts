@@ -13,6 +13,6 @@ export class Category {
   @Column({ type: 'text' })
   type!: CategoryType
 
-  @Column({ name: 'is_default', type: 'boolean' })
+  @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault!: boolean
 }
