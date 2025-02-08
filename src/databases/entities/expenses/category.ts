@@ -12,4 +12,7 @@ export class Category {
 
   @Column({ type: 'text' })
   type!: CategoryType
+
+  @Column({ name: 'is_default', type: 'boolean' })
+  isDefault!: boolean
 }

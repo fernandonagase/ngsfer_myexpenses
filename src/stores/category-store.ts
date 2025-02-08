@@ -89,6 +89,14 @@ export const useCategoryStore = defineStore('category', () => {
         flat: true,
       },
     }).onOk(() => {
+      if (category.isDefault) {
+        $q.notify({
+          type: 'negative',
+          message: `Falha ao excluir categoria`,
+          caption: 'Não é permitido excluir uma categoria padrão',
+        })
+        return
+      }
       let categoryIndex = -1
       if (category.type === 'Entrada') {
         categoryIndex = datasetInput.value.findIndex((element) => element.id === category.id)

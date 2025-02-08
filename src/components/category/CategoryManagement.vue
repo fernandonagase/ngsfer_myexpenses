@@ -10,6 +10,7 @@
           <q-item-section>
             <q-item-label>
               {{ category.name }}
+              <q-badge v-if="category.isDefault" label="Padrão" class="q-ml-xs" />
             </q-item-label>
           </q-item-section>
           <q-item-section side>
@@ -45,6 +46,7 @@
           <q-item-section>
             <q-item-label>
               {{ category.name }}
+              <q-badge v-if="category.isDefault" label="Padrão" class="q-ml-xs" />
             </q-item-label>
           </q-item-section>
           <q-item-section side>
