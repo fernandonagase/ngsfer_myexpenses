@@ -22,6 +22,11 @@
         <q-btn icon="more_vert" flat round dense>
           <q-menu>
             <q-list style="min-width: 100px">
+              <q-item clickable v-close-popup @click="operationStore.showOperationsByCategory()">
+                <q-item-section>Operações por categoria</q-item-section>
+                <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>
+              </q-item>
+              <q-separator />
               <q-item clickable v-close-popup @click="centerStore.showCenters()">
                 <q-item-section>Centros financeiros</q-item-section>
                 <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>

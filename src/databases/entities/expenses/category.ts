@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 import type { CategoryType } from './types/category.types'
+import { Operation } from './operation'
 
 @Entity('category')
 export class Category {
@@ -15,4 +16,7 @@ export class Category {
 
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault!: boolean
+
+  @OneToMany(() => Operation, (operation) => operation.category)
+  operations!: Operation[]
 }

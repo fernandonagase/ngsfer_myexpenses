@@ -2,12 +2,14 @@ import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 
-import type { Category } from 'src/databases/entities/expenses'
+import { Category } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
+import OperationByCategoryDialog from 'src/components/reports/OperationByCategoryDialog.vue'
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
+const categoryOperation = expensesDataSource.dataSource.getRepository(Category)
 
 export const useOperationStore = defineStore('operation', () => {
   const $q = useQuasar()
@@ -87,6 +89,36 @@ export const useOperationStore = defineStore('operation', () => {
     })
   }
 
+  function showOperationsByCategory() {
+    $q.dialog({
+      component: OperationByCategoryDialog,
+    })
+  }
+
+  async function getOperationsByCategory() {
+    const income = await categoryOperation
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.operations', 'operation')
+      .select('category.name', 'category')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
+      .andWhere("category.type = 'Entrada'")
+      .groupBy('category.name')
+      .orderBy('SUM(operation.valueInCents)', 'DESC')
+      .getRawMany()
+    const expenses = await categoryOperation
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.operations', 'operation')
+      .select('category.name', 'category')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
+      .andWhere("category.type = 'Saída'")
+      .groupBy('category.name')
+      .orderBy('SUM(operation.valueInCents)', 'DESC')
+      .getRawMany()
+    return { income, expenses }
+  }
+
   watch(center, async () => {
     if (center.value) {
       const operations = await operationRepository
@@ -107,5 +139,7 @@ export const useOperationStore = defineStore('operation', () => {
     addOperation,
     editOperation,
     removeOperation,
+    showOperationsByCategory,
+    getOperationsByCategory,
   }
 })

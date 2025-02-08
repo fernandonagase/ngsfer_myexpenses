@@ -26,7 +26,7 @@ export class Operation {
   })
   center!: Center
 
-  @ManyToOne(() => Category)
+  @ManyToOne(() => Category, (category) => category.operations)
   @JoinColumn({
     name: 'category_id',
     referencedColumnName: 'id',
