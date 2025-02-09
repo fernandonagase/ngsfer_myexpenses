@@ -18,6 +18,13 @@
         </div>
       </div>
       <div class="col-xs-4 flex justify-end">
+        <q-btn
+          :icon="configStore.hideValues ? 'visibility_off' : 'visibility'"
+          flat
+          round
+          dense
+          @click="configStore.toggleValuesVisibility()"
+        />
         <q-btn icon="description" flat round dense @click="showSummary()" />
         <q-btn icon="more_vert" flat round dense>
           <q-menu>
@@ -50,11 +57,13 @@ import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
 import SummaryDialog from '../summary/SummaryDialog.vue'
 import { useCategoryStore } from 'src/stores/category-store'
+import { useConfigStore } from 'src/stores/config-store'
 
 const $q = useQuasar()
 const centerStore = useCenterStore()
 const categoryStore = useCategoryStore()
 const operationStore = useOperationStore()
+const configStore = useConfigStore()
 
 await centerStore.fetchCenters()
 await categoryStore.fetch()

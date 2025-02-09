@@ -18,11 +18,13 @@
           <q-item-label class="text-weight-bold">Saldo anterior</q-item-label>
         </q-item-section>
         <q-item-section side>
-          {{
-            BRL(
-              operationStore.summaryByMonth.get(operationStore.month)!.initialBalance / 100,
-            ).format()
-          }}
+          <ConcealableValue>
+            <span>{{
+              BRL(
+                operationStore.summaryByMonth.get(operationStore.month)!.initialBalance / 100,
+              ).format()
+            }}</span>
+          </ConcealableValue>
         </q-item-section>
       </q-item>
       <q-item
@@ -37,8 +39,12 @@
           </q-item-label>
           <q-item-label caption>{{ operation.dateString }}</q-item-label>
         </q-item-section>
-        <q-item-section side :class="operation.isExpense ? 'text-negative' : 'text-positive'">
-          {{ operation.valueString }}
+        <q-item-section side>
+          <ConcealableValue>
+            <span :class="operation.isExpense ? 'text-negative' : 'text-positive'">
+              {{ operation.valueString }}
+            </span>
+          </ConcealableValue>
         </q-item-section>
         <q-item-section side>
           <q-btn icon="more_vert" size="12px" flat dense round>
@@ -66,11 +72,13 @@
           <q-item-label class="text-weight-bold">Total</q-item-label>
         </q-item-section>
         <q-item-section side>
-          {{
-            BRL(
-              operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100,
-            ).format()
-          }}
+          <ConcealableValue>
+            <span>{{
+              BRL(
+                operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100,
+              ).format()
+            }}</span>
+          </ConcealableValue>
         </q-item-section>
       </q-item>
     </q-list>
@@ -83,6 +91,7 @@
 <script setup lang="ts">
 import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
+import ConcealableValue from 'src/components/ConcealableValue.vue'
 
 const operationStore = useOperationStore()
 </script>
