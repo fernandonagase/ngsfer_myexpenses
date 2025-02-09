@@ -1,7 +1,34 @@
 <template>
   <q-page>
-    <q-list separator class="operations-list">
-      <q-item v-for="operation in operationStore.operations" :key="operation.id">
+    <q-tabs v-model="operationStore.month">
+      <q-tab
+        v-for="month in operationStore.months"
+        :key="month.value"
+        :name="month.value"
+        :label="month.label"
+      />
+    </q-tabs>
+    <q-list
+      v-if="operationStore.month && operationStore.summaryByMonth.get(operationStore.month)"
+      separator
+      class="operations-list"
+    >
+      <q-item>
+        <q-item-section>
+          <q-item-label class="text-weight-bold">Saldo anterior</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          {{
+            BRL(
+              operationStore.summaryByMonth.get(operationStore.month)!.initialBalance / 100,
+            ).format()
+          }}
+        </q-item-section>
+      </q-item>
+      <q-item
+        v-for="operation in operationStore.summaryByMonth.get(operationStore.month)!.operations"
+        :key="operation.id"
+      >
         <q-item-section>
           <q-item-label>
             <span v-if="operation.description">{{ operation.description }}</span>
@@ -39,7 +66,11 @@
           <q-item-label class="text-weight-bold">Total</q-item-label>
         </q-item-section>
         <q-item-section side>
-          {{ BRL(operationStore.totalInCents / 100).format() }}
+          {{
+            BRL(
+              operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100,
+            ).format()
+          }}
         </q-item-section>
       </q-item>
     </q-list>
