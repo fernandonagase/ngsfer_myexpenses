@@ -3,8 +3,11 @@
     <q-list separator class="operations-list">
       <q-item v-for="operation in operationStore.operations" :key="operation.id">
         <q-item-section>
-          <q-item-label v-if="operation.description">{{ operation.description }}</q-item-label>
-          <q-item-label v-else>Não identificada</q-item-label>
+          <q-item-label>
+            <span v-if="operation.description">{{ operation.description }}</span>
+            <span v-else>Não identificada</span>
+            <q-badge :label="operation.category.name" class="q-ml-sm" />
+          </q-item-label>
           <q-item-label caption>{{ operation.dateString }}</q-item-label>
         </q-item-section>
         <q-item-section side :class="operation.isExpense ? 'text-negative' : 'text-positive'">
