@@ -129,7 +129,7 @@ export const useOperationStore = defineStore('operation', () => {
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
       .andWhere("category.type = 'Saída'")
       .groupBy('category.name')
-      .orderBy('SUM(operation.valueInCents)', 'DESC')
+      .orderBy('SUM(operation.valueInCents)', 'ASC')
       .getRawMany()
     return { income, expenses }
   }
