@@ -10,7 +10,6 @@
     </q-tabs>
     <q-list
       v-if="operationStore.month && operationStore.summaryByMonth.get(operationStore.month)"
-      separator
       class="operations-list"
     >
       <q-item>
@@ -27,46 +26,59 @@
           </ConcealableValue>
         </q-item-section>
       </q-item>
-      <q-item
-        v-for="operation in operationStore.summaryByMonth.get(operationStore.month)!.operations"
-        :key="operation.id"
+      <template
+        v-for="[day, operations] in Object.entries(operationStore.monthOperations)"
+        :key="day"
       >
-        <q-item-section>
-          <q-item-label>
-            <span v-if="operation.description">{{ operation.description }}</span>
-            <span v-else>Não identificada</span>
-            <q-badge :label="operation.category.name" class="q-ml-sm" />
-          </q-item-label>
-          <q-item-label caption>{{ operation.dateString }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <ConcealableValue>
-            <span :class="operation.isExpense ? 'text-negative' : 'text-positive'">
-              {{ operation.valueString }}
-            </span>
-          </ConcealableValue>
-        </q-item-section>
-        <q-item-section side>
-          <q-btn icon="more_vert" size="12px" flat dense round>
-            <q-menu>
-              <q-list style="min-width: 100px">
-                <q-item clickable v-close-popup @click="operationStore.editOperation(operation)">
-                  <q-item-section>Editar</q-item-section>
-                  <q-item-section side>
-                    <q-icon name="edit" size="xs" />
-                  </q-item-section>
-                </q-item>
-                <q-item clickable v-close-popup @click="operationStore.removeOperation(operation)">
-                  <q-item-section>Excluir</q-item-section>
-                  <q-item-section side>
-                    <q-icon name="delete" size="xs" />
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
-        </q-item-section>
-      </q-item>
+        <q-item>
+          <q-item-section>
+            <q-item-label class="text-weight-bold">{{
+              dayjs(day).format('ddd[.], D [de] MMMM [de] YYYY')
+            }}</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item v-for="operation in operations" :key="operation.id">
+          <q-item-section>
+            <q-item-label>
+              <span v-if="operation.description">{{ operation.description }}</span>
+              <span v-else>Não identificada</span>
+              <q-badge :label="operation.category.name" class="q-ml-sm" />
+            </q-item-label>
+            <q-item-label caption>{{ operation.dateString }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <ConcealableValue>
+              <span :class="operation.isExpense ? 'text-negative' : 'text-positive'">
+                {{ operation.valueString }}
+              </span>
+            </ConcealableValue>
+          </q-item-section>
+          <q-item-section side>
+            <q-btn icon="more_vert" size="12px" flat dense round>
+              <q-menu>
+                <q-list style="min-width: 100px">
+                  <q-item clickable v-close-popup @click="operationStore.editOperation(operation)">
+                    <q-item-section>Editar</q-item-section>
+                    <q-item-section side>
+                      <q-icon name="edit" size="xs" />
+                    </q-item-section>
+                  </q-item>
+                  <q-item
+                    clickable
+                    v-close-popup
+                    @click="operationStore.removeOperation(operation)"
+                  >
+                    <q-item-section>Excluir</q-item-section>
+                    <q-item-section side>
+                      <q-icon name="delete" size="xs" />
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </q-item-section>
+        </q-item>
+      </template>
       <q-item>
         <q-item-section>
           <q-item-label class="text-weight-bold">Total</q-item-label>
@@ -89,6 +101,8 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
+
 import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'

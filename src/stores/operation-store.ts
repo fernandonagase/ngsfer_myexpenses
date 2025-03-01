@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
@@ -21,9 +21,19 @@ export const useOperationStore = defineStore('operation', () => {
   const summaryByMonth = reactive(
     new Map<
       string,
-      { initialBalance: number; operations: Array<Operation>; finalBalance: number }
+      {
+        initialBalance: number
+        operations: Partial<Record<string, Array<Operation>>>
+        finalBalance: number
+      }
     >(),
   )
+
+  const monthOperations = computed(() => {
+    if (!month.value) throw new Error('Operações por mês: nenhum mês selecionado')
+    if (!summaryByMonth.has(month.value)) throw new Error('Mês solicitado não contém operações')
+    return summaryByMonth.get(month.value)!.operations
+  })
 
   function setCenter(newCenter: Center) {
     center.value = newCenter
@@ -184,7 +194,7 @@ export const useOperationStore = defineStore('operation', () => {
       .andWhere('SUBSTR(operation.date, 0, 8) <= :month', { month: month.value })
       .getRawOne()
     summaryByMonth.set(month.value, {
-      operations,
+      operations: Object.groupBy(operations, ({ date }) => date),
       initialBalance: initialBalance.Total,
       finalBalance: finalBalance.Total,
     })
@@ -199,6 +209,7 @@ export const useOperationStore = defineStore('operation', () => {
     month,
     months,
     summaryByMonth,
+    monthOperations,
     setCenter,
     addOperation,
     editOperation,
