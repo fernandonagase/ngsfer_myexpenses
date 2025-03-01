@@ -9,6 +9,7 @@
           @change="(e) => emitValue((e.target as HTMLInputElement)!.value)"
           v-money3="moneyFormatForDirective"
           v-show="floatingLabel"
+          inputmode="numeric"
         />
       </template>
     </q-field>
