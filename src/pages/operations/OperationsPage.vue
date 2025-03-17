@@ -14,13 +14,13 @@
     >
       <q-item>
         <q-item-section>
-          <q-item-label class="text-weight-bold">Saldo anterior</q-item-label>
+          <q-item-label class="text-weight-bold">Total</q-item-label>
         </q-item-section>
         <q-item-section side>
           <ConcealableValue>
             <span>{{
               BRL(
-                operationStore.summaryByMonth.get(operationStore.month)!.initialBalance / 100,
+                operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100,
               ).format()
             }}</span>
           </ConcealableValue>
@@ -81,13 +81,13 @@
       </template>
       <q-item>
         <q-item-section>
-          <q-item-label class="text-weight-bold">Total</q-item-label>
+          <q-item-label class="text-weight-bold">Saldo anterior</q-item-label>
         </q-item-section>
         <q-item-section side>
           <ConcealableValue>
             <span>{{
               BRL(
-                operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100,
+                operationStore.summaryByMonth.get(operationStore.month)!.initialBalance / 100,
               ).format()
             }}</span>
           </ConcealableValue>
