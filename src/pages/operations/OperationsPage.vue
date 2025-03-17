@@ -1,3 +1,13 @@
+<script setup lang="ts">
+import dayjs from 'dayjs'
+
+import { BRL } from 'src/helpers/currency'
+import { useOperationStore } from 'src/stores/operation-store'
+import ConcealableValue from 'src/components/ConcealableValue.vue'
+
+const operationStore = useOperationStore()
+</script>
+
 <template>
   <q-page>
     <q-tabs v-model="operationStore.month">
@@ -99,16 +109,6 @@
     </q-page-sticky>
   </q-page>
 </template>
-
-<script setup lang="ts">
-import dayjs from 'dayjs'
-
-import { BRL } from 'src/helpers/currency'
-import { useOperationStore } from 'src/stores/operation-store'
-import ConcealableValue from 'src/components/ConcealableValue.vue'
-
-const operationStore = useOperationStore()
-</script>
 
 <style lang="scss" scoped>
 .operations-list {
