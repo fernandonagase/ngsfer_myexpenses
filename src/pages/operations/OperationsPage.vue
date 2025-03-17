@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { computed } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 
 const operationStore = useOperationStore()
+
+const totalForMonth = computed(() =>
+  operationStore.month
+    ? BRL(operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100).format()
+    : 0,
+)
 </script>
 
 <template>
@@ -28,11 +35,7 @@ const operationStore = useOperationStore()
         </q-item-section>
         <q-item-section side>
           <ConcealableValue>
-            <span>{{
-              BRL(
-                operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100,
-              ).format()
-            }}</span>
+            <span>{{ totalForMonth }}</span>
           </ConcealableValue>
         </q-item-section>
       </q-item>
