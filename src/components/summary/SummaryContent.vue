@@ -4,7 +4,7 @@ import { BRL } from 'src/helpers/currency'
 
 const centerStore = useCenterStore()
 
-const summary = await centerStore.getSummary()
+const summary = await centerStore.getCurrentSummary()
 </script>
 
 <template>

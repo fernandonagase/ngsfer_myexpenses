@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
+import dayjs from 'dayjs'
 
 import { Center, Operation } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
@@ -135,5 +136,34 @@ export const useCenterStore = defineStore('center', () => {
     return summary.concat(total)
   }
 
-  return { centers, fetchCenters, showCenters, addCenter, editCenter, removeCenter, getSummary }
+  async function getCurrentSummary() {
+    const summary = await centerRepository
+      .createQueryBuilder('center')
+      .leftJoinAndSelect('center.operations', 'operation')
+      .select('center.name', 'center')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.date <= :now', { now: dayjs().format('YYYY-MM-DD') })
+      .groupBy('center.name')
+      .orderBy('center.id')
+      .getRawMany()
+    const total = await operationRepository
+      .createQueryBuilder('operation')
+      .select("'Total'", 'center')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.date <= :now', { now: dayjs().format('YYYY-MM-DD') })
+      .getRawMany()
+
+    return summary.concat(total)
+  }
+
+  return {
+    centers,
+    fetchCenters,
+    showCenters,
+    addCenter,
+    editCenter,
+    removeCenter,
+    getSummary,
+    getCurrentSummary,
+  }
 })
