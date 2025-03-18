@@ -25,6 +25,22 @@ const totalForMonth = computed(() =>
         :label="month.label"
       />
     </q-tabs>
+    <div class="column items-center q-my-lg">
+      <ConcealableValue>
+        <p
+          class="text-h2 q-ma-none"
+          :class="{
+            'text-positive':
+              operationStore.summaryByMonth.get(operationStore.month!)!.finalBalance > 0,
+            'text-negative':
+              operationStore.summaryByMonth.get(operationStore.month!)!.finalBalance < 0,
+          }"
+        >
+          {{ totalForMonth }}
+        </p>
+      </ConcealableValue>
+      <p class="text-subtitle1 q-ma-none">Disponível</p>
+    </div>
     <q-list
       v-if="operationStore.month && operationStore.summaryByMonth.get(operationStore.month)"
       class="operations-list"
