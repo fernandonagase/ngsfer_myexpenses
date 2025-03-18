@@ -45,16 +45,6 @@ const totalForMonth = computed(() =>
       v-if="operationStore.month && operationStore.summaryByMonth.get(operationStore.month)"
       class="operations-list"
     >
-      <q-item>
-        <q-item-section>
-          <q-item-label class="text-weight-bold">Total</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <ConcealableValue>
-            <span>{{ totalForMonth }}</span>
-          </ConcealableValue>
-        </q-item-section>
-      </q-item>
       <template
         v-for="[day, operations] in Object.entries(operationStore.monthOperations)"
         :key="day"
