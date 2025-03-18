@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { computed } from 'vue'
+import { StatusBar } from '@capacitor/status-bar'
+import { getCssVar } from 'quasar'
 
 import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
+
+const qPrimaryColor = getCssVar('primary')
+if (qPrimaryColor) {
+  void StatusBar.setBackgroundColor({ color: qPrimaryColor })
+}
 
 const operationStore = useOperationStore()
 
