@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useConfigStore } from 'src/stores/config-store'
 
+defineProps<{
+  concealedClass?: string
+}>()
+
 const configStore = useConfigStore()
 </script>
 
@@ -8,5 +12,5 @@ const configStore = useConfigStore()
   <template v-if="!configStore.hideValues">
     <slot></slot>
   </template>
-  <span v-else>***</span>
+  <span v-else :class="concealedClass ?? ''">***</span>
 </template>
