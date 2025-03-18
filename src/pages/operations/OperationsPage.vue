@@ -26,7 +26,7 @@ const totalForMonth = computed(() =>
       />
     </q-tabs>
     <div class="column items-center q-my-lg">
-      <ConcealableValue>
+      <ConcealableValue concealed-class="text-h2 q-ma-none">
         <p
           class="text-h2 q-ma-none"
           :class="{
