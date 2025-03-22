@@ -7,6 +7,7 @@ import { getCssVar } from 'quasar'
 import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
+import EmptyList from 'src/components/EmptyList.vue'
 
 const qPrimaryColor = getCssVar('primary')
 if (qPrimaryColor) {
@@ -120,6 +121,9 @@ const totalForMonth = computed(() =>
         </q-item-section>
       </q-item>
     </q-list>
+    <div v-else class="q-mt-xl">
+      <EmptyList label="Nenhuma operação lançada" />
+    </div>
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
       <q-btn fab icon="add" color="accent" @click="operationStore.addOperation()" />
     </q-page-sticky>
