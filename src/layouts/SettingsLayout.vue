@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header>
       <q-toolbar>
         <q-btn flat dense round icon="arrow_back" aria-label="Voltar" @click="$router.back()" />
         <q-toolbar-title> Configurações </q-toolbar-title>

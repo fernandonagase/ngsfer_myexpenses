@@ -1,7 +1,7 @@
 <template>
   <Suspense>
     <q-layout view="lHh Lpr lFf">
-      <q-header elevated>
+      <q-header>
         <CenterToolbar />
       </q-header>
 
