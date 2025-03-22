@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { Center, Operation } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import CenterDialog from 'src/components/center/CenterDialog.vue'
+import SelectCenterDialog from 'src/components/center/SelectCenterDialog.vue'
 
 const centerRepository = expensesDataSource.dataSource.getRepository(Center)
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
@@ -156,6 +157,23 @@ export const useCenterStore = defineStore('center', () => {
     return summary.concat(total)
   }
 
+  function selectCenter(exceptFn?: (center: Center) => boolean) {
+    return new Promise<Center | null>((resolve) => {
+      $q.dialog({
+        component: SelectCenterDialog,
+        componentProps: {
+          exceptFn,
+        },
+      })
+        .onOk((center: Center) => {
+          resolve(center)
+        })
+        .onCancel(() => {
+          resolve(null)
+        })
+    })
+  }
+
   return {
     centers,
     fetchCenters,
@@ -165,5 +183,6 @@ export const useCenterStore = defineStore('center', () => {
     removeCenter,
     getSummary,
     getCurrentSummary,
+    selectCenter,
   }
 })
