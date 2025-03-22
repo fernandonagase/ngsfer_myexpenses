@@ -144,8 +144,8 @@ export const useOperationStore = defineStore('operation', () => {
     return { income, expenses }
   }
 
-  async function getMonthGroups() {
-    const dbMonths: Array<{ month: string; year: string }> = await operationRepository
+  async function getCurrentCenterMonths(): Promise<Array<{ month: string; year: string }>> {
+    return await operationRepository
       .createQueryBuilder('operation')
       .select("STRFTIME('%m', operation.date)", 'month')
       .addSelect("STRFTIME('%Y', date)", 'year')
@@ -155,20 +155,24 @@ export const useOperationStore = defineStore('operation', () => {
       .orderBy('year')
       .addOrderBy('month')
       .getRawMany()
-    months.value = dbMonths.map((month) => ({
+  }
+
+  async function getMonthGroups() {
+    const dbMonths = await getCurrentCenterMonths()
+    return dbMonths.map((month) => ({
       label: dayjs(`${month.year}-${month.month}`).format('MMM/YYYY'),
       value: `${month.year}-${month.month}`,
     }))
-    if (month.value && !months.value.some((m) => m.value === month.value)) {
-      month.value = months.value[months.value.length - 1]?.value
-    }
-    if (months.value.length > 0 && !month.value) {
-      month.value = months.value[months.value.length - 1]?.value
-    }
   }
 
   async function refreshData() {
-    await getMonthGroups()
+    months.value = await getMonthGroups()
+    const selectedMonthNotInList = month.value && !months.value.some((m) => m.value === month.value)
+    const noMonthSelected = months.value.length > 0 && !month.value
+    if (selectedMonthNotInList || noMonthSelected) {
+      // Selecione o último mês da lista
+      month.value = months.value[months.value.length - 1]?.value
+    }
     if (!center.value) return
     if (typeof month.value === 'undefined') return
     const initialBalance = await operationRepository
