@@ -32,7 +32,7 @@ const totalForMonth = computed(() =>
         :label="month.label"
       />
     </q-tabs>
-    <div class="column items-center q-my-lg">
+    <div v-if="operationStore.month" class="column items-center q-my-lg">
       <ConcealableValue concealed-class="text-h2 q-ma-none">
         <p
           class="text-h2 q-ma-none"
