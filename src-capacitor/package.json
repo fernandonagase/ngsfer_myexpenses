@@ -1,6 +1,6 @@
 {
   "name": "ngsfer-myexpenses",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Aplicativo para controle de finanças pessoais",
   "author": "Fernando Nagase <nagase.fernando@gmail.com>",
   "private": true,
