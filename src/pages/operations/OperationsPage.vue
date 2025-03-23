@@ -29,9 +29,7 @@ async function transferOperationToAnotherCenter(operation: Operation) {
 }
 
 const totalForMonth = computed(() =>
-  operationStore.month
-    ? BRL(operationStore.summaryByMonth.get(operationStore.month)!.finalBalance / 100).format()
-    : 0,
+  operationStore.month ? BRL(operationStore.selectedMonthSummary.finalBalance / 100).format() : 0,
 )
 </script>
 
@@ -50,10 +48,8 @@ const totalForMonth = computed(() =>
         <p
           class="text-h2 q-ma-none"
           :class="{
-            'text-positive':
-              operationStore.summaryByMonth.get(operationStore.month!)!.finalBalance > 0,
-            'text-negative':
-              operationStore.summaryByMonth.get(operationStore.month!)!.finalBalance < 0,
+            'text-positive': operationStore.selectedMonthSummary.finalBalance > 0,
+            'text-negative': operationStore.selectedMonthSummary.finalBalance < 0,
           }"
         >
           {{ totalForMonth }}
@@ -138,9 +134,7 @@ const totalForMonth = computed(() =>
         <q-item-section side>
           <ConcealableValue>
             <span>{{
-              BRL(
-                operationStore.summaryByMonth.get(operationStore.month!)!.initialBalance / 100,
-              ).format()
+              BRL(operationStore.selectedMonthSummary.initialBalance / 100).format()
             }}</span>
           </ConcealableValue>
         </q-item-section>
