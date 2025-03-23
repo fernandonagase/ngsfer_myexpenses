@@ -55,7 +55,7 @@ const totalForMonth = computed(() =>
           {{ totalForMonth }}
         </p>
       </ConcealableValue>
-      <p class="text-subtitle1 q-ma-none">Disponível</p>
+      <p class="text-subtitle1 q-ma-none">Até o fim do mês</p>
     </div>
     <q-list v-if="operationStore.hasLoadedSelectedMonthSummary" class="operations-list">
       <template
