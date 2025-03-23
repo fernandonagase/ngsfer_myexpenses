@@ -35,7 +35,7 @@ const totalForMonth = computed(() =>
 
 <template>
   <q-page>
-    <q-tabs v-model="operationStore.month">
+    <q-tabs v-model="operationStore.month" indicator-color="primary" class="tabs-container">
       <q-tab
         v-for="month in operationStore.months"
         :key="month.value"
@@ -152,5 +152,9 @@ const totalForMonth = computed(() =>
 <style lang="scss" scoped>
 .operations-list {
   padding-bottom: 82px;
+}
+
+.tabs-container {
+  border-bottom: 1px solid $blue-grey-3;
 }
 </style>
