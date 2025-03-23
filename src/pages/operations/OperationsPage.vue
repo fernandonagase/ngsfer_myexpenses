@@ -45,7 +45,7 @@ const totalForMonth = computed(() =>
         :label="month.label"
       />
     </q-tabs>
-    <div v-if="operationStore.month" class="column items-center q-my-lg">
+    <div v-if="operationStore.hasLoadedSelectedMonthSummary" class="column items-center q-my-lg">
       <ConcealableValue concealed-class="text-h2 q-ma-none">
         <p
           class="text-h2 q-ma-none"
@@ -61,10 +61,7 @@ const totalForMonth = computed(() =>
       </ConcealableValue>
       <p class="text-subtitle1 q-ma-none">Disponível</p>
     </div>
-    <q-list
-      v-if="operationStore.month && operationStore.summaryByMonth.get(operationStore.month)"
-      class="operations-list"
-    >
+    <q-list v-if="operationStore.hasLoadedSelectedMonthSummary" class="operations-list">
       <template
         v-for="[day, operations] in Object.entries(operationStore.monthOperations)"
         :key="day"
@@ -142,7 +139,7 @@ const totalForMonth = computed(() =>
           <ConcealableValue>
             <span>{{
               BRL(
-                operationStore.summaryByMonth.get(operationStore.month)!.initialBalance / 100,
+                operationStore.summaryByMonth.get(operationStore.month!)!.initialBalance / 100,
               ).format()
             }}</span>
           </ConcealableValue>

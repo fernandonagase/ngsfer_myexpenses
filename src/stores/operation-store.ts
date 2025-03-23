@@ -34,6 +34,9 @@ export const useOperationStore = defineStore('operation', () => {
     if (!summaryByMonth.has(month.value)) throw new Error('Mês solicitado não contém operações')
     return summaryByMonth.get(month.value)!.operations
   })
+  const hasLoadedSelectedMonthSummary = computed(() =>
+    month.value ? summaryByMonth.has(month.value) : false,
+  )
 
   function setCenter(newCenter: Center) {
     center.value = newCenter
@@ -234,6 +237,7 @@ export const useOperationStore = defineStore('operation', () => {
     months,
     summaryByMonth,
     monthOperations,
+    hasLoadedSelectedMonthSummary,
     setCenter,
     addOperation,
     editOperation,
