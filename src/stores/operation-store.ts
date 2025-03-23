@@ -200,11 +200,13 @@ export const useOperationStore = defineStore('operation', () => {
 
   async function refreshMonthGroups() {
     months.value = await getMonthGroups()
-    // Selecione o último mês da lista
-    month.value = months.value[months.value.length - 1]?.value
+    if (month.value && !months.value.some((m) => m.value === month.value)) {
+      month.value = months.value[months.value.length - 1]?.value
+    }
+    summaryByMonth.clear()
   }
 
-  async function refreshData() {
+  async function refreshSummary() {
     if (!center.value) return
     if (typeof month.value === 'undefined') return
     const initialBalance = await operationRepository
@@ -236,14 +238,20 @@ export const useOperationStore = defineStore('operation', () => {
     })
   }
 
+  async function refreshData() {
+    await refreshMonthGroups()
+    await refreshSummary()
+  }
+
   watch(center, async () => {
     await refreshMonthGroups()
-    summaryByMonth.clear()
+    // Selecione o último mês da lista
+    month.value = months.value[months.value.length - 1]?.value
     hasLoadedFirstTime.value = true
   })
 
   watch(month, async () => {
-    await refreshData()
+    await refreshSummary()
   })
 
   return {
