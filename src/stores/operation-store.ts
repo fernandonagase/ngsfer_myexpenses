@@ -200,12 +200,8 @@ export const useOperationStore = defineStore('operation', () => {
 
   async function refreshMonthGroups() {
     months.value = await getMonthGroups()
-    const selectedMonthNotInList = month.value && !months.value.some((m) => m.value === month.value)
-    const noMonthSelected = months.value.length > 0 && !month.value
-    if (selectedMonthNotInList || noMonthSelected) {
-      // Selecione o último mês da lista
-      month.value = months.value[months.value.length - 1]?.value
-    }
+    // Selecione o último mês da lista
+    month.value = months.value[months.value.length - 1]?.value
   }
 
   async function refreshData() {
