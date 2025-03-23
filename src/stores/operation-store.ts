@@ -239,8 +239,11 @@ export const useOperationStore = defineStore('operation', () => {
     })
   }
 
-  watch([center, month], async () => {
+  watch(center, async () => {
     await refreshMonthGroups()
+  })
+
+  watch(month, async () => {
     await refreshData()
   })
 
