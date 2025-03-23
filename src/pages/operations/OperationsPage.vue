@@ -6,8 +6,10 @@ import { getCssVar } from 'quasar'
 
 import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
+import { useCenterStore } from 'src/stores/center-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import EmptyList from 'src/components/EmptyList.vue'
+import type { Operation } from 'src/databases/entities/expenses'
 
 const qPrimaryColor = getCssVar('primary')
 if (qPrimaryColor) {
@@ -15,6 +17,16 @@ if (qPrimaryColor) {
 }
 
 const operationStore = useOperationStore()
+const centerStore = useCenterStore()
+
+async function transferOperationToAnotherCenter(operation: Operation) {
+  const targetCenter = await centerStore.selectCenter(
+    (center) => center.id === operationStore.center?.id,
+  )
+  if (targetCenter) {
+    await operationStore.transferOperationToCenter(operation, targetCenter)
+  }
+}
 
 const totalForMonth = computed(() =>
   operationStore.month
@@ -88,6 +100,16 @@ const totalForMonth = computed(() =>
                     <q-item-section>Editar</q-item-section>
                     <q-item-section side>
                       <q-icon name="edit" size="xs" />
+                    </q-item-section>
+                  </q-item>
+                  <q-item
+                    clickable
+                    v-close-popup
+                    @click="transferOperationToAnotherCenter(operation)"
+                  >
+                    <q-item-section>Mover</q-item-section>
+                    <q-item-section side>
+                      <q-icon name="move_up" size="xs" />
                     </q-item-section>
                   </q-item>
                   <q-item

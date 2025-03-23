@@ -114,6 +114,12 @@ export const useOperationStore = defineStore('operation', () => {
     })
   }
 
+  async function transferOperationToCenter(operation: Operation, center: Center) {
+    operation.center = center
+    await operationRepository.save(operation)
+    await refreshData()
+  }
+
   function showOperationsByCategory() {
     $q.dialog({
       component: OperationByCategoryDialog,
@@ -221,5 +227,6 @@ export const useOperationStore = defineStore('operation', () => {
     showOperationsByCategory,
     getOperationsByCategory,
     getMonthGroups,
+    transferOperationToCenter,
   }
 })
