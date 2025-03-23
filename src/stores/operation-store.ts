@@ -245,6 +245,9 @@ export const useOperationStore = defineStore('operation', () => {
 
   watch(center, async () => {
     await refreshMonthGroups()
+    if (month.value === months.value[months.value.length - 1]?.value) {
+      await refreshSummary()
+    }
     // Selecione o último mês da lista
     month.value = months.value[months.value.length - 1]?.value
     hasLoadedFirstTime.value = true
