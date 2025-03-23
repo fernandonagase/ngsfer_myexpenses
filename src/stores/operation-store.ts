@@ -241,6 +241,7 @@ export const useOperationStore = defineStore('operation', () => {
 
   watch(center, async () => {
     await refreshMonthGroups()
+    summaryByMonth.clear()
   })
 
   watch(month, async () => {
