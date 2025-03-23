@@ -114,6 +114,20 @@ export const useOperationStore = defineStore('operation', () => {
     })
   }
 
+  async function copyOperation(operation: Operation) {
+    if (!center.value) {
+      throw new Error('Centro financeiro não informado')
+    }
+    const newOperation = new Operation()
+    newOperation.valueInCents = operation.valueInCents
+    newOperation.date = operation.date
+    newOperation.category = operation.category
+    newOperation.description = operation.description
+    newOperation.center = center.value
+    await operationRepository.save(newOperation)
+    await refreshData()
+  }
+
   async function transferOperationToCenter(operation: Operation, center: Center) {
     operation.center = center
     await operationRepository.save(operation)
@@ -227,6 +241,7 @@ export const useOperationStore = defineStore('operation', () => {
     showOperationsByCategory,
     getOperationsByCategory,
     getMonthGroups,
+    copyOperation,
     transferOperationToCenter,
   }
 })
