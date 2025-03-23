@@ -208,7 +208,6 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   async function refreshData() {
-    await refreshMonthGroups()
     if (!center.value) return
     if (typeof month.value === 'undefined') return
     const initialBalance = await operationRepository
@@ -241,6 +240,7 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   watch([center, month], async () => {
+    await refreshMonthGroups()
     await refreshData()
   })
 
