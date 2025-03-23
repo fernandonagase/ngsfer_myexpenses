@@ -1,3 +1,32 @@
+<script setup lang="ts">
+import { useQuasar } from 'quasar'
+
+import { useCenterStore } from 'src/stores/center-store'
+import { useOperationStore } from 'src/stores/operation-store'
+import SummaryDialog from '../summary/SummaryDialog.vue'
+import { useCategoryStore } from 'src/stores/category-store'
+import { useConfigStore } from 'src/stores/config-store'
+
+const $q = useQuasar()
+const centerStore = useCenterStore()
+const categoryStore = useCategoryStore()
+const operationStore = useOperationStore()
+const configStore = useConfigStore()
+
+await centerStore.fetchCenters()
+await categoryStore.fetch()
+
+if (centerStore.centers ? centerStore.centers.length > 0 : false) {
+  operationStore.center = centerStore.centers[0] ?? null
+}
+
+function showSummary() {
+  $q.dialog({
+    component: SummaryDialog,
+  })
+}
+</script>
+
 <template>
   <q-toolbar>
     <div class="row full-width items-center">
@@ -54,35 +83,6 @@
     </div>
   </q-toolbar>
 </template>
-
-<script setup lang="ts">
-import { useQuasar } from 'quasar'
-
-import { useCenterStore } from 'src/stores/center-store'
-import { useOperationStore } from 'src/stores/operation-store'
-import SummaryDialog from '../summary/SummaryDialog.vue'
-import { useCategoryStore } from 'src/stores/category-store'
-import { useConfigStore } from 'src/stores/config-store'
-
-const $q = useQuasar()
-const centerStore = useCenterStore()
-const categoryStore = useCategoryStore()
-const operationStore = useOperationStore()
-const configStore = useConfigStore()
-
-await centerStore.fetchCenters()
-await categoryStore.fetch()
-
-if (centerStore.centers ? centerStore.centers.length > 0 : false) {
-  operationStore.center = centerStore.centers[0] ?? null
-}
-
-function showSummary() {
-  $q.dialog({
-    component: SummaryDialog,
-  })
-}
-</script>
 
 <style lang="scss">
 .center-select .q-field__native span {
