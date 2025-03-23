@@ -17,6 +17,7 @@ export const useOperationStore = defineStore('operation', () => {
   const center = ref<Center | null>(null)
   const months = ref<Array<{ label: string; value: string }>>([])
   const month = ref<string>()
+  const hasLoadedFirstTime = ref(false)
 
   const summaryByMonth = reactive(
     new Map<
@@ -242,6 +243,7 @@ export const useOperationStore = defineStore('operation', () => {
   watch(center, async () => {
     await refreshMonthGroups()
     summaryByMonth.clear()
+    hasLoadedFirstTime.value = true
   })
 
   watch(month, async () => {
@@ -252,6 +254,7 @@ export const useOperationStore = defineStore('operation', () => {
     center,
     month,
     months,
+    hasLoadedFirstTime,
     summaryByMonth,
     monthOperations,
     hasLoadedSelectedMonthSummary,

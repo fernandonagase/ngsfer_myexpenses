@@ -140,7 +140,7 @@ const totalForMonth = computed(() =>
         </q-item-section>
       </q-item>
     </q-list>
-    <div v-else class="q-mt-xl">
+    <div v-if="operationStore.hasLoadedFirstTime && !operationStore.month" class="q-mt-xl">
       <EmptyList label="Nenhuma operação lançada" />
     </div>
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
