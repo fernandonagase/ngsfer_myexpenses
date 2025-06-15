@@ -92,7 +92,7 @@ const totalForMonth = computed(() =>
               <q-menu>
                 <q-list style="min-width: 100px">
                   <q-item clickable v-close-popup @click="operationStore.editOperation(operation)">
-                    <q-item-section>Editar</q-item-section>
+                    <q-item-section>Alterar</q-item-section>
                     <q-item-section side>
                       <q-icon name="edit" size="xs" />
                     </q-item-section>
