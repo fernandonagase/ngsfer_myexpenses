@@ -193,7 +193,7 @@ export const useOperationStore = defineStore('operation', () => {
   async function getMonthGroups() {
     const dbMonths = await getCurrentCenterMonths()
     return dbMonths.map((month) => ({
-      label: dayjs(`${month.year}-${month.month}`).format('MMM/YYYY'),
+      label: dayjs(`${month.year}-${month.month}`).format('MMM YYYY'),
       value: `${month.year}-${month.month}`,
     }))
   }

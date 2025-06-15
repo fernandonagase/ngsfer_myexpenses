@@ -40,7 +40,8 @@ const totalForMonth = computed(() =>
         v-for="month in operationStore.months"
         :key="month.value"
         :name="month.value"
-        :label="month.label"
+        :label="month.label.charAt(0).toUpperCase() + month.label.slice(1)"
+        no-caps
       />
     </q-tabs>
     <div v-if="operationStore.hasLoadedSelectedMonthSummary" class="column items-center q-my-lg">
