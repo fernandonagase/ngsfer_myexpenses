@@ -98,7 +98,7 @@ const totalForMonth = computed(() =>
                     </q-item-section>
                   </q-item>
                   <q-item clickable v-close-popup @click="operationStore.copyOperation(operation)">
-                    <q-item-section>Copiar</q-item-section>
+                    <q-item-section>Duplicar</q-item-section>
                     <q-item-section side>
                       <q-icon name="content_copy" size="xs" />
                     </q-item-section>
