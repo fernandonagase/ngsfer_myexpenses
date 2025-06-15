@@ -62,26 +62,28 @@ const totalForMonth = computed(() =>
         v-for="[day, operations] in Object.entries(operationStore.monthOperations)"
         :key="day"
       >
-        <q-item>
-          <q-item-section>
-            <q-item-label class="text-weight-bold">{{
-              dayjs(day).format('ddd[.], D [de] MMMM [de] YYYY')
+        <q-item class="daily-header">
+          <q-item-section class="bg-grey-2 q-pa-sm rounded-borders">
+            <q-item-label class="text-body2 text-grey-8">{{
+              dayjs(day).format('dddd, D [de] MMMM')
             }}</q-item-label>
           </q-item-section>
         </q-item>
         <q-item v-for="operation in operations" :key="operation.id">
           <q-item-section>
-            <q-item-label>
+            <q-item-label class="text-body1">
               <span v-if="operation.description">{{ operation.description }}</span>
               <span v-else>Não identificada</span>
-              <q-badge :label="operation.category.name" class="q-ml-sm" />
             </q-item-label>
-            <q-item-label caption>{{ operation.dateString }}</q-item-label>
+            <q-item-label caption>{{ operation.category.name }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <ConcealableValue>
-              <span :class="operation.isExpense ? 'text-negative' : 'text-positive'">
-                {{ operation.valueString }}
+              <span
+                class="text-body1"
+                :class="operation.isExpense ? 'text-black' : 'text-positive'"
+              >
+                {{ operation.isExpense ? '' : '+' }}{{ operation.valueString }}
               </span>
             </ConcealableValue>
           </q-item-section>
@@ -156,5 +158,9 @@ const totalForMonth = computed(() =>
 
 .tabs-container {
   border-bottom: 1px solid $blue-grey-3;
+}
+
+.daily-header:not(.daily-header:first-child) {
+  margin-top: map-get($space-md, y);
 }
 </style>
