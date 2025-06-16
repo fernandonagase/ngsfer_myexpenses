@@ -146,7 +146,7 @@ const totalForMonth = computed(() =>
       <EmptyList label="Nenhuma operação lançada" />
     </div>
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="accent" @click="operationStore.addOperation()" />
+      <q-btn fab icon="add" color="primary" @click="operationStore.addOperation()" />
     </q-page-sticky>
   </q-page>
 </template>
