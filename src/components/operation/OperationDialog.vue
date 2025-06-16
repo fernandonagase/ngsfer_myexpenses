@@ -1,6 +1,6 @@
 <template>
-  <q-dialog ref="dialogRef" persistent @hide="onDialogHide">
-    <q-card class="q-dialog-plugin">
+  <q-dialog ref="dialogRef" persistent position="bottom" @hide="onDialogHide">
+    <q-card class="q-dialog-plugin container">
       <q-card-section>
         <div class="text-h6">Nova operação</div>
       </q-card-section>
@@ -23,7 +23,7 @@
               class="q-ml-sm"
               @click="onDialogCancel()"
             />
-            <q-btn label="Confirmar" type="submit" color="primary" />
+            <q-btn label="Confirmar" type="submit" unelevated color="primary" />
           </div>
         </q-form>
       </q-card-section>
@@ -65,3 +65,9 @@ function onSubmit() {
   })
 }
 </script>
+
+<style lang="scss" scoped>
+.container {
+  border-radius: 20px;
+}
+</style>

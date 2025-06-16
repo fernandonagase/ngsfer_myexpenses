@@ -1,6 +1,7 @@
 <template>
   <div>
-    <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules>
+    <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
+    <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules outlined>
       <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
         <input
           :id="id"
@@ -13,15 +14,15 @@
         />
       </template>
     </q-field>
-    <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules />
+    <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules outlined />
     <q-select
       v-model="category"
       :options="filteredCategories"
       label="Categoria"
       option-label="name"
       :rules="categoryRules"
+      outlined
     />
-    <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter />
   </div>
 </template>
 
