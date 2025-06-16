@@ -44,12 +44,11 @@ const totalForMonth = computed(() =>
         no-caps
       />
     </q-tabs>
-    <div v-if="operationStore.hasLoadedSelectedMonthSummary" class="column items-center q-my-lg">
+    <div v-if="operationStore.hasLoadedSelectedMonthSummary" class="column q-mx-md q-my-lg">
       <ConcealableValue concealed-class="text-h2 q-ma-none">
         <p
-          class="text-h2 q-ma-none"
+          class="text-h4 q-ma-none text-weight-medium"
           :class="{
-            'text-positive': operationStore.selectedMonthSummary.finalBalance > 0,
             'text-negative': operationStore.selectedMonthSummary.finalBalance < 0,
           }"
         >
