@@ -33,10 +33,21 @@ async function doBackup() {
       <q-list>
         <q-item clickable v-ripple @click="doBackup()">
           <q-item-section avatar>
+            <q-icon name="cloud_download" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Importar Backup</q-item-label>
+            <q-item-label caption>
+              O banco de dados será carregado do arquivo importado
+            </q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable v-ripple @click="doBackup()">
+          <q-item-section avatar>
             <q-icon name="backup" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Backup</q-item-label>
+            <q-item-label>Exportar Backup</q-item-label>
             <q-item-label caption>
               O banco de dados será salvo na pasta pública de documentos
             </q-item-label>
