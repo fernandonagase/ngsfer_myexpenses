@@ -19,6 +19,7 @@
     "@capacitor-community/sqlite": "^6.0.2",
     "@capacitor/filesystem": "^6.0.2",
     "@capacitor/status-bar": "^6.0.2",
+    "@capawesome/capacitor-file-picker": "^6.2.0",
     "@quasar/extras": "^1.16.4",
     "@vueuse/core": "^13.4.0",
     "apexcharts": "^4.4.0",
