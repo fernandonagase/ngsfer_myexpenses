@@ -20,6 +20,7 @@
     "@capacitor/filesystem": "^6.0.2",
     "@capacitor/status-bar": "^6.0.2",
     "@quasar/extras": "^1.16.4",
+    "@vueuse/core": "^13.4.0",
     "apexcharts": "^4.4.0",
     "axios": "^1.2.1",
     "currency.js": "^2.0.4",
