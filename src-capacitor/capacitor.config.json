@@ -3,6 +3,9 @@
   "appName": "My Expenses",
   "webDir": "www",
   "plugins": {
-    "CapacitorSQLite": {}
+    "CapacitorSQLite": {},
+    "EdgeToEdge": {
+      "backgroundColor": "#3a5a40"
+    }
   }
 }
