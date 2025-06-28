@@ -1,9 +1,29 @@
 <script setup lang="ts">
+import { useQuasar } from 'quasar'
+
 import ErrorBoundary from 'src/components/ErrorBoundary.vue'
 import { backup } from 'src/services/backup-service'
 
+const $q = useQuasar()
+
 async function doBackup() {
-  await backup()
+  $q.loading.show({
+    delay: 700,
+  })
+  const ret = await backup()
+  $q.loading.hide()
+  if (ret.ok) {
+    $q.notify({
+      type: 'positive',
+      message: 'Backup realizado com sucesso!',
+    })
+  } else {
+    console.error('Erro ao realizar backup:', ret.error)
+    $q.notify({
+      type: 'negative',
+      message: `Erro ao realizar backup. Tente novamente mais tarde.`,
+    })
+  }
 }
 </script>
 
