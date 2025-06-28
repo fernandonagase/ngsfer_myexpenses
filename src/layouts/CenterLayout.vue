@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import CenterToolbar from 'src/components/center/CenterToolbar.vue'
+</script>
+
 <template>
   <Suspense>
     <q-layout view="lHh Lpr lFf">
@@ -12,7 +16,3 @@
     <template #fallback> Carregando... </template>
   </Suspense>
 </template>
-
-<script setup lang="ts">
-import CenterToolbar from 'src/components/center/CenterToolbar.vue'
-</script>
