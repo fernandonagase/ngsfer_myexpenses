@@ -1,5 +1,5 @@
 <template>
-  <q-dialog ref="dialogRef" persistent position="bottom" @hide="onDialogHide">
+  <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
     <q-card class="q-dialog-plugin container">
       <q-card-section>
         <div class="text-h6">Nova operação</div>
