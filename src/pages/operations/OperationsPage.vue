@@ -10,6 +10,7 @@ import { useCenterStore } from 'src/stores/center-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import EmptyList from 'src/components/EmptyList.vue'
 import type { Operation } from 'src/databases/entities/expenses'
+import { useConfigStore } from 'src/stores/config-store'
 
 const qPrimaryColor = getCssVar('primary')
 if (qPrimaryColor) {
@@ -18,6 +19,7 @@ if (qPrimaryColor) {
 
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
+const configStore = useConfigStore()
 
 async function transferOperationToAnotherCenter(operation: Operation) {
   const targetCenter = await centerStore.selectCenter(
@@ -45,16 +47,27 @@ const totalForMonth = computed(() =>
       />
     </q-tabs>
     <div v-if="operationStore.hasLoadedSelectedMonthSummary" class="column q-mx-md q-my-lg">
-      <ConcealableValue concealed-class="text-h2 q-ma-none">
-        <p
-          class="text-h4 q-ma-none text-weight-medium"
-          :class="{
-            'text-negative': operationStore.selectedMonthSummary.finalBalance < 0,
-          }"
-        >
-          {{ totalForMonth }}
-        </p>
-      </ConcealableValue>
+      <div class="row items-center">
+        <ConcealableValue concealed-class="text-h4 q-ma-none">
+          <p
+            class="text-h4 q-ma-none text-weight-medium"
+            :class="{
+              'text-negative': operationStore.selectedMonthSummary.finalBalance < 0,
+            }"
+          >
+            {{ totalForMonth }}
+          </p>
+        </ConcealableValue>
+        <div class="q-ml-xs">
+          <q-btn
+            :icon="configStore.hideValues ? 'visibility_off' : 'visibility'"
+            flat
+            round
+            dense
+            @click="configStore.toggleValuesVisibility()"
+          />
+        </div>
+      </div>
       <p class="text-subtitle1 q-ma-none">Até o fim do mês</p>
     </div>
     <q-list v-if="operationStore.hasLoadedSelectedMonthSummary" class="operations-list">
