@@ -82,7 +82,7 @@ const totalForMonth = computed(() =>
             }}</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item v-for="operation in operations" :key="operation.id">
+        <q-item v-for="operation in operations" :key="operation.id" clickable v-ripple>
           <q-item-section>
             <q-item-label class="text-body1">
               <span v-if="operation.description">{{ operation.description }}</span>
@@ -101,45 +101,36 @@ const totalForMonth = computed(() =>
             </ConcealableValue>
           </q-item-section>
           <q-item-section side>
-            <q-btn icon="more_vert" size="12px" flat dense round>
-              <q-menu>
-                <q-list style="min-width: 100px">
-                  <q-item clickable v-close-popup @click="operationStore.editOperation(operation)">
-                    <q-item-section>Alterar</q-item-section>
-                    <q-item-section side>
-                      <q-icon name="edit" size="xs" />
-                    </q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click="operationStore.copyOperation(operation)">
-                    <q-item-section>Duplicar</q-item-section>
-                    <q-item-section side>
-                      <q-icon name="content_copy" size="xs" />
-                    </q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    @click="transferOperationToAnotherCenter(operation)"
-                  >
-                    <q-item-section>Mover</q-item-section>
-                    <q-item-section side>
-                      <q-icon name="move_up" size="xs" />
-                    </q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    @click="operationStore.removeOperation(operation)"
-                  >
-                    <q-item-section>Excluir</q-item-section>
-                    <q-item-section side>
-                      <q-icon name="delete" size="xs" />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
+            <q-icon name="arrow_forward_ios" size="16px" />
           </q-item-section>
+          <q-popup-proxy>
+            <q-list style="min-width: 100px" class="bg-white">
+              <q-item clickable v-close-popup @click="operationStore.editOperation(operation)">
+                <q-item-section>Alterar</q-item-section>
+                <q-item-section side>
+                  <q-icon name="edit" size="xs" />
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="operationStore.copyOperation(operation)">
+                <q-item-section>Duplicar</q-item-section>
+                <q-item-section side>
+                  <q-icon name="content_copy" size="xs" />
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="transferOperationToAnotherCenter(operation)">
+                <q-item-section>Mover</q-item-section>
+                <q-item-section side>
+                  <q-icon name="move_up" size="xs" />
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="operationStore.removeOperation(operation)">
+                <q-item-section>Excluir</q-item-section>
+                <q-item-section side>
+                  <q-icon name="delete" size="xs" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-popup-proxy>
         </q-item>
       </template>
       <q-item>
