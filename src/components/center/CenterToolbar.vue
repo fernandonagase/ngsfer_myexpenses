@@ -42,7 +42,7 @@ function showSummary() {
             hide-dropdown-icon
             @update:model-value="operationStore.setCenter"
           >
-            <template #after> <q-icon name="arrow_drop_down" color="white" /> </template>
+            <template #append> <q-icon name="arrow_drop_down" color="white" /> </template>
           </q-select>
         </div>
       </div>
