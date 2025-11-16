@@ -1,6 +1,14 @@
 <template>
   <div>
-    <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
+    <q-input
+      v-model="description"
+      type="text"
+      label="Descrição"
+      maxlength="50"
+      counter
+      outlined
+      autofocus
+    />
     <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules outlined>
       <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
         <input
