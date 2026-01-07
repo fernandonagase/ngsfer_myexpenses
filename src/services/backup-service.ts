@@ -30,11 +30,17 @@ async function getAvailableFilePath(basePath: string): Promise<string> {
 }
 
 async function backup() {
+  const basePath = (
+    await Filesystem.getUri({
+      directory: Directory.Documents,
+      path: 'ngsfer_myexpensesSQLite.db',
+    })
+  ).uri
+  const uniquePath = await getAvailableFilePath(basePath)
   try {
     await Filesystem.copy({
       from: `${PATH_DATABASE}/ngsfer_myexpensesSQLite.db`,
-      to: 'ngsfer_myexpensesSQLite.db',
-      toDirectory: Directory.Documents,
+      to: uniquePath,
     })
     return { ok: true }
   } catch (error) {
