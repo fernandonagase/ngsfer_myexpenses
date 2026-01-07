@@ -78,7 +78,7 @@ const totalForMonth = computed(() =>
         <q-item class="daily-header">
           <q-item-section class="bg-grey-2 q-pa-sm rounded-borders">
             <q-item-label class="text-body2 text-grey-8">{{
-              dayjs(day).format('dddd, D [de] MMMM')
+              dayjs(day).format('D [de] MMMM, dddd')
             }}</q-item-label>
           </q-item-section>
         </q-item>
@@ -93,15 +93,12 @@ const totalForMonth = computed(() =>
           <q-item-section side>
             <ConcealableValue>
               <span
-                class="text-body1"
+                class="text-body2"
                 :class="operation.isExpense ? 'text-black' : 'text-positive'"
               >
                 {{ operation.isExpense ? '' : '+' }}{{ operation.valueString }}
               </span>
             </ConcealableValue>
-          </q-item-section>
-          <q-item-section side>
-            <q-icon name="arrow_forward_ios" size="16px" />
           </q-item-section>
           <q-popup-proxy>
             <q-list style="min-width: 100px" class="bg-white">
