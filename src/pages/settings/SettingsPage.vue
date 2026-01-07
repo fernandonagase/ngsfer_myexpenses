@@ -2,9 +2,12 @@
 import { useQuasar } from 'quasar'
 
 import ErrorBoundary from 'src/components/ErrorBoundary.vue'
-import { backup } from 'src/services/backup-service'
+import { actWithDbConnectionStopped } from 'src/databases/datasources/ExpensesDatasource'
+import { backup, importBackup } from 'src/services/backup-service'
+import { useOperationStore } from 'src/stores/operation-store'
 
 const $q = useQuasar()
+const { refreshScreen } = useOperationStore()
 
 async function doBackup() {
   $q.loading.show({
@@ -25,13 +28,28 @@ async function doBackup() {
     })
   }
 }
+
+async function doImportBackup() {
+  try {
+    await actWithDbConnectionStopped(async () => {
+      await importBackup()
+    })
+    $q.notify({
+      type: 'positive',
+      message: 'Backup restaurado com sucesso!',
+    })
+    await refreshScreen()
+  } catch (error) {
+    console.error(error)
+  }
+}
 </script>
 
 <template>
   <q-page>
     <ErrorBoundary>
       <q-list>
-        <q-item clickable v-ripple @click="doBackup()">
+        <q-item clickable v-ripple @click="doImportBackup()">
           <q-item-section avatar>
             <q-icon name="cloud_download" />
           </q-item-section>

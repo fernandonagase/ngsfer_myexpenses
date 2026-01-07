@@ -243,6 +243,16 @@ export const useOperationStore = defineStore('operation', () => {
     await refreshSummary()
   }
 
+  async function refreshScreen() {
+    await refreshMonthGroups()
+    if (month.value === months.value[months.value.length - 1]?.value) {
+      await refreshSummary()
+    }
+    // Selecione o último mês da lista
+    month.value = months.value[months.value.length - 1]?.value
+    hasLoadedFirstTime.value = true
+  }
+
   watch(center, async () => {
     await refreshMonthGroups()
     if (month.value === months.value[months.value.length - 1]?.value) {
@@ -275,5 +285,6 @@ export const useOperationStore = defineStore('operation', () => {
     getMonthGroups,
     copyOperation,
     transferOperationToCenter,
+    refreshScreen,
   }
 })
