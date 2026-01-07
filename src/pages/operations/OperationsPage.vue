@@ -23,7 +23,7 @@ const configStore = useConfigStore()
 
 async function transferOperationToAnotherCenter(operation: Operation) {
   const targetCenter = await centerStore.selectCenter(
-    (center) => center.id === operationStore.center?.id,
+    (center) => center.id === operationStore.center?.id || !center.isActive,
   )
   if (targetCenter) {
     await operationStore.transferOperationToCenter(operation, targetCenter)
