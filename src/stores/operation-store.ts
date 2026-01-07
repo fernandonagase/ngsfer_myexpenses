@@ -48,6 +48,41 @@ export const useOperationStore = defineStore('operation', () => {
     }
   })
 
+  const monthOperationsSummary = computed(() => {
+    if (!month.value) throw new Error('Operações por mês: nenhum mês selecionado')
+    if (!summaryByMonth.has(month.value)) throw new Error('Mês solicitado não contém operações')
+    const currentMonthSummary = summaryByMonth.get(month.value)!
+
+    const summary: [string, { operations: Array<Operation> | undefined; balance: number }][] = []
+
+    Object.entries(currentMonthSummary.operations)
+      .toReversed()
+      .map(([date, operations]) => {
+        return [
+          date,
+          { operations, total: operations?.reduce((acc, op) => acc + op.valueInCents, 0) ?? 0 },
+        ] as const
+      })
+      .forEach(([date, dayValues], index) => {
+        const daySummary = {
+          operations: dayValues.operations,
+          balance: 0,
+        }
+        if (index === 0) {
+          daySummary.balance = currentMonthSummary.initialBalance + dayValues.total
+        } else {
+          daySummary.balance = summary[index - 1]![1].balance + dayValues.total
+        }
+        summary.push([date, daySummary])
+      })
+
+    return {
+      summaries: Object.fromEntries(summary.toReversed()),
+      initialBalance: currentMonthSummary.initialBalance,
+      finalBalance: currentMonthSummary.finalBalance,
+    }
+  })
+
   function setCenter(newCenter: Center) {
     center.value = newCenter
   }
@@ -276,6 +311,7 @@ export const useOperationStore = defineStore('operation', () => {
     monthOperations,
     hasLoadedSelectedMonthSummary,
     selectedMonthSummary,
+    monthOperationsSummary,
     setCenter,
     addOperation,
     editOperation,

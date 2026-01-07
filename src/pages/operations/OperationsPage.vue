@@ -72,17 +72,23 @@ const totalForMonth = computed(() =>
     </div>
     <q-list v-if="operationStore.hasLoadedSelectedMonthSummary" class="operations-list">
       <template
-        v-for="[day, operations] in Object.entries(operationStore.monthOperations)"
+        v-for="[day, summary] in Object.entries(operationStore.monthOperationsSummary.summaries)"
         :key="day"
       >
         <q-item class="daily-header">
           <q-item-section class="bg-grey-2 q-pa-sm rounded-borders">
-            <q-item-label class="text-body2 text-grey-8">{{
-              dayjs(day).format('D [de] MMMM, dddd')
-            }}</q-item-label>
+            <q-item-label class="text-body2 text-grey-8 row justify-between">
+              <span>{{ dayjs(day).format('D [de] MMMM, ddd[.]') }}</span>
+              <span v-if="summary.operations" class="text-caption row items-center">
+                <span>Saldo:</span>
+                <span class="q-ml-xs text-weight-bold">
+                  {{ BRL(summary.balance / 100).format() }}
+                </span>
+              </span>
+            </q-item-label>
           </q-item-section>
         </q-item>
-        <q-item v-for="operation in operations" :key="operation.id" clickable v-ripple>
+        <q-item v-for="operation in summary.operations" :key="operation.id" clickable v-ripple>
           <q-item-section>
             <q-item-label class="text-body1">
               <span v-if="operation.description">{{ operation.description }}</span>
