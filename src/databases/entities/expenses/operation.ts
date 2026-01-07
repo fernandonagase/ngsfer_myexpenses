@@ -19,6 +19,9 @@ export class Operation {
   @Column({ type: 'text' })
   date!: string
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean
+
   @ManyToOne(() => Center, (center) => center.operations)
   @JoinColumn({
     name: 'centro_financeiro_id',

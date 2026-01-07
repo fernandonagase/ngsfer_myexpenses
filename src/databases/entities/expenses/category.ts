@@ -17,6 +17,9 @@ export class Category {
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault!: boolean
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean
+
   @OneToMany(() => Operation, (operation) => operation.category)
   operations!: Operation[]
 }

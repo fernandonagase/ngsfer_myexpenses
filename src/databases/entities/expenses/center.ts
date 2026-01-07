@@ -13,6 +13,9 @@ export class Center {
   @Column({ name: 'is_default_center', type: 'boolean' })
   isDefaultCenter!: boolean
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean
+
   @OneToMany(() => Operation, (operation) => operation.center)
   operations!: Operation[]
 }
