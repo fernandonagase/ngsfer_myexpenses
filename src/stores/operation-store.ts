@@ -235,10 +235,17 @@ export const useOperationStore = defineStore('operation', () => {
     }))
   }
 
+  function getMonthToSelect() {
+    const currentMonth = dayjs().format('YYYY-MM')
+    return months.value.some((m) => m.value === currentMonth)
+      ? currentMonth
+      : months.value[months.value.length - 1]?.value
+  }
+
   async function refreshMonthGroups() {
     months.value = await getMonthGroups()
-    if (month.value && !months.value.some((m) => m.value === month.value)) {
-      month.value = months.value[months.value.length - 1]?.value
+    if (!month.value || !months.value.some((m) => m.value === month.value)) {
+      month.value = getMonthToSelect()
     }
     summaryByMonth.clear()
   }
@@ -282,21 +289,17 @@ export const useOperationStore = defineStore('operation', () => {
 
   async function refreshScreen() {
     await refreshMonthGroups()
-    if (month.value === months.value[months.value.length - 1]?.value) {
-      await refreshSummary()
-    }
-    const currentMonth = dayjs().format('YYYY-MM')
-    if (months.value.some((m) => m.value === currentMonth)) {
-      month.value = currentMonth
-    } else {
-      // Selecione o último mês da lista
-      month.value = months.value[months.value.length - 1]?.value
-    }
+    await refreshSummary()
     hasLoadedFirstTime.value = true
   }
 
-  watch(center, async () => {
+  async function refreshCenter() {
     await refreshScreen()
+    month.value = getMonthToSelect()
+  }
+
+  watch(center, async () => {
+    await refreshCenter()
   })
 
   watch(month, async () => {
