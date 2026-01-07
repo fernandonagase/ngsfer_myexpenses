@@ -33,7 +33,7 @@ function showSummary() {
         <div class="center-select">
           <q-select
             v-model="operationStore.center"
-            :options="centerStore.centers"
+            :options="centerStore.activeCenters"
             option-label="name"
             borderless
             label-color="negative"

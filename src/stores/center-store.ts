@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
@@ -15,6 +15,10 @@ export const useCenterStore = defineStore('center', () => {
   const $q = useQuasar()
 
   const centers = ref<Array<Center>>([])
+
+  const activeCenters = computed(() => {
+    return centers.value.filter((center) => center.isActive)
+  })
 
   async function fetchCenters() {
     centers.value = await centerRepository.find()
@@ -82,6 +86,101 @@ export const useCenterStore = defineStore('center', () => {
     })
   }
 
+  function softRemoveCenter(center: Center) {
+    $q.dialog({
+      title: 'Inativar centro?',
+      message:
+        'Este centro será inativado e deixará de ser contabilizado. Você poderá reativá-lo posteriormente.',
+      ok: {
+        label: 'Confirmar',
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'negative',
+        flat: true,
+      },
+    }).onOk(() => {
+      expensesDataSource.dataSource
+        .transaction(async (manager) => {
+          await manager
+            .createQueryBuilder()
+            .update(Operation)
+            .set({ isActive: false })
+            .where('centro_financeiro_id = :id', { id: center.id })
+            .execute()
+
+          await manager
+            .createQueryBuilder()
+            .update(Center)
+            .set({ isActive: false })
+            .where('id = :id', { id: center.id })
+            .execute()
+        })
+        .then(() => {
+          center.isActive = false
+          $q.notify({
+            type: 'positive',
+            message: `O centro ${center.name} foi inativado com sucesso!`,
+          })
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error)
+          $q.notify({
+            type: 'negative',
+            message: 'Falha ao desativar centro financeiro',
+            caption: message,
+          })
+        })
+    })
+  }
+
+  function reactivateCenter(center: Center) {
+    $q.dialog({
+      title: 'Reativar centro?',
+      message: 'Este centro será reativado e passará a ser contabilizado novamente.',
+      ok: {
+        label: 'Confirmar',
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'negative',
+        flat: true,
+      },
+    }).onOk(() => {
+      expensesDataSource.dataSource
+        .transaction(async (manager) => {
+          await manager
+            .createQueryBuilder()
+            .update(Operation)
+            .set({ isActive: true })
+            .where('centro_financeiro_id = :id', { id: center.id })
+            .execute()
+
+          await manager
+            .createQueryBuilder()
+            .update(Center)
+            .set({ isActive: true })
+            .where('id = :id', { id: center.id })
+            .execute()
+        })
+        .then(() => {
+          center.isActive = true
+          $q.notify({
+            type: 'positive',
+            message: `O centro ${center.name} foi reativado com sucesso!`,
+          })
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error)
+          $q.notify({
+            type: 'negative',
+            message: 'Falha ao reativar centro financeiro',
+            caption: message,
+          })
+        })
+    })
+  }
+
   function removeCenter(center: Center) {
     $q.dialog({
       title: 'Excluir centro?',
@@ -144,6 +243,7 @@ export const useCenterStore = defineStore('center', () => {
       .select('center.name', 'center')
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
       .where('operation.date <= :now', { now: dayjs().format('YYYY-MM-DD') })
+      .andWhere('center.is_active = 1')
       .groupBy('center.name')
       .orderBy('center.id')
       .getRawMany()
@@ -152,6 +252,7 @@ export const useCenterStore = defineStore('center', () => {
       .select("'Total'", 'center')
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
       .where('operation.date <= :now', { now: dayjs().format('YYYY-MM-DD') })
+      .andWhere('operation.is_active = 1')
       .getRawMany()
 
     return summary.concat(total)
@@ -176,10 +277,13 @@ export const useCenterStore = defineStore('center', () => {
 
   return {
     centers,
+    activeCenters,
     fetchCenters,
     showCenters,
     addCenter,
     editCenter,
+    softRemoveCenter,
+    reactivateCenter,
     removeCenter,
     getSummary,
     getCurrentSummary,
