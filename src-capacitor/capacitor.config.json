@@ -4,8 +4,13 @@
   "webDir": "www",
   "plugins": {
     "CapacitorSQLite": {},
+    "SystemBars": {
+      "insetsHandling": "disable"
+    },
     "EdgeToEdge": {
-      "backgroundColor": "#3a5a40"
+      "backgroundColor": "#3a5a40",
+      "statusBarColor": "#3a5a40",
+      "navigationBarColor": "#000000"
     }
   }
 }
