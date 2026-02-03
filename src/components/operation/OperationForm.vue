@@ -1,14 +1,5 @@
 <template>
   <div>
-    <q-input
-      v-model="description"
-      type="text"
-      label="Descrição"
-      maxlength="50"
-      counter
-      outlined
-      autofocus
-    />
     <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules outlined>
       <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
         <input
@@ -18,10 +9,11 @@
           @change="(e) => emitValue((e.target as HTMLInputElement)!.value)"
           v-money3="moneyFormatForDirective"
           v-show="floatingLabel"
-          inputmode="numeric"
+          autofocus
         />
       </template>
     </q-field>
+    <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
     <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules outlined />
     <q-select
       v-model="category"
