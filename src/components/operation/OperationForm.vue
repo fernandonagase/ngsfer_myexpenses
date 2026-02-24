@@ -1,11 +1,24 @@
 <template>
   <div>
+    <q-btn-toggle
+      v-model="operationType"
+      spread
+      no-caps
+      unelevated
+      toggle-color="primary"
+      :options="[
+        { label: 'Despesa', value: 'Saída' },
+        { label: 'Receita', value: 'Entrada' },
+      ]"
+      class="q-mb-md"
+    />
     <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules outlined>
       <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
         <input
           :id="id"
           class="q-field__input"
           :value="modelValue"
+          inputmode="decimal"
           @change="(e) => emitValue((e.target as HTMLInputElement)!.value)"
           v-money3="moneyFormatForDirective"
           v-show="floatingLabel"
@@ -27,18 +40,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
 import type { Category } from 'src/databases/entities/expenses'
+import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { useCategoryStore } from 'src/stores/category-store'
 
 const value = defineModel<string>('value')
 const date = defineModel<string>('date')
 const category = defineModel<Category | null>('category')
 const description = defineModel<string>('description')
-
-const operationType = computed(() => (BRL(value.value).value > 0 ? 'Entrada' : 'Saída'))
+const operationType = defineModel<CategoryType>('operationType', { default: 'Saída' })
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -53,15 +66,18 @@ const categoryRules = [(val: string) => !!val || 'Informe a categoria da operaç
 
 const categoryStore = useCategoryStore()
 
-const filteredCategories = ref<Array<Category>>(
+const filteredCategories = computed<Array<Category>>(() =>
   operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
 )
-watch(operationType, () => {
-  if (operationType.value === 'Entrada') {
-    filteredCategories.value = categoryStore.datasetInput
-  } else {
-    filteredCategories.value = categoryStore.datasetOutput
-  }
-  category.value = filteredCategories.value[0]
-})
+watch(
+  [operationType, filteredCategories],
+  () => {
+    if (category.value?.type !== operationType.value) {
+      category.value = filteredCategories.value[0] ?? null
+    }
+  },
+  {
+    immediate: true,
+  },
+)
 </script>

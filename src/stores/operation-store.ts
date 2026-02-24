@@ -8,6 +8,7 @@ import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
 import OperationByCategoryDialog from 'src/components/reports/OperationByCategoryDialog.vue'
+import { BRL } from 'src/helpers/currency'
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 const categoryOperation = expensesDataSource.dataSource.getRepository(Category) // renomear para categoryRepository
@@ -116,10 +117,11 @@ export const useOperationStore = defineStore('operation', () => {
     $q.dialog({
       component: OperationDialog,
       componentProps: {
-        value: operation.valueString,
+        value: BRL(Math.abs(operation.valueInCents) / 100).format(),
         date: operation.date,
         category: operation.category,
         description: operation.description,
+        operationType: operation.isExpense ? 'Saída' : 'Entrada',
       },
       persistent: true,
     }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
