@@ -54,7 +54,10 @@ export const useOperationStore = defineStore('operation', () => {
     if (!summaryByMonth.has(month.value)) throw new Error('Mês solicitado não contém operações')
     const currentMonthSummary = summaryByMonth.get(month.value)!
 
-    const summary: [string, { operations: Array<Operation> | undefined; balance: number }][] = []
+    const summary: [
+      string,
+      { operations: Array<Operation> | undefined; balance: number; dayBalance: number },
+    ][] = []
 
     Object.entries(currentMonthSummary.operations)
       .toReversed()
@@ -68,6 +71,7 @@ export const useOperationStore = defineStore('operation', () => {
         const daySummary = {
           operations: dayValues.operations,
           balance: 0,
+          dayBalance: dayValues.total,
         }
         if (index === 0) {
           daySummary.balance = currentMonthSummary.initialBalance + dayValues.total

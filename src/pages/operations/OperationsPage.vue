@@ -58,14 +58,33 @@ const totalForMonth = computed(() =>
             {{ totalForMonth }}
           </p>
         </ConcealableValue>
-        <div class="q-ml-xs">
+        <div class="q-ml-xs row items-center no-wrap q-gutter-x-xs">
           <q-btn
             :icon="configStore.hideValues ? 'visibility_off' : 'visibility'"
             flat
             round
             dense
             @click="configStore.toggleValuesVisibility()"
-          />
+          >
+            <q-tooltip>
+              {{ configStore.hideValues ? 'Mostrar valores' : 'Ocultar valores' }}
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            :icon="configStore.showOperationDetails ? 'unfold_less' : 'unfold_more'"
+            flat
+            round
+            dense
+            @click="configStore.toggleOperationDetailsVisibility()"
+          >
+            <q-tooltip>
+              {{
+                configStore.showOperationDetails
+                  ? 'Ocultar detalhamento diário'
+                  : 'Mostrar detalhamento diário'
+              }}
+            </q-tooltip>
+          </q-btn>
         </div>
       </div>
       <p class="text-subtitle1 q-ma-none">Até o fim do mês</p>
@@ -79,12 +98,46 @@ const totalForMonth = computed(() =>
           <q-item-section class="bg-grey-2 q-pa-sm rounded-borders">
             <q-item-label class="text-body2 text-grey-8 row justify-between">
               <span>{{ dayjs(day).format('D [de] MMMM, ddd[.]') }}</span>
-              <span v-if="summary.operations" class="text-caption row items-center">
+              <span
+                v-if="summary.operations && configStore.showOperationDetails"
+                class="text-caption row items-center"
+              >
+                <span>Balanço do dia:</span>
+                <ConcealableValue>
+                  <span
+                    class="q-ml-xs text-weight-bold"
+                    :class="{
+                      'text-positive': summary.dayBalance > 0,
+                      'text-negative': summary.dayBalance < 0,
+                    }"
+                  >
+                    {{ summary.dayBalance > 0 ? '+' : ''
+                    }}{{ BRL(summary.dayBalance / 100).format() }}
+                  </span>
+                </ConcealableValue>
+              </span>
+              <span
+                v-if="summary.operations && !configStore.showOperationDetails"
+                class="text-caption row items-center"
+              >
                 <span>Saldo:</span>
+                <ConcealableValue>
+                  <span class="q-ml-xs text-weight-bold">
+                    {{ BRL(summary.balance / 100).format() }}
+                  </span>
+                </ConcealableValue>
+              </span>
+            </q-item-label>
+            <q-item-label
+              v-if="summary.operations && configStore.showOperationDetails"
+              class="text-caption text-grey-8 row justify-end q-mt-xs"
+            >
+              <span>Saldo:</span>
+              <ConcealableValue>
                 <span class="q-ml-xs text-weight-bold">
                   {{ BRL(summary.balance / 100).format() }}
                 </span>
-              </span>
+              </ConcealableValue>
             </q-item-label>
           </q-item-section>
         </q-item>
