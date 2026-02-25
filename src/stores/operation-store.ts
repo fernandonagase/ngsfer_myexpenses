@@ -109,7 +109,7 @@ export const useOperationStore = defineStore('operation', () => {
       operationRepository
         .save(operation)
         .then(async () => {
-          await refreshData()
+          await refreshDataForOperationDate(payload.date)
         })
         .catch((error) => {
           console.error(error)
@@ -136,7 +136,7 @@ export const useOperationStore = defineStore('operation', () => {
       operationRepository
         .save(operation)
         .then(async () => {
-          await refreshData()
+          await refreshDataForOperationDate(payload.date)
         })
         .catch((error) => {
           console.error(error)
@@ -168,18 +168,37 @@ export const useOperationStore = defineStore('operation', () => {
     })
   }
 
-  async function copyOperation(operation: Operation) {
+  function copyOperation(operation: Operation) {
     if (!center.value) {
       throw new Error('Centro financeiro não informado')
     }
-    const newOperation = new Operation()
-    newOperation.valueInCents = operation.valueInCents
-    newOperation.date = operation.date
-    newOperation.category = operation.category
-    newOperation.description = operation.description
-    newOperation.center = center.value
-    await operationRepository.save(newOperation)
-    await refreshData()
+
+    $q.dialog({
+      component: OperationDialog,
+      componentProps: {
+        value: BRL(Math.abs(operation.valueInCents) / 100).format(),
+        date: operation.date,
+        category: operation.category,
+        description: operation.description,
+        operationType: operation.isExpense ? 'Saída' : 'Entrada',
+      },
+      persistent: true,
+    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
+      const newOperation = new Operation()
+      newOperation.valueInCents = payload.value
+      newOperation.date = payload.date
+      newOperation.category = payload.category
+      newOperation.description = payload.description
+      newOperation.center = center.value!
+      operationRepository
+        .save(newOperation)
+        .then(async () => {
+          await refreshDataForOperationDate(payload.date)
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    })
   }
 
   async function transferOperationToCenter(operation: Operation, center: Center) {
@@ -290,6 +309,19 @@ export const useOperationStore = defineStore('operation', () => {
 
   async function refreshData() {
     await refreshMonthGroups()
+    await refreshSummary()
+  }
+
+  async function refreshDataForOperationDate(operationDate: string) {
+    await refreshMonthGroups()
+    const operationMonth = operationDate.slice(0, 7)
+    const hasOperationMonth = months.value.some((monthGroup) => monthGroup.value === operationMonth)
+
+    if (hasOperationMonth && month.value !== operationMonth) {
+      month.value = operationMonth
+      return
+    }
+
     await refreshSummary()
   }
 
