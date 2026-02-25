@@ -1,34 +1,23 @@
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <q-card class="q-dialog-plugin container">
-      <q-card-section>
-        <div class="text-h6">Nova operação</div>
-      </q-card-section>
-      <q-card-section>
-        <q-form @submit="onSubmit" class="q-gutter-md">
-          <Suspense>
-            <OperationForm
-              v-model:value="value"
-              v-model:date="date"
-              v-model:category="category"
-              v-model:description="description"
-              v-model:operation-type="operationType"
-            />
-            <template #fallback>Carregando...</template>
-          </Suspense>
-          <div class="flex justify-end">
-            <q-btn
-              label="Cancelar"
-              color="negative"
-              flat
-              class="q-ml-sm"
-              @click="onDialogCancel()"
-            />
-            <q-btn label="Confirmar" type="submit" unelevated color="primary" />
-          </div>
-        </q-form>
-      </q-card-section>
-    </q-card>
+    <BottomSheetDialog title="Nova operação">
+      <q-form @submit="onSubmit" class="q-gutter-md">
+        <Suspense>
+          <OperationForm
+            v-model:value="value"
+            v-model:date="date"
+            v-model:category="category"
+            v-model:description="description"
+            v-model:operation-type="operationType"
+          />
+          <template #fallback>Carregando...</template>
+        </Suspense>
+        <div class="flex justify-end">
+          <q-btn label="Cancelar" color="negative" flat class="q-ml-sm" @click="onDialogCancel()" />
+          <q-btn label="Confirmar" type="submit" unelevated color="primary" />
+        </div>
+      </q-form>
+    </BottomSheetDialog>
   </q-dialog>
 </template>
 
@@ -38,6 +27,7 @@ import { useDialogPluginComponent } from 'quasar'
 import { ref } from 'vue'
 
 import { BRL } from 'src/helpers/currency'
+import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import OperationForm from './OperationForm.vue'
 import type { Category } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
@@ -70,9 +60,3 @@ function onSubmit() {
   })
 }
 </script>
-
-<style lang="scss" scoped>
-.container {
-  border-radius: 20px;
-}
-</style>
