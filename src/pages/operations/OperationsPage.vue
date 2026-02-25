@@ -58,34 +58,6 @@ const totalForMonth = computed(() =>
             {{ totalForMonth }}
           </p>
         </ConcealableValue>
-        <div class="q-ml-xs row items-center no-wrap q-gutter-x-xs">
-          <q-btn
-            :icon="configStore.hideValues ? 'visibility_off' : 'visibility'"
-            flat
-            round
-            dense
-            @click="configStore.toggleValuesVisibility()"
-          >
-            <q-tooltip>
-              {{ configStore.hideValues ? 'Mostrar valores' : 'Ocultar valores' }}
-            </q-tooltip>
-          </q-btn>
-          <q-btn
-            :icon="configStore.showOperationDetails ? 'unfold_less' : 'unfold_more'"
-            flat
-            round
-            dense
-            @click="configStore.toggleOperationDetailsVisibility()"
-          >
-            <q-tooltip>
-              {{
-                configStore.showOperationDetails
-                  ? 'Ocultar detalhamento diário'
-                  : 'Mostrar detalhamento diário'
-              }}
-            </q-tooltip>
-          </q-btn>
-        </div>
       </div>
       <p class="text-subtitle1 q-ma-none">Até o fim do mês</p>
     </div>

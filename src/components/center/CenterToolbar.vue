@@ -5,11 +5,13 @@ import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
 import SummaryDialog from '../summary/SummaryDialog.vue'
 import { useCategoryStore } from 'src/stores/category-store'
+import { useConfigStore } from 'src/stores/config-store'
 
 const $q = useQuasar()
 const centerStore = useCenterStore()
 const categoryStore = useCategoryStore()
 const operationStore = useOperationStore()
+const configStore = useConfigStore()
 
 await centerStore.fetchCenters()
 await categoryStore.fetch()
@@ -28,8 +30,7 @@ function showSummary() {
 <template>
   <q-toolbar>
     <div class="row full-width items-center">
-      <div class="col-xs-4"></div>
-      <div class="col-xs-4 flex justify-center">
+      <div class="col-xs-6 col-sm-5 col-md-4 flex justify-start">
         <div class="center-select">
           <q-select
             v-model="operationStore.center"
@@ -44,7 +45,34 @@ function showSummary() {
           </q-select>
         </div>
       </div>
-      <div class="col-xs-4 flex justify-end">
+      <div class="col"></div>
+      <div class="col-xs-auto flex justify-end items-center no-wrap q-gutter-x-xs">
+        <q-btn
+          :icon="configStore.hideValues ? 'visibility_off' : 'visibility'"
+          flat
+          round
+          dense
+          @click="configStore.toggleValuesVisibility()"
+        >
+          <q-tooltip>
+            {{ configStore.hideValues ? 'Mostrar valores' : 'Ocultar valores' }}
+          </q-tooltip>
+        </q-btn>
+        <q-btn
+          :icon="configStore.showOperationDetails ? 'unfold_less' : 'unfold_more'"
+          flat
+          round
+          dense
+          @click="configStore.toggleOperationDetailsVisibility()"
+        >
+          <q-tooltip>
+            {{
+              configStore.showOperationDetails
+                ? 'Ocultar detalhamento diário'
+                : 'Mostrar detalhamento diário'
+            }}
+          </q-tooltip>
+        </q-btn>
         <q-btn icon="description" flat round dense @click="showSummary()" />
         <q-btn icon="more_vert" flat round dense>
           <q-menu>
