@@ -51,10 +51,6 @@ quasar build -m capacitor -T android
 
 ```
 
-## Aviso sobre backup
-
-ATENÇÃO: A funcionalidade de backup está parcialmente implementada. Já é possível exportar o banco de dados (gerar um arquivo com os dados), porém a importação/restauração do banco ainda está incompleta e não deve ser utilizada em produção.
-
 ## Lint e Formatação
 
 ```pwsh
