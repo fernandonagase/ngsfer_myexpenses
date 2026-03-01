@@ -1,5 +1,5 @@
 {
-  "name": "ngsfer-myexpenses",
+  "name": "@ngsfer-myexpenses/capacitor",
   "version": "0.6.0",
   "description": "Aplicativo para controle de finanças pessoais",
   "productName": "My Expenses",
@@ -51,11 +51,6 @@
     "typescript": "~5.5.3",
     "vite-plugin-checker": "^0.8.0",
     "vue-tsc": "^2.0.29"
-  },
-  "pnpm": {
-    "overrides": {
-      "@vitejs/plugin-vue": "5.2.1"
-    }
   },
   "engines": {
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",
