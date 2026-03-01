@@ -1,0 +1,1 @@
+{"appId":"com.ngsfer.myexpenses","appName":"My Expenses","webDir":"www","plugins":{"CapacitorSQLite":{},"SystemBars":{"insetsHandling":"disable"},"EdgeToEdge":{"backgroundColor":"#3a5a40","statusBarColor":"#3a5a40","navigationBarColor":"#000000"}},"server":{"url":"http://192.168.100.12:9500","cleartext":true}}
