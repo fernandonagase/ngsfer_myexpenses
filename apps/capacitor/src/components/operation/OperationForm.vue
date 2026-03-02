@@ -26,6 +26,16 @@
         />
       </template>
     </q-field>
+    <q-checkbox v-model="hasInstallments" label="Parcelado" />
+    <q-input
+      v-if="hasInstallments"
+      v-model.number="installmentCount"
+      type="number"
+      label="Número de parcelas"
+      outlined
+      class="q-mb-md"
+      suffix="x"
+    />
     <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
     <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules outlined />
     <q-select
@@ -48,6 +58,8 @@ import type { CategoryType } from 'src/databases/entities/expenses/types/categor
 import { useCategoryStore } from 'src/stores/category-store'
 
 const value = defineModel<string>('value')
+const hasInstallments = defineModel<boolean>('hasInstallments')
+const installmentCount = defineModel<number>('installmentCount')
 const date = defineModel<string>('date')
 const category = defineModel<Category | null>('category')
 const description = defineModel<string>('description')

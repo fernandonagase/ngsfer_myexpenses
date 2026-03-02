@@ -2,7 +2,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL, splitInInstallments } from '@ngsfer-myexpenses/utils'
 
 import { Category } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
@@ -93,27 +93,46 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   function addOperation() {
+    type OperationPayload = {
+      value: number
+      date: string
+      category: Category
+      description: string
+      installmentCount?: number
+    }
+
+    async function doAddOperation(payload: OperationPayload) {
+      if (!center.value) throw new Error('Centro financeiro não informado')
+
+      const count = Math.max(1, payload.installmentCount ?? 1)
+      const values = splitInInstallments(payload.value, count)
+      try {
+        await operationRepository.manager.transaction(async (manager) => {
+          const operations = values.map((valueInCents, index) => {
+            const operation = new Operation()
+            operation.valueInCents = valueInCents
+            operation.date = dayjs(payload.date).add(index, 'month').format('YYYY-MM-DD')
+            operation.category = payload.category
+            operation.description =
+              count > 1 ? `${payload.description} (${index + 1}/${count})` : payload.description
+            operation.center = center.value!
+            return operation
+          })
+          await manager.save(Operation, operations)
+        })
+        await refreshDataForOperationDate(payload.date)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
     $q.dialog({
       component: OperationDialog,
       persistent: true,
-    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
-      const operation = new Operation()
-      operation.valueInCents = payload.value
-      operation.date = payload.date
-      operation.category = payload.category
-      operation.description = payload.description
-      if (!center.value) {
-        throw new Error('Centro financeiro não informado')
-      }
-      operation.center = center.value
-      operationRepository
-        .save(operation)
-        .then(async () => {
-          await refreshDataForOperationDate(payload.date)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
+    }).onOk((payload: OperationPayload) => {
+      doAddOperation(payload).catch((error) => {
+        console.error(error)
+      })
     })
   }
 

@@ -9,6 +9,7 @@
             v-model:category="category"
             v-model:description="description"
             v-model:operation-type="operationType"
+            v-model:installment-count="installmentCount"
           />
           <template #fallback>Carregando...</template>
         </Suspense>
@@ -38,6 +39,7 @@ const props = defineProps<{
   category?: Category
   description?: string
   operationType?: CategoryType
+  installmentCount?: number
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -49,6 +51,7 @@ const date = ref<string>(props.date ?? dayjs().format('YYYY-MM-DD'))
 const category = ref<Category | null>(props.category ?? null)
 const description = ref<string>(props.description ?? '')
 const operationType = ref<CategoryType>(props.operationType ?? 'Saída')
+const installmentCount = ref<number>(props.installmentCount ?? 1)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
@@ -57,6 +60,7 @@ function onSubmit() {
     date: date.value,
     category: category.value,
     description: description.value,
+    installmentCount: installmentCount.value,
   })
 }
 </script>
