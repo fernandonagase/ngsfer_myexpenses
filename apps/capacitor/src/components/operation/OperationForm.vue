@@ -41,8 +41,8 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { BRL } from '@ngsfer-myexpenses/utils'
 
-import { BRL } from 'src/helpers/currency'
 import type { Category } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { useCategoryStore } from 'src/stores/category-store'

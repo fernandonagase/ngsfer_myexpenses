@@ -2,13 +2,13 @@ import { computed, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
+import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { Category } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
 import OperationByCategoryDialog from 'src/components/reports/OperationByCategoryDialog.vue'
-import { BRL } from 'src/helpers/currency'
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 const categoryOperation = expensesDataSource.dataSource.getRepository(Category) // renomear para categoryRepository

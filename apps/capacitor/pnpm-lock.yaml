@@ -10,12 +10,6 @@ overrides:
 importers:
 
   .:
-    devDependencies:
-      typescript:
-        specifier: ~5.5.4
-        version: 5.5.4
-
-  apps/capacitor:
     dependencies:
       '@capacitor-community/sqlite':
         specifier: ^6.0.2
@@ -29,9 +23,6 @@ importers:
       '@capawesome/capacitor-file-picker':
         specifier: ^6.2.0
         version: 6.2.0(@capacitor/core@6.2.1)
-      '@ngsfer-myexpenses/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
       '@quasar/extras':
         specifier: ^1.16.4
         version: 1.17.0
@@ -44,6 +35,9 @@ importers:
       axios:
         specifier: ^1.2.1
         version: 1.13.6
+      currency.js:
+        specifier: ^2.0.4
+        version: 2.0.4
       dayjs:
         specifier: ^1.11.13
         version: 1.11.19
@@ -117,12 +111,6 @@ importers:
       vue-tsc:
         specifier: ^2.0.29
         version: 2.2.12(typescript@5.5.4)
-
-  packages/utils:
-    dependencies:
-      currency.js:
-        specifier: ^2.0.4
-        version: 2.0.4
 
 packages:
 
