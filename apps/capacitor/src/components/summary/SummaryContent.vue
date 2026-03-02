@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { BRL } from '@ngsfer-myexpenses/utils'
+
 import { useCenterStore } from 'src/stores/center-store'
-import { BRL } from 'src/helpers/currency'
 
 const centerStore = useCenterStore()
 

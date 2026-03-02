@@ -41,9 +41,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { useOperationStore } from 'src/stores/operation-store'
-import { BRL } from 'src/helpers/currency'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 
 const operationStore = useOperationStore()

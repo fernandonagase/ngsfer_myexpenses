@@ -3,8 +3,8 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { StatusBar } from '@capacitor/status-bar'
 import { getCssVar } from 'quasar'
+import { BRL } from "@ngsfer-myexpenses/utils"
 
-import { BRL } from 'src/helpers/currency'
 import { useOperationStore } from 'src/stores/operation-store'
 import { useCenterStore } from 'src/stores/center-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'

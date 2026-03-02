@@ -25,8 +25,8 @@
 import dayjs from 'dayjs'
 import { useDialogPluginComponent } from 'quasar'
 import { ref } from 'vue'
+import { BRL } from '@ngsfer-myexpenses/utils'
 
-import { BRL } from 'src/helpers/currency'
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import OperationForm from './OperationForm.vue'
 import type { Category } from 'src/databases/entities/expenses'

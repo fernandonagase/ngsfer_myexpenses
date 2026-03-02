@@ -1,8 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import dayjs from 'dayjs'
+import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { Center } from './center'
-import { BRL } from 'src/helpers/currency'
 import { Category } from './category'
 
 @Entity('operacao_financeira')
