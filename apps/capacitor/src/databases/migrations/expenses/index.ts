@@ -7,6 +7,7 @@ import { ExpensesCategoryDefault1739034841000 } from './1739034841000-ExpensesCa
 import { ExpensesOperationCategory1739035759000 } from './1739035759000-ExpensesOperationCategory'
 import { ExpensesSoftDelete1767810344173 } from './1767810344173-ExpensesSoftDelete'
 import { ExpensesCreateRecurrencyRule1770167031707 } from './1770167031707-ExpensesCreateRecurrencyRule'
+import { ExpensesAddRecurrencyOperation1772498497128 } from './1772498497128-ExpensesAddRecurrencyOperation'
 
 export {
   InitialExpensesCenter1738203549000,
@@ -18,4 +19,5 @@ export {
   ExpensesOperationCategory1739035759000,
   ExpensesSoftDelete1767810344173,
   ExpensesCreateRecurrencyRule1770167031707,
+  ExpensesAddRecurrencyOperation1772498497128,
 }
