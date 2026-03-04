@@ -4,6 +4,7 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { Center } from './center'
 import { Category } from './category'
+import { RecurringRule } from './recurring-rule'
 
 @Entity('operacao_financeira')
 export class Operation {
@@ -21,6 +22,19 @@ export class Operation {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean
+
+  @Column({ name: 'generated_at', type: 'text' })
+  generatedAt!: string
+
+  @Column({ name: 'generation_key', type: 'text' })
+  generationKey!: string
+
+  @ManyToOne(() => RecurringRule)
+  @JoinColumn({
+    name: 'recurring_rule_id',
+    referencedColumnName: 'id',
+  })
+  recurringRule!: RecurringRule
 
   @ManyToOne(() => Center, (center) => center.operations)
   @JoinColumn({
