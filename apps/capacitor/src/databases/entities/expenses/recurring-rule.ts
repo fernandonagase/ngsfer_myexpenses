@@ -8,6 +8,11 @@ enum FrequencyType {
   YEARLY = 'yearly',
 }
 
+enum AnchorMode {
+  FIXED = 'fixed',
+  LAST_DAY = 'last_day',
+}
+
 enum EndMode {
   NEVER = 'never',
   UNTIL_DATE = 'until_date',
@@ -50,6 +55,12 @@ export class RecurringRule {
 
   @Column({ type: 'int', default: 1 })
   interval!: number
+
+  @Column({ name: 'anchor_mode', type: 'text' })
+  anchorMode!: AnchorMode
+
+  @Column({ name: 'anchor_day', type: 'int' })
+  anchorDay!: number
 
   @Column({ name: 'end_mode', type: 'text', default: EndMode.NEVER })
   endMode!: EndMode
