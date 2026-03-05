@@ -26,7 +26,12 @@
         />
       </template>
     </q-field>
-    <q-checkbox v-model="hasInstallments" label="Parcelado" />
+    <q-option-group
+      v-model="recurrenceType"
+      color="secondary"
+      :options="recurrenceTypeOptions"
+      inline
+    />
     <q-input
       v-if="hasInstallments"
       v-model.number="installmentCount"
@@ -38,6 +43,7 @@
     />
     <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
     <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules outlined />
+    <q-checkbox v-model="isRecurring" label="Operação se repete" />
     <q-select
       v-model="category"
       :options="filteredCategories"
@@ -58,12 +64,31 @@ import type { CategoryType } from 'src/databases/entities/expenses/types/categor
 import { useCategoryStore } from 'src/stores/category-store'
 
 const value = defineModel<string>('value')
-const hasInstallments = defineModel<boolean>('hasInstallments')
+const isRecurring = defineModel<boolean>('isRecurring')
 const installmentCount = defineModel<number>('installmentCount')
 const date = defineModel<string>('date')
 const category = defineModel<Category | null>('category')
 const description = defineModel<string>('description')
 const operationType = defineModel<CategoryType>('operationType', { default: 'Saída' })
+
+const recurrenceTypeOptions = [
+  {
+    value: 'one-time',
+    label: 'À vista',
+  },
+  {
+    value: 'installments',
+    label: 'A prazo',
+  },
+  {
+    value: 'recurring',
+    label: 'Recorrente',
+  },
+]
+
+type RecurrenceType = (typeof recurrenceTypeOptions)[number]['value']
+
+const recurrenceType = defineModel<RecurrenceType>('recurrenceType', { default: 'one-time' })
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -81,6 +106,9 @@ const categoryStore = useCategoryStore()
 const filteredCategories = computed<Array<Category>>(() =>
   operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
 )
+
+const hasInstallments = computed(() => recurrenceType.value === 'installments')
+
 watch(
   [operationType, filteredCategories],
   () => {
