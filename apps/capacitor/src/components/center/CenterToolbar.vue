@@ -90,6 +90,10 @@ function showSummary() {
                 <q-item-section>Categorias</q-item-section>
                 <q-item-section side><q-icon name="label" size="xs" /></q-item-section>
               </q-item>
+              <q-item clickable v-close-popup :to="{ name: 'recurrence' }">
+                <q-item-section>Operações recorrentes</q-item-section>
+                <q-item-section side><q-icon name="event_repeat" size="xs" /></q-item-section>
+              </q-item>
               <q-separator />
               <q-item clickable v-close-popup :to="{ name: 'settings' }">
                 <q-item-section>Configurações</q-item-section>

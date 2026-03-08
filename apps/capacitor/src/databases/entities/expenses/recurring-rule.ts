@@ -1,4 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { BRL } from '@ngsfer-myexpenses/utils'
+
 import { Center } from './center'
 import { Category } from './category'
 
@@ -78,4 +80,20 @@ export class RecurringRule {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean
+
+  get valueString() {
+    return BRL(this.valueInCents / 100).format()
+  }
+
+  get isIncome() {
+    return this.ruleType === RecurringRuleType.INCOME
+  }
+
+  get isExpense() {
+    return this.ruleType === RecurringRuleType.EXPENSE
+  }
+
+  get isMonthly() {
+    return this.frequency === FrequencyType.MONTHLY
+  }
 }

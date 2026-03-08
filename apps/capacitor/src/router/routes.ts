@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/settings',
-    component: () => import('src/layouts/SettingsLayout.vue'),
+    component: () => import('src/layouts/DefaultLayout.vue'),
     meta: { title: 'Configurações' },
     props: (route) => ({
       title: route.meta.title,
@@ -24,6 +24,21 @@ const routes: RouteRecordRaw[] = [
         name: 'settings',
         path: '',
         component: () => import('src/pages/settings/SettingsPage.vue'),
+      },
+    ],
+  },
+  {
+    path: '/recurrence',
+    component: () => import('src/layouts/DefaultLayout.vue'),
+    meta: { title: 'Operações recorrentes' },
+    props: (route) => ({
+      title: route.meta.title,
+    }),
+    children: [
+      {
+        name: 'recurrence',
+        path: '',
+        component: () => import('src/pages/RecurrencePage.vue'),
       },
     ],
   },
