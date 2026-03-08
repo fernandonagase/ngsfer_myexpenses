@@ -4,14 +4,94 @@ import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
 import { BRL, splitInInstallments } from '@ngsfer-myexpenses/utils'
 
-import { Category } from 'src/databases/entities/expenses'
+import { Category, RecurringRule } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
 import OperationByCategoryDialog from 'src/components/reports/OperationByCategoryDialog.vue'
+import { type RecurrenceType } from 'src/components/operation/recurrence-types'
+import { type EntityManager } from 'typeorm'
+import {
+  type FrequencyType,
+  RecurringRuleType,
+} from 'src/databases/entities/expenses/recurring-rule'
+
+type OperationPayload = {
+  value: number
+  date: string
+  category: Category
+  description: string
+  installmentCount?: number
+  recurrenceType: RecurrenceType
+  recurrenceFrequency?: FrequencyType
+}
+
+type OperationData = {
+  date: string
+  category: Category
+  center: Center
+  description: string
+}
+
+type RecurringRuleData = {
+  description: string
+  valueInCents: number
+  startDate: string
+  nextRunDate: string
+  category: Category
+  center: Center
+  recurrenceFrequency: FrequencyType
+  anchorDay: number
+}
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 const categoryOperation = expensesDataSource.dataSource.getRepository(Category) // renomear para categoryRepository
+
+function addRecurringRule(
+  recurringRuleData: RecurringRuleData,
+  { manager }: { manager: EntityManager },
+) {
+  const recurringRule = manager.create(RecurringRule, {
+    description: recurringRuleData.description,
+    valueInCents: recurringRuleData.valueInCents,
+    ruleType:
+      recurringRuleData.valueInCents > 0 ? RecurringRuleType.INCOME : RecurringRuleType.EXPENSE,
+    startDate: recurringRuleData.startDate,
+    nextRunDate: recurringRuleData.nextRunDate,
+    category: recurringRuleData.category,
+    center: recurringRuleData.center,
+    frequency: recurringRuleData.recurrenceFrequency,
+    anchorDay: recurringRuleData.anchorDay,
+  })
+  return manager.save(recurringRule)
+}
+
+function addOperations(
+  operationData: OperationData,
+  {
+    values,
+    recurringRule,
+    manager,
+  }: { values: number[]; recurringRule?: RecurringRule; manager: EntityManager },
+) {
+  const operations = values.map((valueInCents, index) => {
+    const operation = manager.create(Operation, {
+      valueInCents: valueInCents,
+      date: dayjs(operationData.date).add(index, 'month').format('YYYY-MM-DD'),
+      category: operationData.category,
+      description:
+        values.length > 1
+          ? `${operationData.description} (${index + 1}/${values.length})`
+          : operationData.description,
+      center: operationData.center,
+    })
+    if (recurringRule) {
+      operation.setRecurringRule(recurringRule)
+    }
+    return operation
+  })
+  return manager.save(Operation, operations)
+}
 
 export const useOperationStore = defineStore('operation', () => {
   const $q = useQuasar()
@@ -93,36 +173,64 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   function addOperation() {
-    type OperationPayload = {
-      value: number
-      date: string
-      category: Category
-      description: string
-      installmentCount?: number
-    }
-
     async function doAddOperation(payload: OperationPayload) {
       if (!center.value) throw new Error('Centro financeiro não informado')
 
-      const count = Math.max(1, payload.installmentCount ?? 1)
-      const values = splitInInstallments(payload.value, count)
-      try {
-        await operationRepository.manager.transaction(async (manager) => {
-          const operations = values.map((valueInCents, index) => {
-            const operation = new Operation()
-            operation.valueInCents = valueInCents
-            operation.date = dayjs(payload.date).add(index, 'month').format('YYYY-MM-DD')
-            operation.category = payload.category
-            operation.description =
-              count > 1 ? `${payload.description} (${index + 1}/${count})` : payload.description
-            operation.center = center.value!
-            return operation
+      if (payload.recurrenceType === 'recurring') {
+        if (!payload.recurrenceFrequency)
+          throw new Error(
+            'Frequência da recorrência não informada para operação de tipo recorrente',
+          )
+        try {
+          await expensesDataSource.dataSource.manager.transaction(async (manager) => {
+            const recurringRule = await addRecurringRule(
+              {
+                description: payload.description,
+                valueInCents: payload.value,
+                startDate: payload.date,
+                nextRunDate: payload.date,
+                category: payload.category,
+                recurrenceFrequency: payload.recurrenceFrequency!,
+                anchorDay: parseInt(dayjs(payload.date).format('DD')),
+                center: center.value!,
+              },
+              {
+                manager,
+              },
+            )
+            await addOperations(
+              {
+                date: payload.date,
+                category: payload.category,
+                description: payload.description,
+                center: center.value!,
+              },
+              { values: [payload.value], recurringRule: recurringRule, manager },
+            )
           })
-          await manager.save(Operation, operations)
-        })
-        await refreshDataForOperationDate(payload.date)
-      } catch (error) {
-        console.error(error)
+          await refreshDataForOperationDate(payload.date)
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        const count = Math.max(1, payload.installmentCount ?? 1)
+        const values = splitInInstallments(payload.value, count)
+        try {
+          await operationRepository.manager.transaction(async (manager) => {
+            await addOperations(
+              {
+                date: payload.date,
+                category: payload.category,
+                description: payload.description,
+                center: center.value!,
+              },
+              { values, manager },
+            )
+          })
+          await refreshDataForOperationDate(payload.date)
+        } catch (error) {
+          console.error(error)
+        }
       }
     }
 

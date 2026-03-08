@@ -29,12 +29,12 @@ export class Operation {
   @Column({ name: 'generation_key', type: 'text' })
   generationKey!: string
 
-  @ManyToOne(() => RecurringRule)
+  @ManyToOne(() => RecurringRule, { nullable: true })
   @JoinColumn({
     name: 'recurring_rule_id',
     referencedColumnName: 'id',
   })
-  recurringRule!: RecurringRule
+  recurringRule?: RecurringRule
 
   @ManyToOne(() => Center, (center) => center.operations)
   @JoinColumn({
@@ -49,6 +49,17 @@ export class Operation {
     referencedColumnName: 'id',
   })
   category!: Category
+
+  getGenerationKey(recurringRule: RecurringRule, date: string) {
+    return `${recurringRule.id}-${date}`
+  }
+
+  setRecurringRule(recurringRule: RecurringRule) {
+    this.recurringRule = recurringRule
+    const today = dayjs().format('YYYY-MM-DD')
+    this.generatedAt = today
+    this.generationKey = this.getGenerationKey(recurringRule, today)
+  }
 
   get valueString() {
     return BRL(this.valueInCents / 100).format()

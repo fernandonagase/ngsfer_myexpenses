@@ -2,21 +2,26 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 't
 import { Center } from './center'
 import { Category } from './category'
 
-enum FrequencyType {
+export enum FrequencyType {
   MONTHLY = 'monthly',
   WEEKLY = 'weekly',
   YEARLY = 'yearly',
 }
 
-enum AnchorMode {
+export enum AnchorMode {
   FIXED = 'fixed',
   LAST_DAY = 'last_day',
 }
 
-enum EndMode {
+export enum EndMode {
   NEVER = 'never',
   UNTIL_DATE = 'until_date',
   COUNT = 'count',
+}
+
+export enum RecurringRuleType {
+  INCOME = 'income',
+  EXPENSE = 'expense',
 }
 
 @Entity('recurring_rule')
@@ -29,6 +34,9 @@ export class RecurringRule {
 
   @Column({ type: 'int' })
   valueInCents!: number
+
+  @Column({ name: 'type', type: 'text' })
+  ruleType!: RecurringRuleType
 
   @ManyToOne(() => Center, (center) => center.operations)
   @JoinColumn({
@@ -56,7 +64,7 @@ export class RecurringRule {
   @Column({ type: 'int', default: 1 })
   interval!: number
 
-  @Column({ name: 'anchor_mode', type: 'text' })
+  @Column({ name: 'anchor_mode', type: 'text', default: AnchorMode.FIXED })
   anchorMode!: AnchorMode
 
   @Column({ name: 'anchor_day', type: 'int' })

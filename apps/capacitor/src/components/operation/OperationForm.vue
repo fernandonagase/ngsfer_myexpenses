@@ -1,3 +1,62 @@
+<script setup lang="ts">
+import { computed, watch } from 'vue'
+import { BRL } from '@ngsfer-myexpenses/utils'
+
+import type { Category } from 'src/databases/entities/expenses'
+import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
+import { useCategoryStore } from 'src/stores/category-store'
+import { type RecurrenceType, recurrenceTypeOptions } from './recurrence-types'
+import { recurrenceFrequencyOptions } from './recurrence-frequencies'
+import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+
+const value = defineModel<string>('value')
+const installmentCount = defineModel<number>('installmentCount')
+const date = defineModel<string>('date')
+const category = defineModel<Category | null>('category')
+const description = defineModel<string>('description')
+const operationType = defineModel<CategoryType>('operationType', { default: 'Saída' })
+const recurrenceType = defineModel<RecurrenceType>('recurrenceType', { default: 'one-time' })
+const recurrenceFrequency = defineModel<FrequencyType | undefined>('recurrenceFrequency')
+
+const moneyFormatForDirective = {
+  prefix: 'R$',
+  thousands: '.',
+  decimal: ',',
+  precision: 2,
+  focusOnRight: true,
+}
+const valueRules = [(val: string) => BRL(val).value !== 0 || 'Informe um valor diferente de 0']
+const dateRules = [(val: string) => !!val || 'Informe a data da operação']
+const categoryRules = [(val: string) => !!val || 'Informe a categoria da operação']
+
+const categoryStore = useCategoryStore()
+
+const filteredCategories = computed<Array<Category>>(() =>
+  operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
+)
+
+const hasInstallments = computed(() => recurrenceType.value === 'installments')
+const isRecurring = computed(() => recurrenceType.value === 'recurring')
+
+watch(
+  [operationType, filteredCategories],
+  () => {
+    if (category.value?.type !== operationType.value) {
+      category.value = filteredCategories.value[0] ?? null
+    }
+  },
+  {
+    immediate: true,
+  },
+)
+
+watch(recurrenceType, () => {
+  if (recurrenceType.value === 'recurring' && !recurrenceFrequency.value) {
+    recurrenceFrequency.value = FrequencyType.MONTHLY
+  }
+})
+</script>
+
 <template>
   <div>
     <q-btn-toggle
@@ -31,19 +90,30 @@
       color="secondary"
       :options="recurrenceTypeOptions"
       inline
-    />
-    <q-input
-      v-if="hasInstallments"
-      v-model.number="installmentCount"
-      type="number"
-      label="Número de parcelas"
-      outlined
       class="q-mb-md"
-      suffix="x"
     />
+    <template v-if="hasInstallments">
+      <q-input
+        v-model.number="installmentCount"
+        type="number"
+        label="Número de parcelas"
+        outlined
+        class="q-mb-md"
+        suffix="x"
+      />
+    </template>
+    <template v-if="isRecurring">
+      <q-btn-toggle
+        v-model="recurrenceFrequency"
+        toggle-color="primary"
+        :options="recurrenceFrequencyOptions"
+        no-caps
+        unelevated
+        class="q-mb-md"
+      />
+    </template>
     <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
     <q-input v-model="date" type="date" label="Data" :rules="dateRules" lazy-rules outlined />
-    <q-checkbox v-model="isRecurring" label="Operação se repete" />
     <q-select
       v-model="category"
       :options="filteredCategories"
@@ -54,70 +124,3 @@
     />
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed, watch } from 'vue'
-import { BRL } from '@ngsfer-myexpenses/utils'
-
-import type { Category } from 'src/databases/entities/expenses'
-import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
-import { useCategoryStore } from 'src/stores/category-store'
-
-const value = defineModel<string>('value')
-const isRecurring = defineModel<boolean>('isRecurring')
-const installmentCount = defineModel<number>('installmentCount')
-const date = defineModel<string>('date')
-const category = defineModel<Category | null>('category')
-const description = defineModel<string>('description')
-const operationType = defineModel<CategoryType>('operationType', { default: 'Saída' })
-
-const recurrenceTypeOptions = [
-  {
-    value: 'one-time',
-    label: 'À vista',
-  },
-  {
-    value: 'installments',
-    label: 'A prazo',
-  },
-  {
-    value: 'recurring',
-    label: 'Recorrente',
-  },
-]
-
-type RecurrenceType = (typeof recurrenceTypeOptions)[number]['value']
-
-const recurrenceType = defineModel<RecurrenceType>('recurrenceType', { default: 'one-time' })
-
-const moneyFormatForDirective = {
-  prefix: 'R$',
-  thousands: '.',
-  decimal: ',',
-  precision: 2,
-  focusOnRight: true,
-}
-const valueRules = [(val: string) => BRL(val).value !== 0 || 'Informe um valor diferente de 0']
-const dateRules = [(val: string) => !!val || 'Informe a data da operação']
-const categoryRules = [(val: string) => !!val || 'Informe a categoria da operação']
-
-const categoryStore = useCategoryStore()
-
-const filteredCategories = computed<Array<Category>>(() =>
-  operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
-)
-
-const hasInstallments = computed(() => recurrenceType.value === 'installments')
-
-watch(
-  [operationType, filteredCategories],
-  () => {
-    if (category.value?.type !== operationType.value) {
-      category.value = filteredCategories.value[0] ?? null
-    }
-  },
-  {
-    immediate: true,
-  },
-)
-</script>
