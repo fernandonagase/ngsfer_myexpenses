@@ -12,7 +12,8 @@ import { ref, onErrorCaptured } from 'vue'
 
 const hasError = ref(false)
 
-onErrorCaptured(() => {
+onErrorCaptured((error) => {
+  console.error(error)
   hasError.value = true
   return false
 })
