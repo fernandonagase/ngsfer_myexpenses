@@ -6,16 +6,17 @@ import { FrequencyType, RecurringRuleType } from 'src/databases/entities/expense
 import ConcealableValue from '../ConcealableValue.vue'
 
 interface RecurringRuleItemProps {
-  description?: string
+  description?: string | undefined
   categoryName: string
   value: string
   recurringRuleType: RecurringRuleType
   frequency: FrequencyType
-  monthlyAnchorDay?: number
+  monthlyAnchorDay?: number | undefined
   weeklyAnchorDay?: 0 | 1 | 2 | 3 | 4 | 5 | 6
 }
 
 const props = defineProps<RecurringRuleItemProps>()
+defineEmits(['click'])
 
 const isExpense = computed(() => props.recurringRuleType === RecurringRuleType.EXPENSE)
 
@@ -25,7 +26,7 @@ function getWeekday(day: 0 | 1 | 2 | 3 | 4 | 5 | 6) {
 </script>
 
 <template>
-  <q-item clickable v-ripple>
+  <q-item clickable v-ripple @click="$emit('click')">
     <q-item-section>
       <q-item-label class="text-body1">
         <span v-if="description">{{ description }}</span>
