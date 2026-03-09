@@ -1,9 +1,10 @@
 import { defineStore, acceptHMRUpdate } from 'pinia'
 
-import { type RecurringRule } from 'src/databases/entities/expenses'
-import { getRecurringRuleRepository } from 'src/databases/repositories/recurring-rule-repository'
+import { type RecurringRule } from 'src/domain/RecurringRule'
+import { TypeOrmRecurringRuleService } from 'src/services/typeorm-recurring-rule-service'
+import type { IRecurringRuleService } from 'src/services/types/IRecurringRuleService'
 
-const recurringRuleRepository = getRecurringRuleRepository()
+const recurringRuleService: IRecurringRuleService = new TypeOrmRecurringRuleService()
 
 export const useRecurringRuleStore = defineStore('recurringRuleStore', {
   state: () => ({
@@ -11,19 +12,29 @@ export const useRecurringRuleStore = defineStore('recurringRuleStore', {
   }),
   getters: {},
   actions: {
-    async fetchRecurringRules({
-      withCategory,
-      withCenter,
-    }: {
-      withCategory: boolean
-      withCenter: boolean
-    }) {
-      this.recurringRules = await recurringRuleRepository.find({
-        relations: {
-          category: withCategory,
-          center: withCenter,
-        },
-      })
+    async fetchRecurringRules({ relations = [] }: { relations?: string[] } = {}) {
+      const result = await recurringRuleService.list({ relations })
+      if (result.ok) {
+        this.recurringRules = result.payload
+      } else {
+        throw new Error('Falha ao carregar regras de recorrência', { cause: result })
+      }
+    },
+    async insert(recurringRule: RecurringRule) {
+      const result = await recurringRuleService.insert(recurringRule)
+      if (result.ok) {
+        return result.payload
+      } else {
+        throw new Error('Falha ao criar regra de recorrência', { cause: result })
+      }
+    },
+    async save(recurringRule: RecurringRule) {
+      const result = await recurringRuleService.update(recurringRule)
+      if (result.ok) {
+        return result.payload
+      } else {
+        throw new Error('Falha ao salvar regra de recorrência', { cause: result })
+      }
     },
   },
 })
