@@ -1,7 +1,13 @@
-interface IServiceResult<T> {
-  ok: boolean
-  message?: string
-  payload?: T
+interface IServiceResultOk<T> {
+  ok: true
+  payload: T
 }
 
-export type { IServiceResult }
+interface IServiceResultError {
+  ok: false
+  message: string
+}
+
+type IServiceResult<T> = IServiceResultOk<T> | IServiceResultError
+
+export type { IServiceResult, IServiceResultOk, IServiceResultError }
