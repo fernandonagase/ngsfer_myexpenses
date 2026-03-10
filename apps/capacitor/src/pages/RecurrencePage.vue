@@ -6,6 +6,7 @@ import RecurringRuleItem from 'src/components/recurring-rule/RecurringRuleItem.v
 import { QuasarRecurringRuleController } from 'src/controllers/quasar-recurring-rule-controller'
 import type {
   IRecurringRuleController,
+  ShowAddRecurringRulePayload,
   ShowEditRecurringRulePayload,
 } from 'src/controllers/types/IRecurringRuleController'
 import { RecurringRule } from 'src/domain/RecurringRule'
@@ -22,6 +23,12 @@ function editRecurringRuleGenerator(recurringRule: RecurringRule) {
     Object.assign(model, payload)
     await recurringRuleStore.save(model)
   }
+}
+
+async function addRecurringRule(payload: ShowAddRecurringRulePayload) {
+  const model = new RecurringRule({ ...payload })
+  await recurringRuleStore.insert(model)
+  await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
 }
 </script>
 
@@ -46,6 +53,18 @@ function editRecurringRuleGenerator(recurringRule: RecurringRule) {
           "
         />
       </q-list>
+      <q-page-sticky position="bottom-right" :offset="[18, 18]">
+        <q-btn
+          fab
+          icon="add"
+          color="primary"
+          @click="
+            recurringRuleController.showAddRecurringRule({
+              addCallback: addRecurringRule,
+            })
+          "
+        />
+      </q-page-sticky>
     </ErrorBoundary>
   </q-page>
 </template>

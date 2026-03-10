@@ -1,15 +1,16 @@
 import { BRL } from '@ngsfer-myexpenses/utils'
+import dayjs from 'dayjs'
 
 import type { Category, Center } from 'src/databases/entities/expenses'
 import {
-  type AnchorMode,
+  AnchorMode,
   type EndMode,
   FrequencyType,
   RecurringRuleType,
 } from 'src/databases/entities/expenses/recurring-rule'
 
 export class RecurringRule {
-  id: number
+  id?: number
   description?: string
   valueInCents: number
   ruleType: RecurringRuleType
@@ -42,7 +43,7 @@ export class RecurringRule {
     endDate,
     isActive,
   }: {
-    id: number
+    id?: number
     description?: string
     valueInCents: number
     ruleType: RecurringRuleType
@@ -58,7 +59,7 @@ export class RecurringRule {
     endDate?: string
     isActive: boolean
   }) {
-    this.id = id
+    if (id) this.id = id
     if (description) this.description = description
     this.valueInCents = valueInCents
     this.ruleType = ruleType
@@ -69,7 +70,13 @@ export class RecurringRule {
     this.frequency = frequency
     this.interval = interval
     this.anchorMode = anchorMode
-    if (anchorDay) this.anchorDay = anchorDay
+    if (anchorDay) {
+      this.anchorDay = anchorDay
+    } else {
+      if (anchorMode === AnchorMode.FIXED) {
+        this.anchorDay = parseInt(dayjs(this.startDate).format('DD'))
+      }
+    }
     this.endMode = endMode
     if (endDate) this.endDate = endDate
     this.isActive = isActive

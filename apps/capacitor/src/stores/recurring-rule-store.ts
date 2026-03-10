@@ -3,12 +3,13 @@ import { defineStore, acceptHMRUpdate } from 'pinia'
 import { type RecurringRule } from 'src/domain/RecurringRule'
 import { TypeOrmRecurringRuleService } from 'src/services/typeorm-recurring-rule-service'
 import type { IRecurringRuleService } from 'src/services/types/IRecurringRuleService'
+import type { WithRequiredId } from 'src/services/types/IService'
 
 const recurringRuleService: IRecurringRuleService = new TypeOrmRecurringRuleService()
 
 export const useRecurringRuleStore = defineStore('recurringRuleStore', {
   state: () => ({
-    recurringRules: [] as RecurringRule[],
+    recurringRules: [] as WithRequiredId<RecurringRule>[],
   }),
   getters: {},
   actions: {

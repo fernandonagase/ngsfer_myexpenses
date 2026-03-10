@@ -5,7 +5,7 @@ import type { RecurringRule as RecurringRuleEntity } from 'src/databases/entitie
 import type { IRecurringRuleService } from './types/IRecurringRuleService'
 import type { IServiceResult } from './types/IServiceResult'
 import { getRecurringRuleRepository } from 'src/databases/repositories/recurring-rule-repository'
-import type { IServiceListOptions } from './types/IService'
+import type { IServiceListOptions, WithRequiredId } from './types/IService'
 import { ServiceResult } from './service-result'
 
 export class TypeOrmRecurringRuleService implements IRecurringRuleService {
@@ -17,12 +17,12 @@ export class TypeOrmRecurringRuleService implements IRecurringRuleService {
 
   static modelFromEntity(entity: RecurringRuleEntity) {
     const model = new RecurringRule(entity)
-    return model
+    return model as WithRequiredId<RecurringRule>
   }
 
   async list(
     options: IServiceListOptions = { relations: [] },
-  ): Promise<IServiceResult<RecurringRule[]>> {
+  ): Promise<IServiceResult<WithRequiredId<RecurringRule>[]>> {
     try {
       const recurringRules = (
         await this.repository.find({
