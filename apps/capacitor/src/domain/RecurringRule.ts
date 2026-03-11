@@ -97,4 +97,12 @@ export class RecurringRule {
   get isMonthly() {
     return this.frequency === FrequencyType.MONTHLY
   }
+
+  get isWeekly() {
+    return this.frequency === FrequencyType.WEEKLY
+  }
+
+  get weeklyAnchorDay() {
+    return this.isWeekly ? dayjs(this.startDate).day() : null
+  }
 }

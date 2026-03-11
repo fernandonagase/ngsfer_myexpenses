@@ -6,7 +6,7 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import RecurringRuleForm from './RecurringRuleForm.vue'
-import type { Category } from 'src/databases/entities/expenses'
+import type { Category, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { type FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 
@@ -14,10 +14,13 @@ const props = defineProps<{
   value?: string
   date?: string
   category?: Category
+  center?: Center
   description?: string
   operationType?: CategoryType
   recurrenceFrequency?: FrequencyType
   isActive?: boolean
+  interval: number
+  anchorDay: number
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -27,10 +30,13 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginC
 const value = ref<string>(props.value ?? '')
 const date = ref<string>(props.date ?? dayjs().format('YYYY-MM-DD'))
 const category = ref<Category | null>(props.category ?? null)
+const center = ref<Center | null>(props.center ?? null)
 const description = ref<string>(props.description ?? '')
 const operationType = ref<CategoryType>(props.operationType ?? 'Saída')
 const recurrenceFrequency = ref<FrequencyType | undefined>(props.recurrenceFrequency)
 const isActive = ref<boolean>(props.isActive)
+const interval = ref<number>(props.interval)
+const anchorDay = ref<number>(props.anchorDay)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
@@ -52,10 +58,13 @@ function onSubmit() {
             v-model:value="value"
             v-model:date="date"
             v-model:category="category"
+            v-model:center="center"
             v-model:description="description"
             v-model:operation-type="operationType"
             v-model:recurrence-frequency="recurrenceFrequency"
             v-model:is-active="isActive"
+            v-model:interval="interval"
+            v-model:anchor-day="anchorDay"
           />
           <template #fallback>Carregando...</template>
         </Suspense>

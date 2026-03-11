@@ -1,19 +1,26 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
 
-import type { Category } from 'src/databases/entities/expenses'
+import type { Category, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { useCategoryStore } from 'src/stores/category-store'
 import { recurrenceFrequencyOptions } from './recurrence-frequencies.js'
-import type { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { useCenterStore } from 'src/stores/center-store.js'
+
+const centerStore = useCenterStore()
+await centerStore.fetchCenters()
 
 const value = defineModel<string>('value')
 const category = defineModel<Category | null>('category')
+const center = defineModel<Center | null>('center')
 const description = defineModel<string>('description')
 const operationType = defineModel<CategoryType>('operationType', { default: 'Saída' })
 const recurrenceFrequency = defineModel<FrequencyType | undefined>('recurrenceFrequency')
 const isActive = defineModel<boolean>('isActive')
+const interval = defineModel<number>('interval', { required: true })
+const anchorDay = defineModel<number>('anchorDay', { required: true })
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -82,6 +89,15 @@ watch(
       class="q-mb-md"
       readonly
     />
+    <p>
+      Repete a cada {{ interval }}
+      <template v-if="recurrenceFrequency === FrequencyType.MONTHLY">
+        {{ interval === 1 ? 'mês' : 'meses' }} todo dia {{ anchorDay }}
+      </template>
+      <template v-if="recurrenceFrequency === FrequencyType.WEEKLY">
+        semana(s) toda(o) {{ getWeekdayName(anchorDay as 0 | 1 | 2 | 3 | 4 | 5 | 6) }}
+      </template>
+    </p>
     <q-input v-model="description" type="text" label="Descrição" maxlength="50" counter outlined />
     <q-select
       v-model="category"
@@ -90,6 +106,14 @@ watch(
       option-label="name"
       :rules="categoryRules"
       outlined
+    />
+    <q-select
+      v-model="center"
+      :options="centerStore.activeCenters"
+      option-label="name"
+      label="Centro financeiro"
+      outlined
+      readonly
     />
     <q-toggle v-model="isActive" color="green" label="Ativa" />
   </div>

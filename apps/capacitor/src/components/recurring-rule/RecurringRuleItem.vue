@@ -13,9 +13,12 @@ interface RecurringRuleItemProps {
   frequency: FrequencyType
   monthlyAnchorDay?: number | undefined
   weeklyAnchorDay?: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  isActive?: boolean
 }
 
-const props = defineProps<RecurringRuleItemProps>()
+const props = withDefaults(defineProps<RecurringRuleItemProps>(), {
+  isActive: true,
+})
 defineEmits(['click'])
 
 const isExpense = computed(() => props.recurringRuleType === RecurringRuleType.EXPENSE)
@@ -31,6 +34,7 @@ function getWeekday(day: 0 | 1 | 2 | 3 | 4 | 5 | 6) {
       <q-item-label class="text-body1">
         <span v-if="description">{{ description }}</span>
         <span v-else>Não identificada</span>
+        <q-badge v-if="!isActive" color="red" class="q-ml-sm">Inativa</q-badge>
       </q-item-label>
       <q-item-label caption>{{ categoryName }}</q-item-label>
       <q-item-label caption>

@@ -22,6 +22,7 @@ function editRecurringRuleGenerator(recurringRule: RecurringRule) {
     const model = new RecurringRule({ ...recurringRule })
     Object.assign(model, payload)
     await recurringRuleStore.save(model)
+    await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
   }
 }
 
@@ -46,6 +47,7 @@ async function addRecurringRule(payload: ShowAddRecurringRulePayload) {
           :frequency="recurringRule.frequency"
           :monthly-anchor-day="recurringRule.anchorDay"
           :weekly-anchor-day="dayjs(recurringRule.startDate).day()"
+          :is-active="recurringRule.isActive"
           @click="
             recurringRuleController.showEditRecurringRule(recurringRule, {
               editCallback: editRecurringRuleGenerator(recurringRule),
