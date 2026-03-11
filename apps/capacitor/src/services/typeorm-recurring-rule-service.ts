@@ -1,12 +1,16 @@
-import { type Repository } from 'typeorm'
+import { type FindManyOptions, type Repository } from 'typeorm'
 
 import { RecurringRule } from 'src/domain/RecurringRule'
-import type { RecurringRule as RecurringRuleEntity } from 'src/databases/entities/expenses'
+import type {
+  Operation,
+  RecurringRule as RecurringRuleEntity,
+} from 'src/databases/entities/expenses'
 import type { IRecurringRuleService } from './types/IRecurringRuleService'
 import type { IServiceResult } from './types/IServiceResult'
 import { getRecurringRuleRepository } from 'src/databases/repositories/recurring-rule-repository'
-import type { IServiceListOptions, WithRequiredId } from './types/IService'
+import type { IServiceListFilters, IServiceListOptions, WithRequiredId } from './types/IService'
 import { ServiceResult } from './service-result'
+import { getOperationRepository } from 'src/databases/repositories/operation-repository'
 
 export class TypeOrmRecurringRuleService implements IRecurringRuleService {
   repository: Repository<RecurringRuleEntity>
@@ -21,14 +25,22 @@ export class TypeOrmRecurringRuleService implements IRecurringRuleService {
   }
 
   async list(
-    options: IServiceListOptions = { relations: [] },
+    { relations = [], filters }: IServiceListOptions = { relations: [] },
   ): Promise<IServiceResult<WithRequiredId<RecurringRule>[]>> {
     try {
-      const recurringRules = (
-        await this.repository.find({
-          relations: Object.fromEntries(options.relations.map((relation) => [relation, true])),
-        })
-      ).map((recurringRule) => TypeOrmRecurringRuleService.modelFromEntity(recurringRule))
+      const findOptions: FindManyOptions = {
+        relations: Object.fromEntries(relations.map((relation) => [relation, true])),
+      }
+      const whereOptions = {} as IServiceListFilters
+      if (filters?.isActive) {
+        whereOptions.isActive = true
+      }
+      if (Object.keys(whereOptions).length !== 0) {
+        findOptions.where = whereOptions
+      }
+      const recurringRules = (await this.repository.find(findOptions)).map((recurringRule) =>
+        TypeOrmRecurringRuleService.modelFromEntity(recurringRule),
+      )
       return ServiceResult.ok(recurringRules)
     } catch (error) {
       return ServiceResult.error(error)
@@ -67,6 +79,27 @@ export class TypeOrmRecurringRuleService implements IRecurringRuleService {
       return ServiceResult.ok(undefined)
     } catch (error) {
       return ServiceResult.error(error)
+    }
+  }
+
+  async generateRecurringOperationsForCurrentWindow(): Promise<void> {
+    const ret = await this.list({
+      filters: { isActive: true },
+      relations: ['center', 'category'],
+    })
+    const operations = [] as Operation[]
+    if (ret.ok) {
+      ret.payload.forEach((recurringRule) => {
+        operations.push(...recurringRule.generateCurrentWindowOperations())
+      })
+    }
+    const operationRepository = getOperationRepository()
+    for (const operation of operations) {
+      try {
+        await operationRepository.save(operation)
+      } catch (error) {
+        console.error(error)
+      }
     }
   }
 }

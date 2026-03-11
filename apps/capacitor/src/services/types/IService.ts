@@ -1,7 +1,12 @@
 import type { IServiceResult } from './IServiceResult'
 
+export type IServiceListFilters = Partial<{
+  isActive: boolean
+}>
+
 interface IServiceListOptions {
-  relations: string[]
+  relations?: string[]
+  filters?: IServiceListFilters
 }
 
 type WithRequiredId<T extends { id?: unknown }> = Omit<T, 'id'> & { id: NonNullable<T['id']> }
