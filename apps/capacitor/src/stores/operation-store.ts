@@ -414,6 +414,7 @@ export const useOperationStore = defineStore('operation', () => {
     const operations = await operationRepository
       .createQueryBuilder('operation')
       .leftJoinAndSelect('operation.category', 'category')
+      .leftJoinAndSelect('operation.recurringRule', 'recurringRule')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
       .andWhere("STRFTIME('%m', operation.date) = :monthIndex", {
         monthIndex: month.value.slice(5, 7),

@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { BRL } from '@ngsfer-myexpenses/utils'
+import dayjs from 'dayjs'
 
 import { Center } from './center'
 import { Category } from './category'
@@ -95,5 +96,13 @@ export class RecurringRule {
 
   get isMonthly() {
     return this.frequency === FrequencyType.MONTHLY
+  }
+
+  get isWeekly() {
+    return this.frequency === FrequencyType.WEEKLY
+  }
+
+  get weeklyAnchorDay() {
+    return this.isWeekly ? dayjs(this.startDate).day() : null
   }
 }

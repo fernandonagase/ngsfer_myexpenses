@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { StatusBar } from '@capacitor/status-bar'
 import { getCssVar } from 'quasar'
-import { BRL } from "@ngsfer-myexpenses/utils"
+import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
 
 import { useOperationStore } from 'src/stores/operation-store'
 import { useCenterStore } from 'src/stores/center-store'
@@ -11,6 +11,7 @@ import ConcealableValue from 'src/components/ConcealableValue.vue'
 import EmptyList from 'src/components/EmptyList.vue'
 import type { Operation } from 'src/databases/entities/expenses'
 import { useConfigStore } from 'src/stores/config-store'
+import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 
 const qPrimaryColor = getCssVar('primary')
 if (qPrimaryColor) {
@@ -120,6 +121,16 @@ const totalForMonth = computed(() =>
               <span v-else>Não identificada</span>
             </q-item-label>
             <q-item-label caption>{{ operation.category.name }}</q-item-label>
+            <q-item-label caption>
+              <q-icon name="repeat" />
+              Repete
+              <template v-if="operation.recurringRule?.frequency === FrequencyType.WEEKLY">
+                toda(o) {{ getWeekdayName(operation.recurringRule.weeklyAnchorDay!) }}
+              </template>
+              <template v-if="operation.recurringRule?.frequency === FrequencyType.MONTHLY">
+                todo dia {{ operation.recurringRule.anchorDay }}
+              </template>
+            </q-item-label>
           </q-item-section>
           <q-item-section side>
             <ConcealableValue>
