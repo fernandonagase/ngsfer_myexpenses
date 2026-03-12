@@ -121,7 +121,7 @@ const totalForMonth = computed(() =>
               <span v-else>Não identificada</span>
             </q-item-label>
             <q-item-label caption>{{ operation.category.name }}</q-item-label>
-            <q-item-label caption>
+            <q-item-label v-if="operation.recurringRule" caption>
               <q-icon name="repeat" />
               Repete
               <template v-if="operation.recurringRule?.frequency === FrequencyType.WEEKLY">
