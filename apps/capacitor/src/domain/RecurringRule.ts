@@ -90,7 +90,8 @@ export class RecurringRule {
     const windowEnd = dayjs().add(1, 'month').endOf('month')
     const operations: Operation[] = []
 
-    if (this.isMonthly && this.anchorDay && this.interval > 0) {
+    if (this.isMonthly) {
+      if (!this.anchorDay || this.interval <= 0) return operations
       let monthCursor = effectiveWindowStart.startOf('month')
       let firstDateForCurrentWindow = monthCursor
 
@@ -129,6 +130,45 @@ export class RecurringRule {
         }
 
         dateCursor = dateCursor.add(this.interval, 'month')
+      }
+
+      const generatedAt = dayjs().format('YYYY-MM-DD HH:mm:ss')
+      effectiveWindowDates.forEach((date) => {
+        const operation = new Operation()
+        operation.description = this.description ?? ''
+        operation.valueInCents = this.valueInCents
+        operation.date = date
+        operation.isActive = this.isActive
+        operation.generatedAt = generatedAt
+        operation.generationKey = `${this.id}-${date}`
+        operation.recurringRule = this as unknown as NonNullable<Operation['recurringRule']>
+        if (this.center) operation.center = this.center
+        if (this.category) operation.category = this.category
+        operations.push(operation)
+      })
+    } else if (this.isWeekly) {
+      if (this.interval <= 0) return operations
+      const startWeekday = startDate.day()
+      const daysUntilStartWeekday = (startWeekday - effectiveWindowStart.day() + 7) % 7
+      let firstDateForCurrentWindow = effectiveWindowStart.add(daysUntilStartWeekday, 'day')
+      const weeksDiff = firstDateForCurrentWindow
+        .startOf('day')
+        .diff(startDate.startOf('day'), 'week')
+      const intervalRemainder = weeksDiff % this.interval
+
+      if (intervalRemainder !== 0) {
+        firstDateForCurrentWindow = firstDateForCurrentWindow.add(
+          this.interval - intervalRemainder,
+          'week',
+        )
+      }
+
+      const effectiveWindowDates = [] as string[]
+      let dateCursor = firstDateForCurrentWindow
+
+      while (dateCursor.isSame(windowEnd, 'day') || dateCursor.isBefore(windowEnd, 'day')) {
+        effectiveWindowDates.push(dateCursor.format('YYYY-MM-DD'))
+        dateCursor = dateCursor.add(this.interval, 'week')
       }
 
       const generatedAt = dayjs().format('YYYY-MM-DD HH:mm:ss')
