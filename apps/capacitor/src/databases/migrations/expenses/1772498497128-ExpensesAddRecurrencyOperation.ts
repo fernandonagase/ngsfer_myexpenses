@@ -1,6 +1,8 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class ExpensesAddRecurrencyOperation1772498497128 implements MigrationInterface {
+  name = 'ExpensesAddRecurrencyOperation1772498497128'
+
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `CREATE TABLE operacao_financeira_new (
