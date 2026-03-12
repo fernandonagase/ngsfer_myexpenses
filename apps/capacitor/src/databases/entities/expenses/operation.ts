@@ -58,7 +58,7 @@ export class Operation {
     this.recurringRule = recurringRule
     const today = dayjs().format('YYYY-MM-DD')
     this.generatedAt = today
-    this.generationKey = this.getGenerationKey(recurringRule, today)
+    this.generationKey = this.getGenerationKey(recurringRule, this.date ?? today)
   }
 
   get valueString() {
