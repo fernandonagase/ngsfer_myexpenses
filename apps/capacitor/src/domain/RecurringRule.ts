@@ -99,9 +99,12 @@ export class RecurringRule {
         const hasAnchorDayInMonth = this.anchorDay <= monthCursor.daysInMonth()
         if (hasAnchorDayInMonth) {
           const candidate = monthCursor.startOf('month').date(this.anchorDay)
+          const monthsDiff = monthCursor.startOf('month').diff(startDate.startOf('month'), 'month')
+          const isIntervalCompatible = monthsDiff % this.interval === 0
           if (
-            candidate.isSame(effectiveWindowStart, 'day') ||
-            candidate.isAfter(effectiveWindowStart)
+            isIntervalCompatible &&
+            (candidate.isSame(effectiveWindowStart, 'day') ||
+              candidate.isAfter(effectiveWindowStart))
           ) {
             firstDateForCurrentWindow = candidate
             break
