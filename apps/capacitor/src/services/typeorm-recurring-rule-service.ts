@@ -94,12 +94,6 @@ export class TypeOrmRecurringRuleService implements IRecurringRuleService {
       })
     }
     const operationRepository = getOperationRepository()
-    for (const operation of operations) {
-      try {
-        await operationRepository.save(operation)
-      } catch (error) {
-        console.error(error)
-      }
-    }
+    await operationRepository.createQueryBuilder().insert().values(operations).orIgnore().execute()
   }
 }

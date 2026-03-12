@@ -37,6 +37,9 @@ export const useRecurringRuleStore = defineStore('recurringRuleStore', {
         throw new Error('Falha ao salvar regra de recorrência', { cause: result })
       }
     },
+    async generateRecurringOperationsForCurrentWindow() {
+      await recurringRuleService.generateRecurringOperationsForCurrentWindow()
+    },
   },
 })
 

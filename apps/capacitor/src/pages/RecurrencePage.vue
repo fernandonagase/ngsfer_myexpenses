@@ -10,20 +10,12 @@ import type {
   ShowEditRecurringRulePayload,
 } from 'src/controllers/types/IRecurringRuleController'
 import { RecurringRule } from 'src/domain/RecurringRule'
-import { TypeOrmRecurringRuleService } from 'src/services/typeorm-recurring-rule-service'
-import type { IRecurringRuleService } from 'src/services/types/IRecurringRuleService'
 import { useRecurringRuleStore } from 'src/stores/recurring-rule-store'
-import { onMounted } from 'vue'
 
 const recurringRuleStore = useRecurringRuleStore()
 const recurringRuleController: IRecurringRuleController = new QuasarRecurringRuleController()
 
 await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
-
-onMounted(async () => {
-  const recurringRuleService: IRecurringRuleService = new TypeOrmRecurringRuleService()
-  await recurringRuleService.generateRecurringOperationsForCurrentWindow()
-})
 
 function editRecurringRuleGenerator(recurringRule: RecurringRule) {
   return async (payload: ShowEditRecurringRulePayload) => {
@@ -37,6 +29,7 @@ function editRecurringRuleGenerator(recurringRule: RecurringRule) {
 async function addRecurringRule(payload: ShowAddRecurringRulePayload) {
   const model = new RecurringRule({ ...payload })
   await recurringRuleStore.insert(model)
+  await recurringRuleStore.generateRecurringOperationsForCurrentWindow()
   await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
 }
 </script>

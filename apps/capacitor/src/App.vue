@@ -9,9 +9,6 @@ import { TypeOrmRecurringRuleService } from './services/typeorm-recurring-rule-s
 
 onMounted(async () => {
   const recurringRuleService: IRecurringRuleService = new TypeOrmRecurringRuleService()
-  const ret = await recurringRuleService.list({ filters: { isActive: true } })
-  if (ret.ok) {
-    console.log(ret.payload)
-  }
+  await recurringRuleService.generateRecurringOperationsForCurrentWindow()
 })
 </script>
