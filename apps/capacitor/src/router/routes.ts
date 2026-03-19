@@ -14,6 +14,21 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/reports',
+    component: () => import('src/layouts/ReportsLayout.vue'),
+    meta: { title: 'Relatórios' },
+    props: (route) => ({
+      title: route.meta.title,
+    }),
+    children: [
+      {
+        name: 'operations-by-category',
+        path: 'operations-by-category',
+        component: () => import('pages/reports/OperationsByCategoryPage.vue'),
+      },
+    ],
+  },
+  {
     path: '/settings',
     component: () => import('src/layouts/DefaultLayout.vue'),
     meta: { title: 'Configurações' },

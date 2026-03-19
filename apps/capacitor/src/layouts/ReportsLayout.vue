@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CenterToolbar from 'src/components/center/CenterToolbar.vue'
+import ReportsToolbar from 'src/components/reports/ReportsToolbar.vue'
 import { useOperationStore } from 'src/stores/operation-store';
 
 const operationStore = useOperationStore()
@@ -9,7 +9,7 @@ const operationStore = useOperationStore()
   <Suspense>
     <q-layout view="lHh Lpr lFf">
       <q-header>
-        <CenterToolbar />
+        <ReportsToolbar />
       </q-header>
 
       <q-page-container>

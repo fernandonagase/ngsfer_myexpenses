@@ -8,7 +8,6 @@ import { Category, RecurringRule } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
-import OperationByCategoryDialog from 'src/components/reports/OperationByCategoryDialog.vue'
 import { type RecurrenceType } from 'src/components/operation/recurrence-types'
 import { type EntityManager } from 'typeorm'
 import {
@@ -344,12 +343,6 @@ export const useOperationStore = defineStore('operation', () => {
     await refreshData()
   }
 
-  function showOperationsByCategory() {
-    $q.dialog({
-      component: OperationByCategoryDialog,
-    })
-  }
-
   async function getOperationsByCategory() {
     const income = await categoryOperation
       .createQueryBuilder('category')
@@ -496,7 +489,6 @@ export const useOperationStore = defineStore('operation', () => {
     addOperation,
     editOperation,
     removeOperation,
-    showOperationsByCategory,
     getOperationsByCategory,
     getMonthGroups,
     copyOperation,
