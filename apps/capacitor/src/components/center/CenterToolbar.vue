@@ -58,21 +58,6 @@ function showSummary() {
             {{ configStore.hideValues ? 'Mostrar valores' : 'Ocultar valores' }}
           </q-tooltip>
         </q-btn>
-        <q-btn
-          :icon="configStore.showOperationDetails ? 'unfold_less' : 'unfold_more'"
-          flat
-          round
-          dense
-          @click="configStore.toggleOperationDetailsVisibility()"
-        >
-          <q-tooltip>
-            {{
-              configStore.showOperationDetails
-                ? 'Ocultar detalhamento diário'
-                : 'Mostrar detalhamento diário'
-            }}
-          </q-tooltip>
-        </q-btn>
         <q-btn icon="description" flat round dense @click="showSummary()" />
       </div>
     </div>
