@@ -24,10 +24,10 @@ export class Operation {
   isActive!: boolean
 
   @Column({ name: 'generated_at', type: 'text' })
-  generatedAt!: string
+  generatedAt?: string
 
   @Column({ name: 'generation_key', type: 'text' })
-  generationKey!: string
+  generationKey?: string
 
   @ManyToOne(() => RecurringRule, { nullable: true })
   @JoinColumn({
@@ -49,6 +49,9 @@ export class Operation {
     referencedColumnName: 'id',
   })
   category!: Category
+
+  @Column({ name: 'notes', type: 'text' })
+  notes?: string
 
   getGenerationKey(recurringRule: RecurringRule, date: string) {
     return `${recurringRule.id}-${date}`

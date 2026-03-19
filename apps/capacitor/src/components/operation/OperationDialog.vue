@@ -20,6 +20,7 @@ const props = defineProps<{
   installmentCount?: number
   recurrenceType?: RecurrenceType
   recurrenceFrequency?: FrequencyType
+  notes?: string
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -34,6 +35,7 @@ const operationType = ref<CategoryType>(props.operationType ?? 'Saída')
 const installmentCount = ref<number>(props.installmentCount ?? 1)
 const recurrenceType = ref<RecurrenceType>(props.recurrenceType ?? 'one-time')
 const recurrenceFrequency = ref<FrequencyType | undefined>(props.recurrenceFrequency)
+const notes = ref<string | undefined>(props.notes)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
@@ -45,6 +47,7 @@ function onSubmit() {
     installmentCount: installmentCount.value,
     recurrenceType: recurrenceType.value,
     recurrenceFrequency: recurrenceFrequency.value,
+    notes: notes.value,
   })
 }
 </script>
@@ -63,6 +66,7 @@ function onSubmit() {
             v-model:installment-count="installmentCount"
             v-model:recurrence-type="recurrenceType"
             v-model:recurrence-frequency="recurrenceFrequency"
+            v-model:notes="notes"
           />
           <template #fallback>Carregando...</template>
         </Suspense>

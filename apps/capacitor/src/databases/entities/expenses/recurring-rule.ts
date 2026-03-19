@@ -77,7 +77,7 @@ export class RecurringRule {
   endMode!: EndMode
 
   @Column({ name: 'end_date', type: 'text' })
-  endDate!: string
+  endDate?: string
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean

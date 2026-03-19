@@ -17,6 +17,7 @@ const description = defineModel<string>('description')
 const operationType = defineModel<CategoryType>('operationType', { default: 'Saída' })
 const recurrenceType = defineModel<RecurrenceType>('recurrenceType', { default: 'one-time' })
 const recurrenceFrequency = defineModel<FrequencyType | undefined>('recurrenceFrequency')
+const notes = defineModel<string | undefined>('notes')
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -121,5 +122,6 @@ watch(recurrenceType, () => {
       :rules="categoryRules"
       outlined
     />
+    <q-input v-model="notes" type="text" label="Observações" outlined autogrow />
   </div>
 </template>

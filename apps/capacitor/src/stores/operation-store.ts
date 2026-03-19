@@ -24,6 +24,7 @@ type OperationPayload = {
   installmentCount?: number
   recurrenceType: RecurrenceType
   recurrenceFrequency?: FrequencyType
+  notes?: string
 }
 
 type OperationData = {
@@ -31,6 +32,7 @@ type OperationData = {
   category: Category
   center: Center
   description: string
+  notes?: string | undefined
 }
 
 type RecurringRuleData = {
@@ -84,6 +86,7 @@ function addOperations(
           ? `${operationData.description} (${index + 1}/${values.length})`
           : operationData.description,
       center: operationData.center,
+      ...(operationData.notes !== undefined ? { notes: operationData.notes } : {}),
     })
     if (recurringRule) {
       operation.setRecurringRule(recurringRule)
@@ -223,6 +226,7 @@ export const useOperationStore = defineStore('operation', () => {
                 category: payload.category,
                 description: payload.description,
                 center: center.value!,
+                notes: payload.notes,
               },
               { values, manager },
             )
@@ -253,13 +257,16 @@ export const useOperationStore = defineStore('operation', () => {
         category: operation.category,
         description: operation.description,
         operationType: operation.isExpense ? 'Saída' : 'Entrada',
+        notes: operation.notes,
       },
       persistent: true,
-    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
+    }).onOk(
+      (payload: { value: number; date: string; category: Category; description: string; notes?: string }) => {
       operation.valueInCents = payload.value
       operation.date = payload.date
       operation.category = payload.category
       operation.description = payload.description
+      operation.notes = payload.notes ?? ''
       operationRepository
         .save(operation)
         .then(async () => {
@@ -308,14 +315,17 @@ export const useOperationStore = defineStore('operation', () => {
         category: operation.category,
         description: operation.description,
         operationType: operation.isExpense ? 'Saída' : 'Entrada',
+        notes: operation.notes,
       },
       persistent: true,
-    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
+    }).onOk(
+      (payload: { value: number; date: string; category: Category; description: string; notes?: string }) => {
       const newOperation = new Operation()
       newOperation.valueInCents = payload.value
       newOperation.date = payload.date
       newOperation.category = payload.category
       newOperation.description = payload.description
+      newOperation.notes = payload.notes ?? ''
       newOperation.center = center.value!
       operationRepository
         .save(newOperation)
