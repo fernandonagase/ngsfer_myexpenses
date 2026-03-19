@@ -1,6 +1,6 @@
 {
   "name": "@ngsfer-myexpenses/capacitor",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Aplicativo para controle de finanças pessoais",
   "productName": "My Expenses",
   "author": "Fernando Nagase <nagase.fernando@gmail.com>",
@@ -13,7 +13,8 @@
     "dev": "quasar dev",
     "dev:android": "quasar dev -m capacitor -T android",
     "build": "quasar build",
-    "postinstall": "quasar prepare"
+    "postinstall": "quasar prepare",
+    "createmigration": "typeorm migration:create"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^6.0.2",
