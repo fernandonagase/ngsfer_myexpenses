@@ -4,6 +4,7 @@ import { useQuasar } from 'quasar'
 import ErrorBoundary from 'src/components/ErrorBoundary.vue'
 import { actWithDbConnectionStopped } from 'src/databases/datasources/ExpensesDatasource'
 import { backup, importBackup } from 'src/services/backup-service'
+import { notificationService } from 'src/services/notification-service'
 import { useCategoryStore } from 'src/stores/category-store'
 import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
@@ -45,6 +46,7 @@ async function doImportBackup() {
       message: 'Backup restaurado com sucesso!',
     })
     await refreshScreen()
+    await notificationService.rescheduleAll()
   } catch (error) {
     console.error(error)
   }

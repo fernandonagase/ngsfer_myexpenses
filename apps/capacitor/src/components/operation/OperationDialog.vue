@@ -21,6 +21,9 @@ const props = defineProps<{
   recurrenceType?: RecurrenceType
   recurrenceFrequency?: FrequencyType
   notes?: string
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -36,6 +39,9 @@ const installmentCount = ref<number>(props.installmentCount ?? 1)
 const recurrenceType = ref<RecurrenceType>(props.recurrenceType ?? 'one-time')
 const recurrenceFrequency = ref<FrequencyType | undefined>(props.recurrenceFrequency)
 const notes = ref<string | undefined>(props.notes)
+const notificationEnabled = ref<boolean>(props.notificationEnabled ?? false)
+const notificationDaysBefore = ref<number | undefined>(props.notificationDaysBefore)
+const notificationTime = ref<string | undefined>(props.notificationTime)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
@@ -48,6 +54,9 @@ function onSubmit() {
     recurrenceType: recurrenceType.value,
     recurrenceFrequency: recurrenceFrequency.value,
     notes: notes.value,
+    notificationEnabled: notificationEnabled.value,
+    notificationDaysBefore: notificationDaysBefore.value,
+    notificationTime: notificationTime.value,
   })
 }
 </script>
@@ -67,6 +76,9 @@ function onSubmit() {
             v-model:recurrence-type="recurrenceType"
             v-model:recurrence-frequency="recurrenceFrequency"
             v-model:notes="notes"
+            v-model:notification-enabled="notificationEnabled"
+            v-model:notification-days-before="notificationDaysBefore"
+            v-model:notification-time="notificationTime"
           />
           <template #fallback>Carregando...</template>
         </Suspense>

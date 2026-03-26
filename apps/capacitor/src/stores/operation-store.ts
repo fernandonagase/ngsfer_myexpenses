@@ -14,6 +14,7 @@ import {
   type FrequencyType,
   RecurringRuleType,
 } from 'src/databases/entities/expenses/recurring-rule'
+import { notificationService } from 'src/services/notification-service'
 
 type OperationPayload = {
   value: number
@@ -24,6 +25,9 @@ type OperationPayload = {
   recurrenceType: RecurrenceType
   recurrenceFrequency?: FrequencyType
   notes?: string
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
 }
 
 type OperationData = {
@@ -32,6 +36,9 @@ type OperationData = {
   center: Center
   description: string
   notes?: string | undefined
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
 }
 
 type RecurringRuleData = {
@@ -75,10 +82,13 @@ function addOperations(
     manager,
   }: { values: number[]; recurringRule?: RecurringRule; manager: EntityManager },
 ) {
+  const today = dayjs().format('YYYY-MM-DD')
   const operations = values.map((valueInCents, index) => {
+    const operationDate = dayjs(operationData.date).add(index, 'month').format('YYYY-MM-DD')
+    const isFuture = operationDate > today
     const operation = manager.create(Operation, {
       valueInCents: valueInCents,
-      date: dayjs(operationData.date).add(index, 'month').format('YYYY-MM-DD'),
+      date: operationDate,
       category: operationData.category,
       description:
         values.length > 1
@@ -86,6 +96,13 @@ function addOperations(
           : operationData.description,
       center: operationData.center,
       ...(operationData.notes !== undefined ? { notes: operationData.notes } : {}),
+      notificationEnabled: isFuture ? (operationData.notificationEnabled ?? false) : false,
+      ...(isFuture && operationData.notificationEnabled
+        ? {
+            notificationDaysBefore: operationData.notificationDaysBefore,
+            notificationTime: operationData.notificationTime,
+          }
+        : {}),
     })
     if (recurringRule) {
       operation.setRecurringRule(recurringRule)
@@ -211,6 +228,7 @@ export const useOperationStore = defineStore('operation', () => {
             )
           })
           await refreshDataForOperationDate(payload.date)
+          await notificationService.rescheduleAll()
         } catch (error) {
           console.error(error)
         }
@@ -226,11 +244,19 @@ export const useOperationStore = defineStore('operation', () => {
                 description: payload.description,
                 center: center.value!,
                 notes: payload.notes,
+                ...(payload.notificationEnabled
+                  ? { notificationEnabled: payload.notificationEnabled }
+                  : {}),
+                ...(payload.notificationDaysBefore
+                  ? { notificationDaysBefore: payload.notificationDaysBefore }
+                  : {}),
+                ...(payload.notificationTime ? { notificationTime: payload.notificationTime } : {}),
               },
               { values, manager },
             )
           })
           await refreshDataForOperationDate(payload.date)
+          await notificationService.rescheduleAll()
         } catch (error) {
           console.error(error)
         }
@@ -257,24 +283,47 @@ export const useOperationStore = defineStore('operation', () => {
         description: operation.description,
         operationType: operation.isExpense ? 'Saída' : 'Entrada',
         notes: operation.notes,
+        notificationEnabled: operation.notificationEnabled ?? false,
+        notificationDaysBefore: operation.notificationDaysBefore,
+        notificationTime: operation.notificationTime,
       },
       persistent: true,
     }).onOk(
-      (payload: { value: number; date: string; category: Category; description: string; notes?: string }) => {
-      operation.valueInCents = payload.value
-      operation.date = payload.date
-      operation.category = payload.category
-      operation.description = payload.description
-      operation.notes = payload.notes ?? ''
-      operationRepository
-        .save(operation)
-        .then(async () => {
-          await refreshDataForOperationDate(payload.date)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-    })
+      (payload: {
+        value: number
+        date: string
+        category: Category
+        description: string
+        notes?: string
+        notificationEnabled?: boolean
+        notificationDaysBefore?: number
+        notificationTime?: string
+      }) => {
+        const today = dayjs().format('YYYY-MM-DD')
+        const isFuture = payload.date > today
+        operation.valueInCents = payload.value
+        operation.date = payload.date
+        operation.category = payload.category
+        operation.description = payload.description
+        operation.notes = payload.notes ?? ''
+        operation.notificationEnabled = isFuture ? (payload.notificationEnabled ?? false) : false
+        if (isFuture && payload.notificationDaysBefore) {
+          operation.notificationDaysBefore = payload.notificationDaysBefore
+        }
+        if (isFuture && payload.notificationTime) {
+          operation.notificationTime = payload.notificationTime
+        }
+        operationRepository
+          .save(operation)
+          .then(async () => {
+            await refreshDataForOperationDate(payload.date)
+            await notificationService.rescheduleAll()
+          })
+          .catch((error) => {
+            console.error(error)
+          })
+      },
+    )
   }
 
   function removeOperation(operation: Operation) {
@@ -294,6 +343,7 @@ export const useOperationStore = defineStore('operation', () => {
         .remove(operation)
         .then(async () => {
           await refreshData()
+          await notificationService.rescheduleAll()
         })
         .catch((error) => {
           console.error(error)
@@ -318,23 +368,43 @@ export const useOperationStore = defineStore('operation', () => {
       },
       persistent: true,
     }).onOk(
-      (payload: { value: number; date: string; category: Category; description: string; notes?: string }) => {
-      const newOperation = new Operation()
-      newOperation.valueInCents = payload.value
-      newOperation.date = payload.date
-      newOperation.category = payload.category
-      newOperation.description = payload.description
-      newOperation.notes = payload.notes ?? ''
-      newOperation.center = center.value!
-      operationRepository
-        .save(newOperation)
-        .then(async () => {
-          await refreshDataForOperationDate(payload.date)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-    })
+      (payload: {
+        value: number
+        date: string
+        category: Category
+        description: string
+        notes?: string
+        notificationEnabled?: boolean
+        notificationDaysBefore?: number
+        notificationTime?: string
+      }) => {
+        const today = dayjs().format('YYYY-MM-DD')
+        const isFuture = payload.date > today
+        const newOperation = new Operation()
+        newOperation.valueInCents = payload.value
+        newOperation.date = payload.date
+        newOperation.category = payload.category
+        newOperation.description = payload.description
+        newOperation.notes = payload.notes ?? ''
+        newOperation.center = center.value!
+        newOperation.notificationEnabled = isFuture ? (payload.notificationEnabled ?? false) : false
+        if (isFuture && payload.notificationDaysBefore) {
+          newOperation.notificationDaysBefore = payload.notificationDaysBefore
+        }
+        if (isFuture && payload.notificationTime) {
+          newOperation.notificationTime = payload.notificationTime
+        }
+        operationRepository
+          .save(newOperation)
+          .then(async () => {
+            await refreshDataForOperationDate(payload.date)
+            await notificationService.rescheduleAll()
+          })
+          .catch((error) => {
+            console.error(error)
+          })
+      },
+    )
   }
 
   async function transferOperationToCenter(operation: Operation, center: Center) {

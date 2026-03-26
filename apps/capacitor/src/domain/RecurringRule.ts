@@ -26,6 +26,9 @@ export class RecurringRule {
   endMode: EndMode
   endDate?: string
   isActive: boolean
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
 
   constructor({
     id,
@@ -43,6 +46,9 @@ export class RecurringRule {
     endMode,
     endDate,
     isActive,
+    notificationEnabled,
+    notificationDaysBefore,
+    notificationTime,
   }: {
     id?: number
     description?: string
@@ -59,6 +65,9 @@ export class RecurringRule {
     endMode: EndMode
     endDate?: string
     isActive: boolean
+    notificationEnabled?: boolean
+    notificationDaysBefore?: number
+    notificationTime?: string
   }) {
     if (id) this.id = id
     if (description) this.description = description
@@ -81,6 +90,9 @@ export class RecurringRule {
     this.endMode = endMode
     if (endDate) this.endDate = endDate
     this.isActive = isActive
+    this.notificationEnabled = notificationEnabled ?? false
+    if (notificationDaysBefore) this.notificationDaysBefore = notificationDaysBefore
+    if (notificationTime) this.notificationTime = notificationTime
   }
 
   generateCurrentWindowOperations() {
@@ -147,6 +159,10 @@ export class RecurringRule {
         operation.recurringRule = this as unknown as NonNullable<Operation['recurringRule']>
         if (this.center) operation.center = this.center
         if (this.category) operation.category = this.category
+        operation.notificationEnabled = this.notificationEnabled ?? false
+        if (this.notificationDaysBefore)
+          operation.notificationDaysBefore = this.notificationDaysBefore
+        if (this.notificationTime) operation.notificationTime = this.notificationTime
         operations.push(operation)
       })
     } else if (this.isWeekly) {
@@ -186,6 +202,10 @@ export class RecurringRule {
         operation.recurringRule = this as unknown as NonNullable<Operation['recurringRule']>
         if (this.center) operation.center = this.center
         if (this.category) operation.category = this.category
+        operation.notificationEnabled = this.notificationEnabled ?? false
+        if (this.notificationDaysBefore)
+          operation.notificationDaysBefore = this.notificationDaysBefore
+        if (this.notificationTime) operation.notificationTime = this.notificationTime
         operations.push(operation)
       })
     }

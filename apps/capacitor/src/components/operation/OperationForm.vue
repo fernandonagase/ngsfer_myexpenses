@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { BRL } from '@ngsfer-myexpenses/utils'
+import dayjs from 'dayjs'
+import { useQuasar } from 'quasar'
 
 import type { Category } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
@@ -8,6 +10,9 @@ import { useCategoryStore } from 'src/stores/category-store'
 import { type RecurrenceType, recurrenceTypeOptions } from './recurrence-types'
 import { recurrenceFrequencyOptions } from './recurrence-frequencies'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { notificationService } from 'src/services/notification-service'
+
+const $q = useQuasar()
 
 const value = defineModel<string>('value')
 const installmentCount = defineModel<number>('installmentCount')
@@ -18,6 +23,9 @@ const operationType = defineModel<CategoryType>('operationType', { default: 'Sa�
 const recurrenceType = defineModel<RecurrenceType>('recurrenceType', { default: 'one-time' })
 const recurrenceFrequency = defineModel<FrequencyType | undefined>('recurrenceFrequency')
 const notes = defineModel<string | undefined>('notes')
+const notificationEnabled = defineModel<boolean>('notificationEnabled', { default: false })
+const notificationDaysBefore = defineModel<number | undefined>('notificationDaysBefore')
+const notificationTime = defineModel<string | undefined>('notificationTime')
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -39,6 +47,17 @@ const filteredCategories = computed<Array<Category>>(() =>
 const hasInstallments = computed(() => recurrenceType.value === 'installments')
 const isRecurring = computed(() => recurrenceType.value === 'recurring')
 
+const isFutureDate = computed(() => {
+  if (!date.value) return false
+  return dayjs(date.value).isAfter(dayjs(), 'day')
+})
+
+const notificationDaysBeforeOptions = [
+  { label: 'No mesmo dia', value: 0 },
+  { label: '1 dia antes', value: 1 },
+  { label: '2 dias antes', value: 2 },
+]
+
 watch(
   [operationType, filteredCategories],
   () => {
@@ -56,6 +75,27 @@ watch(recurrenceType, () => {
     recurrenceFrequency.value = FrequencyType.MONTHLY
   }
 })
+
+watch(isFutureDate, (isFuture) => {
+  if (!isFuture) {
+    notificationEnabled.value = false
+    notificationDaysBefore.value = undefined
+    notificationTime.value = undefined
+  }
+})
+
+async function onNotificationToggle(val: boolean) {
+  if (!val) return
+
+  const granted = await notificationService.checkAndRequestPermissions()
+  if (!granted) {
+    notificationEnabled.value = false
+    $q.notify({
+      type: 'warning',
+      message: 'Permissão de notificações negada. Ative nas configurações do dispositivo.',
+    })
+  }
+}
 </script>
 
 <template>
@@ -123,5 +163,32 @@ watch(recurrenceType, () => {
       outlined
     />
     <q-input v-model="notes" type="text" label="Observações" outlined autogrow />
+    <template v-if="isFutureDate && !isRecurring">
+      <q-separator spaced />
+      <q-toggle
+        v-model="notificationEnabled"
+        label="Notificar"
+        color="primary"
+        @update:model-value="onNotificationToggle"
+      />
+      <template v-if="notificationEnabled">
+        <q-select
+          v-model="notificationDaysBefore"
+          :options="notificationDaysBeforeOptions"
+          label="Antecedência"
+          emit-value
+          map-options
+          outlined
+          class="q-mt-sm"
+        />
+        <q-input
+          v-model="notificationTime"
+          type="time"
+          label="Horário"
+          outlined
+          class="q-mt-sm"
+        />
+      </template>
+    </template>
   </div>
 </template>

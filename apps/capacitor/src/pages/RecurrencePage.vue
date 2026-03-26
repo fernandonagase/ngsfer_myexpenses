@@ -11,6 +11,7 @@ import type {
 } from 'src/controllers/types/IRecurringRuleController'
 import { RecurringRule } from 'src/domain/RecurringRule'
 import { useRecurringRuleStore } from 'src/stores/recurring-rule-store'
+import { notificationService } from 'src/services/notification-service'
 
 const recurringRuleStore = useRecurringRuleStore()
 const recurringRuleController: IRecurringRuleController = new QuasarRecurringRuleController()
@@ -23,6 +24,7 @@ function editRecurringRuleGenerator(recurringRule: RecurringRule) {
     Object.assign(model, payload)
     await recurringRuleStore.save(model)
     await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
+    await notificationService.rescheduleAll()
   }
 }
 
@@ -31,6 +33,7 @@ async function addRecurringRule(payload: ShowAddRecurringRulePayload) {
   await recurringRuleStore.insert(model)
   await recurringRuleStore.generateRecurringOperationsForCurrentWindow()
   await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
+  await notificationService.rescheduleAll()
 }
 </script>
 

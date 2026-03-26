@@ -27,6 +27,9 @@ export type ShowAddRecurringRulePayload = {
   nextRunDate: string
   anchorMode: AnchorMode
   endMode: EndMode
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
 }
 
 export interface IRecurringRuleController {

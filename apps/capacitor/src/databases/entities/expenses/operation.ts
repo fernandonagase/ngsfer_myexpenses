@@ -53,6 +53,15 @@ export class Operation {
   @Column({ name: 'notes', type: 'text' })
   notes?: string
 
+  @Column({ name: 'notification_enabled', type: 'boolean', default: false })
+  notificationEnabled?: boolean
+
+  @Column({ name: 'notification_days_before', type: 'int', nullable: true })
+  notificationDaysBefore?: number
+
+  @Column({ name: 'notification_time', type: 'text', nullable: true })
+  notificationTime?: string
+
   getGenerationKey(recurringRule: RecurringRule, date: string) {
     return `${recurringRule.id}-${date}`
   }

@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import { BRL } from '@ngsfer-myexpenses/utils'
 import dayjs from 'dayjs'
+import { useQuasar } from 'quasar'
 
 import type { Category, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
@@ -9,6 +10,9 @@ import { useCategoryStore } from 'src/stores/category-store'
 import { recurrenceFrequencyOptions } from './recurrence-frequencies.js'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 import { useCenterStore } from 'src/stores/center-store.js'
+import { notificationService } from 'src/services/notification-service'
+
+const $q = useQuasar()
 
 const centerStore = useCenterStore()
 await centerStore.fetchCenters()
@@ -22,6 +26,9 @@ const operationType = defineModel<CategoryType>('operationType', { default: 'Sa�
 const recurrenceFrequency = defineModel<FrequencyType>('recurrenceFrequency', {
   default: FrequencyType.MONTHLY,
 })
+const notificationEnabled = defineModel<boolean>('notificationEnabled', { default: false })
+const notificationDaysBefore = defineModel<number | undefined>('notificationDaysBefore')
+const notificationTime = defineModel<string | undefined>('notificationTime')
 
 center.value = centerStore.activeCenters[0]
 
@@ -41,6 +48,12 @@ const filteredCategories = computed<Array<Category>>(() =>
   operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
 )
 
+const notificationDaysBeforeOptions = [
+  { label: 'No mesmo dia', value: 0 },
+  { label: '1 dia antes', value: 1 },
+  { label: '2 dias antes', value: 2 },
+]
+
 watch(
   [operationType, filteredCategories],
   () => {
@@ -52,6 +65,19 @@ watch(
     immediate: true,
   },
 )
+
+async function onNotificationToggle(val: boolean) {
+  if (!val) return
+
+  const granted = await notificationService.checkAndRequestPermissions()
+  if (!granted) {
+    notificationEnabled.value = false
+    $q.notify({
+      type: 'warning',
+      message: 'Permissão de notificações negada. Ative nas configurações do dispositivo.',
+    })
+  }
+}
 </script>
 
 <template>
@@ -114,5 +140,30 @@ watch(
       label="Centro financeiro"
       outlined
     />
+    <q-separator spaced />
+    <q-toggle
+      v-model="notificationEnabled"
+      label="Notificar operações geradas"
+      color="primary"
+      @update:model-value="onNotificationToggle"
+    />
+    <template v-if="notificationEnabled">
+      <q-select
+        v-model="notificationDaysBefore"
+        :options="notificationDaysBeforeOptions"
+        label="Antecedência"
+        emit-value
+        map-options
+        outlined
+        class="q-mt-sm"
+      />
+      <q-input
+        v-model="notificationTime"
+        type="time"
+        label="Horário"
+        outlined
+        class="q-mt-sm"
+      />
+    </template>
   </div>
 </template>

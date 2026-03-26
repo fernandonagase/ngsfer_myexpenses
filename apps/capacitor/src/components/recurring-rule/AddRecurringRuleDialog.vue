@@ -36,6 +36,9 @@ const center = ref<Center | null>(props.center ?? null)
 const description = ref<string>(props.description ?? '')
 const operationType = ref<CategoryType>(props.operationType ?? 'Saída')
 const recurrenceFrequency = ref<FrequencyType>(props.recurrenceFrequency ?? FrequencyType.MONTHLY)
+const notificationEnabled = ref<boolean>(false)
+const notificationDaysBefore = ref<number | undefined>(undefined)
+const notificationTime = ref<string | undefined>(undefined)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
@@ -53,6 +56,9 @@ function onSubmit() {
     nextRunDate: startDate.value,
     anchorMode: AnchorMode.FIXED,
     endMode: EndMode.NEVER,
+    notificationEnabled: notificationEnabled.value,
+    notificationDaysBefore: notificationDaysBefore.value,
+    notificationTime: notificationTime.value,
   })
 }
 </script>
@@ -70,6 +76,9 @@ function onSubmit() {
             v-model:description="description"
             v-model:operation-type="operationType"
             v-model:recurrence-frequency="recurrenceFrequency"
+            v-model:notification-enabled="notificationEnabled"
+            v-model:notification-days-before="notificationDaysBefore"
+            v-model:notification-time="notificationTime"
           />
           <template #fallback>Carregando...</template>
         </Suspense>
