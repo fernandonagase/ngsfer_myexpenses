@@ -118,6 +118,11 @@ export const useOperationStore = defineStore('operation', () => {
   const months = ref<Array<{ label: string; value: string }>>([])
   const month = ref<string>()
   const hasLoadedFirstTime = ref(false)
+  const dataRevision = ref(0)
+
+  function bumpDataRevision() {
+    dataRevision.value += 1
+  }
 
   const summaryByMonth = reactive(
     new Map<
@@ -413,8 +418,8 @@ export const useOperationStore = defineStore('operation', () => {
     await refreshData()
   }
 
-  async function getOperationsByCategory() {
-    const income = await categoryOperation
+  async function getOperationsByCategory(monthValue?: string) {
+    const incomeQuery = categoryOperation
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.operations', 'operation')
       .select('category.name', 'category')
@@ -424,8 +429,8 @@ export const useOperationStore = defineStore('operation', () => {
       .andWhere("category.type = 'Entrada'")
       .groupBy('category.name')
       .orderBy('SUM(operation.valueInCents)', 'DESC')
-      .getRawMany()
-    const expenses = await categoryOperation
+
+    const expensesQuery = categoryOperation
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.operations', 'operation')
       .select('category.name', 'category')
@@ -435,7 +440,22 @@ export const useOperationStore = defineStore('operation', () => {
       .andWhere("category.type = 'Saída'")
       .groupBy('category.name')
       .orderBy('SUM(operation.valueInCents)', 'ASC')
-      .getRawMany()
+
+    if (monthValue) {
+      const year = monthValue.slice(0, 4)
+      const monthIndex = monthValue.slice(5, 7)
+      incomeQuery
+        .andWhere("STRFTIME('%Y', operation.date) = :year", { year })
+        .andWhere("STRFTIME('%m', operation.date) = :monthIndex", { monthIndex })
+      expensesQuery
+        .andWhere("STRFTIME('%Y', operation.date) = :year", { year })
+        .andWhere("STRFTIME('%m', operation.date) = :monthIndex", { monthIndex })
+    }
+
+    const [income, expenses] = await Promise.all([
+      incomeQuery.getRawMany(),
+      expensesQuery.getRawMany(),
+    ])
     return { income, expenses }
   }
 
@@ -511,6 +531,7 @@ export const useOperationStore = defineStore('operation', () => {
   async function refreshData() {
     await refreshMonthGroups()
     await refreshSummary()
+    bumpDataRevision()
   }
 
   async function refreshDataForOperationDate(operationDate: string) {
@@ -520,16 +541,19 @@ export const useOperationStore = defineStore('operation', () => {
 
     if (hasOperationMonth && month.value !== operationMonth) {
       month.value = operationMonth
+      bumpDataRevision()
       return
     }
 
     await refreshSummary()
+    bumpDataRevision()
   }
 
   async function refreshScreen() {
     await refreshMonthGroups()
     await refreshSummary()
     hasLoadedFirstTime.value = true
+    bumpDataRevision()
   }
 
   async function refreshCenter() {
@@ -550,6 +574,7 @@ export const useOperationStore = defineStore('operation', () => {
     month,
     months,
     hasLoadedFirstTime,
+    dataRevision,
     summaryByMonth,
     monthOperations,
     hasLoadedSelectedMonthSummary,
