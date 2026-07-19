@@ -17,10 +17,11 @@
     "createmigration": "typeorm migration:create"
   },
   "dependencies": {
-    "@capacitor-community/sqlite": "^6.0.2",
-    "@capacitor/filesystem": "^6.0.2",
-    "@capacitor/status-bar": "^6.0.2",
-    "@capawesome/capacitor-file-picker": "^6.2.0",
+    "@capacitor-community/sqlite": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.7",
+    "@capacitor/status-bar": "^7.0.0",
+    "@capawesome/capacitor-file-picker": "^7.0.0",
     "@ngsfer-myexpenses/utils": "workspace:*",
     "@quasar/extras": "^1.16.4",
     "@vueuse/core": "^13.4.0",
@@ -50,6 +51,7 @@
     "globals": "^15.12.0",
     "prettier": "^3.3.3",
     "typescript": "~5.5.3",
+    "vite": "^7.3.1",
     "vite-plugin-checker": "^0.8.0",
     "vue-tsc": "^2.0.29"
   },
