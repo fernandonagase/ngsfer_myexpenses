@@ -2,13 +2,16 @@
 import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { StatusBar } from '@capacitor/status-bar'
-import { getCssVar } from 'quasar'
+import { getCssVar, useQuasar } from 'quasar'
 import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
 
 import { useOperationStore } from 'src/stores/operation-store'
 import { useCenterStore } from 'src/stores/center-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import EmptyList from 'src/components/EmptyList.vue'
+import OperationDetailsDialog, {
+  type OperationDetailsAction,
+} from 'src/components/operation/OperationDetailsDialog.vue'
 import type { Operation } from 'src/databases/entities/expenses'
 import { useConfigStore } from 'src/stores/config-store'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
@@ -18,6 +21,7 @@ if (qPrimaryColor) {
   void StatusBar.setBackgroundColor({ color: qPrimaryColor })
 }
 
+const $q = useQuasar()
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 const configStore = useConfigStore()
@@ -33,6 +37,23 @@ async function transferOperationToAnotherCenter(operation: Operation) {
   if (targetCenter) {
     await operationStore.transferOperationToCenter(operation, targetCenter)
   }
+}
+
+function openOperationDetails(operation: Operation) {
+  $q.dialog({
+    component: OperationDetailsDialog,
+    componentProps: { operation },
+  }).onOk((action: OperationDetailsAction) => {
+    if (action === 'edit') {
+      operationStore.editOperation(operation)
+    } else if (action === 'duplicate') {
+      operationStore.copyOperation(operation)
+    } else if (action === 'move') {
+      void transferOperationToAnotherCenter(operation)
+    } else if (action === 'delete') {
+      operationStore.removeOperation(operation)
+    }
+  })
 }
 
 const totalForMonth = computed(() =>
@@ -136,7 +157,13 @@ const totalForMonth = computed(() =>
             </q-item-label>
           </q-item-section>
         </q-item>
-        <q-item v-for="operation in summary.operations" :key="operation.id" clickable v-ripple>
+        <q-item
+          v-for="operation in summary.operations"
+          :key="operation.id"
+          clickable
+          v-ripple
+          @click="openOperationDetails(operation)"
+        >
           <q-item-section>
             <q-item-label class="text-body1">
               <span v-if="operation.description">{{ operation.description }}</span>
@@ -164,34 +191,6 @@ const totalForMonth = computed(() =>
               </span>
             </ConcealableValue>
           </q-item-section>
-          <q-popup-proxy>
-            <q-list style="min-width: 100px" class="bg-white">
-              <q-item clickable v-close-popup @click="operationStore.editOperation(operation)">
-                <q-item-section>Alterar</q-item-section>
-                <q-item-section side>
-                  <q-icon name="edit" size="xs" />
-                </q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="operationStore.copyOperation(operation)">
-                <q-item-section>Duplicar</q-item-section>
-                <q-item-section side>
-                  <q-icon name="content_copy" size="xs" />
-                </q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="transferOperationToAnotherCenter(operation)">
-                <q-item-section>Mover</q-item-section>
-                <q-item-section side>
-                  <q-icon name="move_up" size="xs" />
-                </q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="operationStore.removeOperation(operation)">
-                <q-item-section>Excluir</q-item-section>
-                <q-item-section side>
-                  <q-icon name="delete" size="xs" />
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-popup-proxy>
         </q-item>
       </template>
       <q-item>
