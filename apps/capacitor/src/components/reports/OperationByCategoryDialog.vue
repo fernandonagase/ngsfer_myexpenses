@@ -1,6 +1,6 @@
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Operações por categoria">
+    <BottomSheetDialog title="Operações por categoria" @dismiss="onDialogCancel">
       <Suspense>
         <OperationByCategoryContent />
         <template #fallback> Carregando... </template>
@@ -17,5 +17,5 @@ import OperationByCategoryContent from './OperationByCategoryContent.vue'
 
 defineEmits([...useDialogPluginComponent.emits])
 
-const { dialogRef, onDialogHide } = useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 </script>

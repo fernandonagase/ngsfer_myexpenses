@@ -51,7 +51,7 @@ function onSubmit() {
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Operação recorrente">
+    <BottomSheetDialog title="Operação recorrente" @dismiss="onDialogCancel">
       <q-form @submit="onSubmit" class="q-gutter-md">
         <Suspense>
           <RecurringRuleForm

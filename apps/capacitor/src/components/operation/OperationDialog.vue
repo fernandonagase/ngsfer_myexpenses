@@ -63,7 +63,7 @@ function onSubmit() {
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Nova operação">
+    <BottomSheetDialog title="Nova operação" @dismiss="onDialogCancel">
       <q-form @submit="onSubmit" class="q-gutter-md">
         <Suspense>
           <OperationForm

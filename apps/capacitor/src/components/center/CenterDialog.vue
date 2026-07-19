@@ -1,6 +1,6 @@
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Centros financeiros">
+    <BottomSheetDialog title="Centros financeiros" @dismiss="onDialogCancel">
       <Suspense>
         <CenterManagement />
         <template #fallback> Carregando... </template>
@@ -17,5 +17,5 @@ import CenterManagement from './CenterManagement.vue'
 
 defineEmits([...useDialogPluginComponent.emits])
 
-const { dialogRef, onDialogHide } = useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 </script>

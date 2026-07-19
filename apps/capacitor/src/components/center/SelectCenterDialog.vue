@@ -15,12 +15,12 @@ function exceptFnLocal(center: Center) {
   return props.exceptFn(center)
 }
 
-const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 </script>
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Escolha o centro financeiro">
+    <BottomSheetDialog title="Escolha o centro financeiro" @dismiss="onDialogCancel">
       <Suspense>
         <SelectCenterList :except-fn="exceptFnLocal" @select="(center) => onDialogOK(center)" />
         <template #fallback> Carregando... </template>

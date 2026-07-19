@@ -1,6 +1,6 @@
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Resumo por centro financeiro">
+    <BottomSheetDialog title="Resumo por centro financeiro" @dismiss="onDialogCancel">
       <Suspense>
         <SummaryContent />
         <template #fallback> Carregando... </template>
@@ -17,5 +17,5 @@ import SummaryContent from './SummaryContent.vue'
 
 defineEmits([...useDialogPluginComponent.emits])
 
-const { dialogRef, onDialogHide } = useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 </script>

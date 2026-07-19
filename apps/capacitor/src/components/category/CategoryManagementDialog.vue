@@ -1,6 +1,6 @@
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Categorias">
+    <BottomSheetDialog title="Categorias" @dismiss="onDialogCancel">
       <Suspense>
         <CategoryManagement />
         <template #fallback> Carregando... </template>
@@ -17,5 +17,5 @@ import CategoryManagement from './CategoryManagement.vue'
 
 defineEmits([...useDialogPluginComponent.emits])
 
-const { dialogRef, onDialogHide } = useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 </script>

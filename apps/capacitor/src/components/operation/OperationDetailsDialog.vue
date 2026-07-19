@@ -19,7 +19,7 @@ const props = defineProps<{
 
 defineEmits([...useDialogPluginComponent.emits])
 
-const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
+const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 
@@ -72,7 +72,7 @@ function selectAction(action: OperationDetailsAction) {
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog :title="title">
+    <BottomSheetDialog :title="title" @dismiss="onDialogCancel">
       <template #header-side>
         <q-btn icon="more_vert" size="12px" flat dense round>
           <q-menu>
