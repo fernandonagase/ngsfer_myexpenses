@@ -1,7 +1,32 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
 import { useOperationStore } from 'src/stores/operation-store'
 
+const route = useRoute()
 const operationStore = useOperationStore()
+
+type FooterTab = 'home' | 'reports' | 'more'
+
+const activeTab = computed<FooterTab>(() => {
+  if (route.name === 'operations-by-category' || route.path.startsWith('/reports')) {
+    return 'reports'
+  }
+  if (
+    route.name === 'settings' ||
+    route.name === 'recurrence' ||
+    route.path.startsWith('/settings') ||
+    route.path.startsWith('/recurrence')
+  ) {
+    return 'more'
+  }
+  return 'home'
+})
+
+function tabColor(tab: FooterTab) {
+  return activeTab.value === tab ? 'primary' : 'grey-6'
+}
 </script>
 
 <template>
@@ -13,7 +38,7 @@ const operationStore = useOperationStore()
         no-caps
         label="Início"
         icon="home"
-        color="primary"
+        :color="tabColor('home')"
         class="col-6"
         :to="{ name: 'operations' }"
       />
@@ -26,7 +51,7 @@ const operationStore = useOperationStore()
         no-caps
         label="Relatório"
         icon="trending_up"
-        color="primary"
+        :color="tabColor('reports')"
         class="col-6"
         :to="{ name: 'operations-by-category' }"
       />
@@ -36,7 +61,7 @@ const operationStore = useOperationStore()
         no-caps
         label="Mais"
         icon="menu"
-        color="primary"
+        :color="tabColor('more')"
         class="col-6"
         :to="{ name: 'settings' }"
       />
