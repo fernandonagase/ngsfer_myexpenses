@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { StatusBar } from '@capacitor/status-bar'
 import { getCssVar } from 'quasar'
-import { BRL } from "@ngsfer-myexpenses/utils"
+import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
 
 import { useOperationStore } from 'src/stores/operation-store'
 import { useCenterStore } from 'src/stores/center-store'
@@ -11,6 +11,7 @@ import ConcealableValue from 'src/components/ConcealableValue.vue'
 import EmptyList from 'src/components/EmptyList.vue'
 import type { Operation } from 'src/databases/entities/expenses'
 import { useConfigStore } from 'src/stores/config-store'
+import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 
 const qPrimaryColor = getCssVar('primary')
 if (qPrimaryColor) {
@@ -20,6 +21,10 @@ if (qPrimaryColor) {
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 const configStore = useConfigStore()
+
+function isDayDetailsShown(day: string) {
+  return configStore.showOperationDetailsByDay[day] ?? configStore.showOperationDetails
+}
 
 async function transferOperationToAnotherCenter(operation: Operation) {
   const targetCenter = await centerStore.selectCenter(
@@ -68,40 +73,58 @@ const totalForMonth = computed(() =>
       >
         <q-item class="daily-header">
           <q-item-section class="bg-grey-2 q-pa-sm rounded-borders">
-            <q-item-label class="text-body2 text-grey-8 row justify-between">
+            <q-item-label class="text-body2 text-grey-8 row items-center justify-between">
               <span>{{ dayjs(day).format('D [de] MMMM, ddd[.]') }}</span>
-              <span
-                v-if="summary.operations && configStore.showOperationDetails"
-                class="text-caption row items-center"
-              >
-                <span>Balanço do dia:</span>
-                <ConcealableValue>
-                  <span
-                    class="q-ml-xs text-weight-bold"
-                    :class="{
-                      'text-positive': summary.dayBalance > 0,
-                      'text-negative': summary.dayBalance < 0,
-                    }"
-                  >
-                    {{ summary.dayBalance > 0 ? '+' : ''
-                    }}{{ BRL(summary.dayBalance / 100).format() }}
-                  </span>
-                </ConcealableValue>
-              </span>
-              <span
-                v-if="summary.operations && !configStore.showOperationDetails"
-                class="text-caption row items-center"
-              >
-                <span>Saldo:</span>
-                <ConcealableValue>
-                  <span class="q-ml-xs text-weight-bold">
-                    {{ BRL(summary.balance / 100).format() }}
-                  </span>
-                </ConcealableValue>
-              </span>
+              <div class="row items-center no-wrap">
+                <span
+                  v-if="summary.operations && isDayDetailsShown(day)"
+                  class="text-caption row items-center"
+                >
+                  <span>Balanço do dia:</span>
+                  <ConcealableValue>
+                    <span
+                      class="q-ml-xs text-weight-bold"
+                      :class="{
+                        'text-positive': summary.dayBalance > 0,
+                        'text-negative': summary.dayBalance < 0,
+                      }"
+                    >
+                      {{ summary.dayBalance > 0 ? '+' : '' }}{{ BRL(summary.dayBalance / 100).format() }}
+                    </span>
+                  </ConcealableValue>
+                </span>
+                <span
+                  v-if="summary.operations && !isDayDetailsShown(day)"
+                  class="text-caption row items-center"
+                >
+                  <span>Saldo:</span>
+                  <ConcealableValue>
+                    <span class="q-ml-xs text-weight-bold">
+                      {{ BRL(summary.balance / 100).format() }}
+                    </span>
+                  </ConcealableValue>
+                </span>
+                <q-btn
+                  v-if="summary.operations"
+                  :icon="isDayDetailsShown(day) ? 'expand_less' : 'expand_more'"
+                  flat
+                  round
+                  dense
+                  @click="configStore.toggleOperationDetailsVisibilityForDay(day)"
+                  class="q-ml-xs"
+                >
+                  <q-tooltip>
+                    {{
+                      isDayDetailsShown(day)
+                        ? 'Ocultar detalhamento deste dia'
+                        : 'Mostrar detalhamento deste dia'
+                    }}
+                  </q-tooltip>
+                </q-btn>
+              </div>
             </q-item-label>
             <q-item-label
-              v-if="summary.operations && configStore.showOperationDetails"
+              v-if="summary.operations && isDayDetailsShown(day)"
               class="text-caption text-grey-8 row justify-end q-mt-xs"
             >
               <span>Saldo:</span>
@@ -120,6 +143,16 @@ const totalForMonth = computed(() =>
               <span v-else>Não identificada</span>
             </q-item-label>
             <q-item-label caption>{{ operation.category.name }}</q-item-label>
+            <q-item-label v-if="operation.recurringRule" caption>
+              <q-icon name="repeat" />
+              Repete
+              <template v-if="operation.recurringRule?.frequency === FrequencyType.WEEKLY">
+                toda(o) {{ getWeekdayName(operation.recurringRule.weeklyAnchorDay!) }}
+              </template>
+              <template v-if="operation.recurringRule?.frequency === FrequencyType.MONTHLY">
+                todo dia {{ operation.recurringRule.anchorDay }}
+              </template>
+            </q-item-label>
           </q-item-section>
           <q-item-section side>
             <ConcealableValue>
@@ -177,9 +210,6 @@ const totalForMonth = computed(() =>
     <div v-if="operationStore.hasLoadedFirstTime && !operationStore.month" class="q-mt-xl">
       <EmptyList label="Nenhuma operação lançada" />
     </div>
-    <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="primary" @click="operationStore.addOperation()" />
-    </q-page-sticky>
   </q-page>
 </template>
 

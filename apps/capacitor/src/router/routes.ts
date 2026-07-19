@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/CenterLayout.vue'),
     children: [
       {
+        name: 'operations',
         path: '',
         component: () => import('pages/operations/OperationsPage.vue'),
         alias: 'operations',
@@ -13,13 +14,47 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/reports',
+    component: () => import('src/layouts/ReportsLayout.vue'),
+    meta: { title: 'Relatórios' },
+    props: (route) => ({
+      title: route.meta.title,
+    }),
+    children: [
+      {
+        name: 'operations-by-category',
+        path: 'operations-by-category',
+        component: () => import('pages/reports/OperationsByCategoryPage.vue'),
+      },
+    ],
+  },
+  {
     path: '/settings',
-    component: () => import('src/layouts/SettingsLayout.vue'),
+    component: () => import('src/layouts/DefaultLayout.vue'),
+    meta: { title: 'Configurações' },
+    props: (route) => ({
+      title: route.meta.title,
+    }),
     children: [
       {
         name: 'settings',
         path: '',
         component: () => import('src/pages/settings/SettingsPage.vue'),
+      },
+    ],
+  },
+  {
+    path: '/recurrence',
+    component: () => import('src/layouts/DefaultLayout.vue'),
+    meta: { title: 'Operações recorrentes' },
+    props: (route) => ({
+      title: route.meta.title,
+    }),
+    children: [
+      {
+        name: 'recurrence',
+        path: '',
+        component: () => import('src/pages/RecurrencePage.vue'),
       },
     ],
   },

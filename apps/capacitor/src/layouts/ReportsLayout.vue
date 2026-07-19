@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import CenterToolbar from 'src/components/center/CenterToolbar.vue'
 import MainFooterToolbar from 'src/components/MainFooterToolbar.vue';
+import ReportsToolbar from 'src/components/reports/ReportsToolbar.vue'
 </script>
 
 <template>
   <Suspense>
     <q-layout view="lHh Lpr lFf">
       <q-header>
-        <CenterToolbar />
+        <ReportsToolbar />
       </q-header>
 
       <q-page-container>
@@ -21,4 +21,3 @@ import MainFooterToolbar from 'src/components/MainFooterToolbar.vue';
     <template #fallback> Carregando... </template>
   </Suspense>
 </template>
-

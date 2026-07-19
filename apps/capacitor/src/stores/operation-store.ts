@@ -2,16 +2,115 @@ import { computed, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL, splitInInstallments } from '@ngsfer-myexpenses/utils'
 
-import { Category } from 'src/databases/entities/expenses'
+import { Category, RecurringRule } from 'src/databases/entities/expenses'
 import { Operation, type Center } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
-import OperationByCategoryDialog from 'src/components/reports/OperationByCategoryDialog.vue'
+import { type RecurrenceType } from 'src/components/operation/recurrence-types'
+import { type EntityManager } from 'typeorm'
+import {
+  type FrequencyType,
+  RecurringRuleType,
+} from 'src/databases/entities/expenses/recurring-rule'
+import { notificationService } from 'src/services/notification-service'
+
+type OperationPayload = {
+  value: number
+  date: string
+  category: Category
+  description: string
+  installmentCount?: number
+  recurrenceType: RecurrenceType
+  recurrenceFrequency?: FrequencyType
+  notes?: string
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
+}
+
+type OperationData = {
+  date: string
+  category: Category
+  center: Center
+  description: string
+  notes?: string | undefined
+  notificationEnabled?: boolean
+  notificationDaysBefore?: number
+  notificationTime?: string
+}
+
+type RecurringRuleData = {
+  description: string
+  valueInCents: number
+  startDate: string
+  nextRunDate: string
+  category: Category
+  center: Center
+  recurrenceFrequency: FrequencyType
+  anchorDay: number
+}
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 const categoryOperation = expensesDataSource.dataSource.getRepository(Category) // renomear para categoryRepository
+
+function addRecurringRule(
+  recurringRuleData: RecurringRuleData,
+  { manager }: { manager: EntityManager },
+) {
+  const recurringRule = manager.create(RecurringRule, {
+    description: recurringRuleData.description,
+    valueInCents: recurringRuleData.valueInCents,
+    ruleType:
+      recurringRuleData.valueInCents > 0 ? RecurringRuleType.INCOME : RecurringRuleType.EXPENSE,
+    startDate: recurringRuleData.startDate,
+    nextRunDate: recurringRuleData.nextRunDate,
+    category: recurringRuleData.category,
+    center: recurringRuleData.center,
+    frequency: recurringRuleData.recurrenceFrequency,
+    anchorDay: recurringRuleData.anchorDay,
+  })
+  return manager.save(recurringRule)
+}
+
+function addOperations(
+  operationData: OperationData,
+  {
+    values,
+    recurringRule,
+    manager,
+  }: { values: number[]; recurringRule?: RecurringRule; manager: EntityManager },
+) {
+  const today = dayjs().format('YYYY-MM-DD')
+  const operations = values.map((valueInCents, index) => {
+    const operationDate = dayjs(operationData.date).add(index, 'month').format('YYYY-MM-DD')
+    const isFuture = operationDate > today
+    const operation = manager.create(Operation, {
+      valueInCents: valueInCents,
+      date: operationDate,
+      category: operationData.category,
+      description:
+        values.length > 1
+          ? `${operationData.description} (${index + 1}/${values.length})`
+          : operationData.description,
+      center: operationData.center,
+      ...(operationData.notes !== undefined ? { notes: operationData.notes } : {}),
+      notificationEnabled: isFuture ? (operationData.notificationEnabled ?? false) : false,
+      ...(isFuture && operationData.notificationEnabled
+        ? {
+            notificationDaysBefore: operationData.notificationDaysBefore,
+            notificationTime: operationData.notificationTime,
+          }
+        : {}),
+    })
+    if (recurringRule) {
+      operation.setRecurringRule(recurringRule)
+    }
+    return operation
+  })
+  return manager.save(Operation, operations)
+}
 
 export const useOperationStore = defineStore('operation', () => {
   const $q = useQuasar()
@@ -93,27 +192,84 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   function addOperation() {
+    async function doAddOperation(payload: OperationPayload) {
+      if (!center.value) throw new Error('Centro financeiro não informado')
+
+      if (payload.recurrenceType === 'recurring') {
+        if (!payload.recurrenceFrequency)
+          throw new Error(
+            'Frequência da recorrência não informada para operação de tipo recorrente',
+          )
+        try {
+          await expensesDataSource.dataSource.manager.transaction(async (manager) => {
+            const recurringRule = await addRecurringRule(
+              {
+                description: payload.description,
+                valueInCents: payload.value,
+                startDate: payload.date,
+                nextRunDate: payload.date,
+                category: payload.category,
+                recurrenceFrequency: payload.recurrenceFrequency!,
+                anchorDay: parseInt(dayjs(payload.date).format('DD')),
+                center: center.value!,
+              },
+              {
+                manager,
+              },
+            )
+            await addOperations(
+              {
+                date: payload.date,
+                category: payload.category,
+                description: payload.description,
+                center: center.value!,
+              },
+              { values: [payload.value], recurringRule: recurringRule, manager },
+            )
+          })
+          await refreshDataForOperationDate(payload.date)
+          await notificationService.rescheduleAll()
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        const count = Math.max(1, payload.installmentCount ?? 1)
+        const values = splitInInstallments(payload.value, count)
+        try {
+          await operationRepository.manager.transaction(async (manager) => {
+            await addOperations(
+              {
+                date: payload.date,
+                category: payload.category,
+                description: payload.description,
+                center: center.value!,
+                notes: payload.notes,
+                ...(payload.notificationEnabled
+                  ? { notificationEnabled: payload.notificationEnabled }
+                  : {}),
+                ...(payload.notificationDaysBefore
+                  ? { notificationDaysBefore: payload.notificationDaysBefore }
+                  : {}),
+                ...(payload.notificationTime ? { notificationTime: payload.notificationTime } : {}),
+              },
+              { values, manager },
+            )
+          })
+          await refreshDataForOperationDate(payload.date)
+          await notificationService.rescheduleAll()
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }
+
     $q.dialog({
       component: OperationDialog,
       persistent: true,
-    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
-      const operation = new Operation()
-      operation.valueInCents = payload.value
-      operation.date = payload.date
-      operation.category = payload.category
-      operation.description = payload.description
-      if (!center.value) {
-        throw new Error('Centro financeiro não informado')
-      }
-      operation.center = center.value
-      operationRepository
-        .save(operation)
-        .then(async () => {
-          await refreshDataForOperationDate(payload.date)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
+    }).onOk((payload: OperationPayload) => {
+      doAddOperation(payload).catch((error) => {
+        console.error(error)
+      })
     })
   }
 
@@ -126,22 +282,48 @@ export const useOperationStore = defineStore('operation', () => {
         category: operation.category,
         description: operation.description,
         operationType: operation.isExpense ? 'Saída' : 'Entrada',
+        notes: operation.notes,
+        notificationEnabled: operation.notificationEnabled ?? false,
+        notificationDaysBefore: operation.notificationDaysBefore,
+        notificationTime: operation.notificationTime,
       },
       persistent: true,
-    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
-      operation.valueInCents = payload.value
-      operation.date = payload.date
-      operation.category = payload.category
-      operation.description = payload.description
-      operationRepository
-        .save(operation)
-        .then(async () => {
-          await refreshDataForOperationDate(payload.date)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-    })
+    }).onOk(
+      (payload: {
+        value: number
+        date: string
+        category: Category
+        description: string
+        notes?: string
+        notificationEnabled?: boolean
+        notificationDaysBefore?: number
+        notificationTime?: string
+      }) => {
+        const today = dayjs().format('YYYY-MM-DD')
+        const isFuture = payload.date > today
+        operation.valueInCents = payload.value
+        operation.date = payload.date
+        operation.category = payload.category
+        operation.description = payload.description
+        operation.notes = payload.notes ?? ''
+        operation.notificationEnabled = isFuture ? (payload.notificationEnabled ?? false) : false
+        if (isFuture && payload.notificationDaysBefore) {
+          operation.notificationDaysBefore = payload.notificationDaysBefore
+        }
+        if (isFuture && payload.notificationTime) {
+          operation.notificationTime = payload.notificationTime
+        }
+        operationRepository
+          .save(operation)
+          .then(async () => {
+            await refreshDataForOperationDate(payload.date)
+            await notificationService.rescheduleAll()
+          })
+          .catch((error) => {
+            console.error(error)
+          })
+      },
+    )
   }
 
   function removeOperation(operation: Operation) {
@@ -161,6 +343,7 @@ export const useOperationStore = defineStore('operation', () => {
         .remove(operation)
         .then(async () => {
           await refreshData()
+          await notificationService.rescheduleAll()
         })
         .catch((error) => {
           console.error(error)
@@ -181,36 +364,53 @@ export const useOperationStore = defineStore('operation', () => {
         category: operation.category,
         description: operation.description,
         operationType: operation.isExpense ? 'Saída' : 'Entrada',
+        notes: operation.notes,
       },
       persistent: true,
-    }).onOk((payload: { value: number; date: string; category: Category; description: string }) => {
-      const newOperation = new Operation()
-      newOperation.valueInCents = payload.value
-      newOperation.date = payload.date
-      newOperation.category = payload.category
-      newOperation.description = payload.description
-      newOperation.center = center.value!
-      operationRepository
-        .save(newOperation)
-        .then(async () => {
-          await refreshDataForOperationDate(payload.date)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-    })
+    }).onOk(
+      (payload: {
+        value: number
+        date: string
+        category: Category
+        description: string
+        notes?: string
+        notificationEnabled?: boolean
+        notificationDaysBefore?: number
+        notificationTime?: string
+      }) => {
+        const today = dayjs().format('YYYY-MM-DD')
+        const isFuture = payload.date > today
+        const newOperation = new Operation()
+        newOperation.valueInCents = payload.value
+        newOperation.date = payload.date
+        newOperation.category = payload.category
+        newOperation.description = payload.description
+        newOperation.notes = payload.notes ?? ''
+        newOperation.center = center.value!
+        newOperation.notificationEnabled = isFuture ? (payload.notificationEnabled ?? false) : false
+        if (isFuture && payload.notificationDaysBefore) {
+          newOperation.notificationDaysBefore = payload.notificationDaysBefore
+        }
+        if (isFuture && payload.notificationTime) {
+          newOperation.notificationTime = payload.notificationTime
+        }
+        operationRepository
+          .save(newOperation)
+          .then(async () => {
+            await refreshDataForOperationDate(payload.date)
+            await notificationService.rescheduleAll()
+          })
+          .catch((error) => {
+            console.error(error)
+          })
+      },
+    )
   }
 
   async function transferOperationToCenter(operation: Operation, center: Center) {
     operation.center = center
     await operationRepository.save(operation)
     await refreshData()
-  }
-
-  function showOperationsByCategory() {
-    $q.dialog({
-      component: OperationByCategoryDialog,
-    })
   }
 
   async function getOperationsByCategory() {
@@ -287,6 +487,7 @@ export const useOperationStore = defineStore('operation', () => {
     const operations = await operationRepository
       .createQueryBuilder('operation')
       .leftJoinAndSelect('operation.category', 'category')
+      .leftJoinAndSelect('operation.recurringRule', 'recurringRule')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
       .andWhere("STRFTIME('%m', operation.date) = :monthIndex", {
         monthIndex: month.value.slice(5, 7),
@@ -358,7 +559,6 @@ export const useOperationStore = defineStore('operation', () => {
     addOperation,
     editOperation,
     removeOperation,
-    showOperationsByCategory,
     getOperationsByCategory,
     getMonthGroups,
     copyOperation,

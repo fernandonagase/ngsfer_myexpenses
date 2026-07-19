@@ -1,6 +1,6 @@
 {
   "name": "@ngsfer-myexpenses/capacitor",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Aplicativo para controle de finanças pessoais",
   "author": "Fernando Nagase <nagase.fernando@gmail.com>",
   "private": true,
@@ -11,6 +11,7 @@
     "@capacitor/cli": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.6",
     "@capacitor/status-bar": "^7.0.0",
     "@capawesome/capacitor-android-edge-to-edge-support": "^8.0.2",
     "@capawesome/capacitor-file-picker": "^7.0.0"

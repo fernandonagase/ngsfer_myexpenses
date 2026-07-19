@@ -58,46 +58,7 @@ function showSummary() {
             {{ configStore.hideValues ? 'Mostrar valores' : 'Ocultar valores' }}
           </q-tooltip>
         </q-btn>
-        <q-btn
-          :icon="configStore.showOperationDetails ? 'unfold_less' : 'unfold_more'"
-          flat
-          round
-          dense
-          @click="configStore.toggleOperationDetailsVisibility()"
-        >
-          <q-tooltip>
-            {{
-              configStore.showOperationDetails
-                ? 'Ocultar detalhamento diário'
-                : 'Mostrar detalhamento diário'
-            }}
-          </q-tooltip>
-        </q-btn>
         <q-btn icon="description" flat round dense @click="showSummary()" />
-        <q-btn icon="more_vert" flat round dense>
-          <q-menu>
-            <q-list style="min-width: 100px">
-              <q-item clickable v-close-popup @click="operationStore.showOperationsByCategory()">
-                <q-item-section>Operações por categoria</q-item-section>
-                <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>
-              </q-item>
-              <q-separator />
-              <q-item clickable v-close-popup @click="centerStore.showCenters()">
-                <q-item-section>Centros financeiros</q-item-section>
-                <q-item-section side><q-icon name="account_balance" size="xs" /></q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="categoryStore.showCategories()">
-                <q-item-section>Categorias</q-item-section>
-                <q-item-section side><q-icon name="label" size="xs" /></q-item-section>
-              </q-item>
-              <q-separator />
-              <q-item clickable v-close-popup :to="{ name: 'settings' }">
-                <q-item-section>Configurações</q-item-section>
-                <q-item-section side><q-icon name="settings" size="xs" /></q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
       </div>
     </div>
   </q-toolbar>

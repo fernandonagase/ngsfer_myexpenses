@@ -4,6 +4,7 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { Center } from './center'
 import { Category } from './category'
+import { RecurringRule } from './recurring-rule'
 
 @Entity('operacao_financeira')
 export class Operation {
@@ -22,6 +23,19 @@ export class Operation {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean
 
+  @Column({ name: 'generated_at', type: 'text' })
+  generatedAt?: string
+
+  @Column({ name: 'generation_key', type: 'text' })
+  generationKey?: string
+
+  @ManyToOne(() => RecurringRule, { nullable: true })
+  @JoinColumn({
+    name: 'recurring_rule_id',
+    referencedColumnName: 'id',
+  })
+  recurringRule?: RecurringRule
+
   @ManyToOne(() => Center, (center) => center.operations)
   @JoinColumn({
     name: 'centro_financeiro_id',
@@ -35,6 +49,29 @@ export class Operation {
     referencedColumnName: 'id',
   })
   category!: Category
+
+  @Column({ name: 'notes', type: 'text' })
+  notes?: string
+
+  @Column({ name: 'notification_enabled', type: 'boolean', default: false })
+  notificationEnabled?: boolean
+
+  @Column({ name: 'notification_days_before', type: 'int', nullable: true })
+  notificationDaysBefore?: number
+
+  @Column({ name: 'notification_time', type: 'text', nullable: true })
+  notificationTime?: string
+
+  getGenerationKey(recurringRule: RecurringRule, date: string) {
+    return `${recurringRule.id}-${date}`
+  }
+
+  setRecurringRule(recurringRule: RecurringRule) {
+    this.recurringRule = recurringRule
+    const today = dayjs().format('YYYY-MM-DD')
+    this.generatedAt = today
+    this.generationKey = this.getGenerationKey(recurringRule, this.date ?? today)
+  }
 
   get valueString() {
     return BRL(this.valueInCents / 100).format()

@@ -5,25 +5,22 @@ import { ref } from 'vue'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
-import OperationForm from './OperationForm.vue'
-import type { Category } from 'src/databases/entities/expenses'
+import RecurringRuleForm from './RecurringRuleForm.vue'
+import type { Category, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
-import { type RecurrenceType } from './recurrence-types'
-import type { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { type FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 
 const props = defineProps<{
   value?: string
   date?: string
   category?: Category
+  center?: Center
   description?: string
   operationType?: CategoryType
-  installmentCount?: number
-  recurrenceType?: RecurrenceType
   recurrenceFrequency?: FrequencyType
-  notes?: string
-  notificationEnabled?: boolean
-  notificationDaysBefore?: number
-  notificationTime?: string
+  isActive?: boolean
+  interval: number
+  anchorDay: number
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -33,52 +30,41 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginC
 const value = ref<string>(props.value ?? '')
 const date = ref<string>(props.date ?? dayjs().format('YYYY-MM-DD'))
 const category = ref<Category | null>(props.category ?? null)
+const center = ref<Center | null>(props.center ?? null)
 const description = ref<string>(props.description ?? '')
 const operationType = ref<CategoryType>(props.operationType ?? 'Saída')
-const installmentCount = ref<number>(props.installmentCount ?? 1)
-const recurrenceType = ref<RecurrenceType>(props.recurrenceType ?? 'one-time')
 const recurrenceFrequency = ref<FrequencyType | undefined>(props.recurrenceFrequency)
-const notes = ref<string | undefined>(props.notes)
-const notificationEnabled = ref<boolean>(props.notificationEnabled ?? false)
-const notificationDaysBefore = ref<number | undefined>(props.notificationDaysBefore)
-const notificationTime = ref<string | undefined>(props.notificationTime)
+const isActive = ref<boolean>(props.isActive)
+const interval = ref<number>(props.interval)
+const anchorDay = ref<number>(props.anchorDay)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
   onDialogOK({
-    value: operationType.value === 'Entrada' ? valueInCents : -valueInCents,
-    date: date.value,
-    category: category.value,
+    valueInCents: operationType.value === 'Entrada' ? valueInCents : -valueInCents,
     description: description.value,
-    installmentCount: installmentCount.value,
-    recurrenceType: recurrenceType.value,
-    recurrenceFrequency: recurrenceFrequency.value,
-    notes: notes.value,
-    notificationEnabled: notificationEnabled.value,
-    notificationDaysBefore: notificationDaysBefore.value,
-    notificationTime: notificationTime.value,
+    category: category.value,
+    isActive: isActive.value,
   })
 }
 </script>
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Nova operação">
+    <BottomSheetDialog title="Operação recorrente">
       <q-form @submit="onSubmit" class="q-gutter-md">
         <Suspense>
-          <OperationForm
+          <RecurringRuleForm
             v-model:value="value"
             v-model:date="date"
             v-model:category="category"
+            v-model:center="center"
             v-model:description="description"
             v-model:operation-type="operationType"
-            v-model:installment-count="installmentCount"
-            v-model:recurrence-type="recurrenceType"
             v-model:recurrence-frequency="recurrenceFrequency"
-            v-model:notes="notes"
-            v-model:notification-enabled="notificationEnabled"
-            v-model:notification-days-before="notificationDaysBefore"
-            v-model:notification-time="notificationTime"
+            v-model:is-active="isActive"
+            v-model:interval="interval"
+            v-model:anchor-day="anchorDay"
           />
           <template #fallback>Carregando...</template>
         </Suspense>
