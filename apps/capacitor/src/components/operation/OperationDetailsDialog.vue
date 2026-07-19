@@ -8,6 +8,7 @@ import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import type { Operation } from 'src/databases/entities/expenses'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
 
 export type OperationDetailsAction = 'edit' | 'duplicate' | 'move' | 'delete'
@@ -20,12 +21,15 @@ defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 const operationStore = useOperationStore()
+const centerStore = useCenterStore()
 
 const title = computed(() => props.operation.description || 'Não identificada')
 
 const centerName = computed(
   () => props.operation.center?.name ?? operationStore.center?.name ?? '—',
 )
+
+const canMoveBetweenCenters = computed(() => centerStore.activeCenters.length > 1)
 
 const isFuture = computed(() => props.operation.date > dayjs().format('YYYY-MM-DD'))
 
@@ -85,7 +89,12 @@ function selectAction(action: OperationDetailsAction) {
                   <q-icon name="content_copy" size="xs" />
                 </q-item-section>
               </q-item>
-              <q-item clickable v-close-popup @click="selectAction('move')">
+              <q-item
+                v-if="canMoveBetweenCenters"
+                clickable
+                v-close-popup
+                @click="selectAction('move')"
+              >
                 <q-item-section>Mover</q-item-section>
                 <q-item-section side>
                   <q-icon name="move_up" size="xs" />
