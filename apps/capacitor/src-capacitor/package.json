@@ -1,6 +1,6 @@
 {
   "name": "@ngsfer-myexpenses/capacitor",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Aplicativo para controle de finanças pessoais",
   "author": "Fernando Nagase <nagase.fernando@gmail.com>",
   "private": true,
