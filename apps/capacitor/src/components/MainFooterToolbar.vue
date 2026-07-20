@@ -7,9 +7,12 @@ import { useOperationStore } from 'src/stores/operation-store'
 const route = useRoute()
 const operationStore = useOperationStore()
 
-type FooterTab = 'home' | 'reports' | 'more'
+type FooterTab = 'home' | 'invoices' | 'reports' | 'more'
 
 const activeTab = computed<FooterTab>(() => {
+  if (route.name === 'invoices' || route.path.startsWith('/invoices')) {
+    return 'invoices'
+  }
   if (route.name === 'operations-by-category' || route.path.startsWith('/reports')) {
     return 'reports'
   }
@@ -41,6 +44,16 @@ function tabColor(tab: FooterTab) {
         :color="tabColor('home')"
         class="col-6"
         :to="{ name: 'operations' }"
+      />
+      <q-btn
+        stack
+        flat
+        no-caps
+        label="Faturas"
+        icon="receipt_long"
+        :color="tabColor('invoices')"
+        class="col-6"
+        :to="{ name: 'invoices' }"
       />
     </div>
     <div class="fab-space"></div>

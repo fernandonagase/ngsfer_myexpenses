@@ -58,6 +58,18 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/invoices',
+    component: () => import('src/layouts/InvoicesLayout.vue'),
+    meta: { title: 'Faturas' },
+    children: [
+      {
+        name: 'invoices',
+        path: '',
+        component: () => import('src/pages/invoices/InvoicesPage.vue'),
+      },
+    ],
+  },
 
   // Always leave this as last one,
   // but you can also remove it
