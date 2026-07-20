@@ -10,6 +10,8 @@ import { ExpensesCreateRecurrencyRule1770167031707 } from './1770167031707-Expen
 import { ExpensesAddRecurrencyOperation1772498497128 } from './1772498497128-ExpensesAddRecurrencyOperation'
 import { ExpensesAddOperationNotes1773792148695 } from './1773792148695-ExpensesAddOperationNotes'
 import { ExpensesAddNotificationFields1774000000000 } from './1774000000000-ExpensesAddNotificationFields'
+import { ExpensesCreateCreditCard1775000000000 } from './1775000000000-ExpensesCreateCreditCard'
+import { ExpensesInvoicePaymentCategory1776000000000 } from './1776000000000-ExpensesInvoicePaymentCategory'
 
 export {
   InitialExpensesCenter1738203549000,
@@ -24,4 +26,6 @@ export {
   ExpensesAddRecurrencyOperation1772498497128,
   ExpensesAddOperationNotes1773792148695,
   ExpensesAddNotificationFields1774000000000,
+  ExpensesCreateCreditCard1775000000000,
+  ExpensesInvoicePaymentCategory1776000000000,
 }

@@ -1,11 +1,18 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { BRL, splitInInstallments } from '@ngsfer-myexpenses/utils'
 
-import { Category, RecurringRule } from 'src/databases/entities/expenses'
-import { Operation, type Center } from 'src/databases/entities/expenses'
+import {
+  Category,
+  Operation,
+  RecurringRule,
+  type CardInvoice,
+  type Center,
+  type CreditCard,
+} from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import OperationDialog from 'src/components/operation/OperationDialog.vue'
 import { type RecurrenceType } from 'src/components/operation/recurrence-types'
@@ -15,6 +22,10 @@ import {
   RecurringRuleType,
 } from 'src/databases/entities/expenses/recurring-rule'
 import { notificationService } from 'src/services/notification-service'
+import {
+  getOrCreateInvoiceForPurchase,
+  reconcileInvoiceStatuses,
+} from 'src/databases/entities/expenses/card-invoice-helpers'
 
 type OperationPayload = {
   value: number
@@ -28,6 +39,8 @@ type OperationPayload = {
   notificationEnabled?: boolean
   notificationDaysBefore?: number
   notificationTime?: string
+  isCredit?: boolean
+  creditCard?: CreditCard | null
 }
 
 type OperationData = {
@@ -39,6 +52,7 @@ type OperationData = {
   notificationEnabled?: boolean
   notificationDaysBefore?: number
   notificationTime?: string
+  creditCard?: CreditCard | null
 }
 
 type RecurringRuleData = {
@@ -74,7 +88,7 @@ function addRecurringRule(
   return manager.save(recurringRule)
 }
 
-function addOperations(
+async function addOperations(
   operationData: OperationData,
   {
     values,
@@ -83,9 +97,21 @@ function addOperations(
   }: { values: number[]; recurringRule?: RecurringRule; manager: EntityManager },
 ) {
   const today = dayjs().format('YYYY-MM-DD')
-  const operations = values.map((valueInCents, index) => {
+  const operations: Operation[] = []
+
+  for (const [index, valueInCents] of values.entries()) {
     const operationDate = dayjs(operationData.date).add(index, 'month').format('YYYY-MM-DD')
     const isFuture = operationDate > today
+
+    let cardInvoice: CardInvoice | null = null
+    if (operationData.creditCard) {
+      cardInvoice = await getOrCreateInvoiceForPurchase(
+        operationData.creditCard,
+        operationDate,
+        manager,
+      )
+    }
+
     const operation = manager.create(Operation, {
       valueInCents: valueInCents,
       date: operationDate,
@@ -103,17 +129,21 @@ function addOperations(
             notificationTime: operationData.notificationTime,
           }
         : {}),
+      cardInvoice: cardInvoice,
+      isInvoicePayment: false,
     })
     if (recurringRule) {
       operation.setRecurringRule(recurringRule)
     }
-    return operation
-  })
+    operations.push(operation)
+  }
+
   return manager.save(Operation, operations)
 }
 
 export const useOperationStore = defineStore('operation', () => {
   const $q = useQuasar()
+  const router = useRouter()
   const center = ref<Center | null>(null)
   const months = ref<Array<{ label: string; value: string }>>([])
   const month = ref<string>()
@@ -196,6 +226,32 @@ export const useOperationStore = defineStore('operation', () => {
     center.value = newCenter
   }
 
+  function notifyOperationSuccess(payload: OperationPayload) {
+    if (payload.isCredit && payload.creditCard) {
+      const count = Math.max(1, payload.installmentCount ?? 1)
+      const cardName = payload.creditCard.name
+      const cardId = payload.creditCard.id
+      $q.notify({
+        type: 'positive',
+        message:
+          count > 1
+            ? `${count}x lançadas na fatura de ${cardName}`
+            : `Compra lançada na fatura de ${cardName}`,
+        actions: [
+          {
+            label: 'Ver fatura',
+            color: 'white',
+            handler: () => {
+              void router.push({ name: 'invoices', query: { cardId } })
+            },
+          },
+        ],
+      })
+      return
+    }
+    $q.notify({ type: 'positive', message: 'Operação lançada' })
+  }
+
   function addOperation() {
     async function doAddOperation(payload: OperationPayload) {
       if (!center.value) throw new Error('Centro financeiro não informado')
@@ -234,10 +290,19 @@ export const useOperationStore = defineStore('operation', () => {
           })
           await refreshDataForOperationDate(payload.date)
           await notificationService.rescheduleAll()
+          notifyOperationSuccess(payload)
         } catch (error) {
           console.error(error)
         }
       } else {
+        if (payload.isCredit) {
+          if (!payload.creditCard) {
+            throw new Error('Cartão de crédito não informado para compra no crédito')
+          }
+          if (!payload.creditCard.isActive) {
+            throw new Error('Não é possível lançar compras em cartão inativo')
+          }
+        }
         const count = Math.max(1, payload.installmentCount ?? 1)
         const values = splitInInstallments(payload.value, count)
         try {
@@ -256,12 +321,14 @@ export const useOperationStore = defineStore('operation', () => {
                   ? { notificationDaysBefore: payload.notificationDaysBefore }
                   : {}),
                 ...(payload.notificationTime ? { notificationTime: payload.notificationTime } : {}),
+                creditCard: payload.isCredit ? (payload.creditCard ?? null) : null,
               },
               { values, manager },
             )
           })
           await refreshDataForOperationDate(payload.date)
           await notificationService.rescheduleAll()
+          notifyOperationSuccess(payload)
         } catch (error) {
           console.error(error)
         }
@@ -279,6 +346,21 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   function editOperation(operation: Operation) {
+    if (operation.isInvoicePayment) {
+      $q.notify({
+        type: 'warning',
+        message:
+          'Este lançamento é o pagamento de uma fatura. Estorne o pagamento na tela de Faturas.',
+      })
+      return
+    }
+    if (operation.isLockedByInvoice) {
+      $q.notify({
+        type: 'warning',
+        message: 'Compra em fatura fechada. Reabra a fatura para editar.',
+      })
+      return
+    }
     $q.dialog({
       component: OperationDialog,
       componentProps: {
@@ -332,6 +414,21 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   function removeOperation(operation: Operation) {
+    if (operation.isInvoicePayment) {
+      $q.notify({
+        type: 'warning',
+        message:
+          'Este lançamento é o pagamento de uma fatura. Estorne o pagamento na tela de Faturas.',
+      })
+      return
+    }
+    if (operation.isLockedByInvoice) {
+      $q.notify({
+        type: 'warning',
+        message: 'Compra em fatura fechada. Reabra a fatura para excluir.',
+      })
+      return
+    }
     $q.dialog({
       title: 'Excluir operação?',
       message: 'Esta operação é irreversível',
@@ -357,6 +454,14 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   function copyOperation(operation: Operation) {
+    if (operation.isInvoicePayment) {
+      $q.notify({
+        type: 'warning',
+        message:
+          'Este lançamento é o pagamento de uma fatura. Estorne o pagamento na tela de Faturas.',
+      })
+      return
+    }
     if (!center.value) {
       throw new Error('Centro financeiro não informado')
     }
@@ -413,6 +518,14 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   async function transferOperationToCenter(operation: Operation, center: Center) {
+    if (operation.isInvoicePayment) {
+      $q.notify({
+        type: 'warning',
+        message:
+          'Este lançamento é o pagamento de uma fatura. Estorne o pagamento na tela de Faturas.',
+      })
+      return
+    }
     operation.center = center
     await operationRepository.save(operation)
     await refreshData()
@@ -426,6 +539,7 @@ export const useOperationStore = defineStore('operation', () => {
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
       .andWhere('operation.is_active = 1')
+      .andWhere('operation.is_invoice_payment = 0')
       .andWhere("category.type = 'Entrada'")
       .groupBy('category.name')
       .orderBy('SUM(operation.valueInCents)', 'DESC')
@@ -437,6 +551,7 @@ export const useOperationStore = defineStore('operation', () => {
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
       .andWhere('operation.is_active = 1')
+      .andWhere('operation.is_invoice_payment = 0')
       .andWhere("category.type = 'Saída'")
       .groupBy('category.name')
       .orderBy('SUM(operation.valueInCents)', 'ASC')
@@ -465,6 +580,9 @@ export const useOperationStore = defineStore('operation', () => {
       .select("STRFTIME('%m', operation.date)", 'month')
       .addSelect("STRFTIME('%Y', date)", 'year')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
+      .andWhere(
+        'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)',
+      )
       .groupBy('month')
       .addGroupBy('year')
       .orderBy('year')
@@ -498,17 +616,28 @@ export const useOperationStore = defineStore('operation', () => {
   async function refreshSummary() {
     if (!center.value) return
     if (typeof month.value === 'undefined') return
+
+    // Compras no crédito não entram no saldo/lista de caixa
+    const excludeCardPurchases =
+      'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)'
+
     const initialBalance = await operationRepository
       .createQueryBuilder('operation')
       .select('SUM(operation.valueInCents)', 'Total')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
+      .andWhere('operation.is_active = 1')
+      .andWhere(excludeCardPurchases)
       .andWhere('SUBSTR(operation.date, 0, 8) < :month', { month: month.value })
       .getRawOne()
     const operations = await operationRepository
       .createQueryBuilder('operation')
       .leftJoinAndSelect('operation.category', 'category')
       .leftJoinAndSelect('operation.recurringRule', 'recurringRule')
+      .leftJoinAndSelect('operation.cardInvoice', 'cardInvoice')
+      .leftJoinAndSelect('cardInvoice.creditCard', 'creditCard')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
+      .andWhere('operation.is_active = 1')
+      .andWhere(excludeCardPurchases)
       .andWhere("STRFTIME('%m', operation.date) = :monthIndex", {
         monthIndex: month.value.slice(5, 7),
       })
@@ -519,6 +648,8 @@ export const useOperationStore = defineStore('operation', () => {
       .createQueryBuilder('operation')
       .select('SUM(operation.valueInCents)', 'Total')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
+      .andWhere('operation.is_active = 1')
+      .andWhere(excludeCardPurchases)
       .andWhere('SUBSTR(operation.date, 0, 8) <= :month', { month: month.value })
       .getRawOne()
     summaryByMonth.set(month.value, {
@@ -550,6 +681,7 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   async function refreshScreen() {
+    await reconcileInvoiceStatuses(expensesDataSource.dataSource.manager)
     await refreshMonthGroups()
     await refreshSummary()
     hasLoadedFirstTime.value = true

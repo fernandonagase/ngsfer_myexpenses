@@ -5,6 +5,7 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 import { Center } from './center'
 import { Category } from './category'
 import { RecurringRule } from './recurring-rule'
+import { CardInvoice, InvoiceStatus } from './card-invoice'
 
 @Entity('operacao_financeira')
 export class Operation {
@@ -62,6 +63,16 @@ export class Operation {
   @Column({ name: 'notification_time', type: 'text', nullable: true })
   notificationTime?: string
 
+  @ManyToOne(() => CardInvoice, (invoice) => invoice.operations, { nullable: true })
+  @JoinColumn({
+    name: 'fatura_cartao_id',
+    referencedColumnName: 'id',
+  })
+  cardInvoice?: CardInvoice | null
+
+  @Column({ name: 'is_invoice_payment', type: 'boolean', default: false })
+  isInvoicePayment!: boolean
+
   getGenerationKey(recurringRule: RecurringRule, date: string) {
     return `${recurringRule.id}-${date}`
   }
@@ -87,5 +98,17 @@ export class Operation {
 
   get isExpense() {
     return this.valueInCents < 0
+  }
+
+  get isCardPurchase() {
+    return this.cardInvoice != null && !this.isInvoicePayment
+  }
+
+  /**
+   * Compra em fatura fechada/paga é somente-leitura: exige reabrir a fatura
+   * para editar. Requer a relação `cardInvoice` carregada.
+   */
+  get isLockedByInvoice() {
+    return this.isCardPurchase && this.cardInvoice!.status !== InvoiceStatus.ABERTA
   }
 }

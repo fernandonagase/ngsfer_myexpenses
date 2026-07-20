@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { BRL } from '@ngsfer-myexpenses/utils'
 import dayjs from 'dayjs'
 import { useQuasar } from 'quasar'
 
-import type { Category } from 'src/databases/entities/expenses'
+import type { Category, CreditCard } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { useCategoryStore } from 'src/stores/category-store'
+import { useCardStore } from 'src/stores/card-store'
 import { type RecurrenceType, recurrenceTypeOptions } from './recurrence-types'
 import { recurrenceFrequencyOptions } from './recurrence-frequencies'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
@@ -26,6 +27,8 @@ const notes = defineModel<string | undefined>('notes')
 const notificationEnabled = defineModel<boolean>('notificationEnabled', { default: false })
 const notificationDaysBefore = defineModel<number | undefined>('notificationDaysBefore')
 const notificationTime = defineModel<string | undefined>('notificationTime')
+const paymentMethod = defineModel<'cash' | 'credit'>('paymentMethod', { default: 'cash' })
+const creditCard = defineModel<CreditCard | null>('creditCard', { default: null })
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -39,6 +42,7 @@ const dateRules = [(val: string) => !!val || 'Informe a data da operação']
 const categoryRules = [(val: string) => !!val || 'Informe a categoria da operação']
 
 const categoryStore = useCategoryStore()
+const cardStore = useCardStore()
 
 const filteredCategories = computed<Array<Category>>(() =>
   operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
@@ -46,6 +50,15 @@ const filteredCategories = computed<Array<Category>>(() =>
 
 const hasInstallments = computed(() => recurrenceType.value === 'installments')
 const isRecurring = computed(() => recurrenceType.value === 'recurring')
+const isCredit = computed(() => paymentMethod.value === 'credit')
+const canUseCredit = computed(() => operationType.value === 'Saída' && !isRecurring.value)
+const creditCardRules = [
+  (val: CreditCard | null) => !isCredit.value || !!val || 'Selecione o cartão de crédito',
+]
+
+onMounted(async () => {
+  await cardStore.fetchCards()
+})
 
 const isFutureDate = computed(() => {
   if (!date.value) return false
@@ -73,6 +86,31 @@ watch(
 watch(recurrenceType, () => {
   if (recurrenceType.value === 'recurring' && !recurrenceFrequency.value) {
     recurrenceFrequency.value = FrequencyType.MONTHLY
+  }
+})
+
+watch([operationType, recurrenceType], () => {
+  if (!canUseCredit.value) {
+    paymentMethod.value = 'cash'
+    creditCard.value = null
+  }
+})
+
+watch(paymentMethod, (method) => {
+  if (method !== 'credit') {
+    creditCard.value = null
+    return
+  }
+  if (cardStore.activeCards.length === 0) {
+    $q.notify({
+      type: 'warning',
+      message: 'Cadastre um cartão em Configurações antes de lançar no crédito.',
+    })
+    paymentMethod.value = 'cash'
+    return
+  }
+  if (!creditCard.value && cardStore.activeCards.length === 1) {
+    creditCard.value = cardStore.activeCards[0] ?? null
   }
 })
 
@@ -112,6 +150,30 @@ async function onNotificationToggle(val: boolean) {
       ]"
       class="q-mb-md"
     />
+    <template v-if="canUseCredit">
+      <q-btn-toggle
+        v-model="paymentMethod"
+        spread
+        no-caps
+        unelevated
+        toggle-color="secondary"
+        :options="[
+          { label: 'Dinheiro', value: 'cash' },
+          { label: 'Crédito', value: 'credit' },
+        ]"
+        class="q-mb-md"
+      />
+      <q-select
+        v-if="isCredit"
+        v-model="creditCard"
+        :options="cardStore.activeCards"
+        label="Cartão"
+        option-label="name"
+        :rules="creditCardRules"
+        outlined
+        class="q-mb-md"
+      />
+    </template>
     <q-field v-model="value" label="Valor" :rules="valueRules" lazy-rules outlined>
       <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
         <input

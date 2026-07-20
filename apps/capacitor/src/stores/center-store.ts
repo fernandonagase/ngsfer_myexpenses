@@ -86,7 +86,27 @@ export const useCenterStore = defineStore('center', () => {
     })
   }
 
-  function softRemoveCenter(center: Center) {
+  async function countOpenInvoicePurchases(centerId: number): Promise<number> {
+    return operationRepository
+      .createQueryBuilder('operation')
+      .leftJoin('operation.cardInvoice', 'invoice')
+      .where('operation.centro_financeiro_id = :centerId', { centerId })
+      .andWhere('operation.is_invoice_payment = 0')
+      .andWhere('operation.is_active = 1')
+      .andWhere("invoice.status = 'aberta'")
+      .getCount()
+  }
+
+  async function softRemoveCenter(center: Center) {
+    const openPurchases = await countOpenInvoicePurchases(center.id)
+    if (openPurchases > 0) {
+      $q.notify({
+        type: 'warning',
+        message: 'Não é possível inativar este centro',
+        caption: 'Há compras em faturas abertas. Pague ou resolva as faturas antes de inativar.',
+      })
+      return
+    }
     $q.dialog({
       title: 'Inativar centro?',
       message:
@@ -219,9 +239,14 @@ export const useCenterStore = defineStore('center', () => {
   }
 
   async function getSummary() {
+    // Compras no crédito não entram no saldo de caixa.
+    // Filtros no JOIN para preservar centros sem operações (LEFT JOIN).
+    const cashOpsJoin =
+      'operation.is_active = 1 AND NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)'
+
     const summary = await centerRepository
       .createQueryBuilder('center')
-      .leftJoinAndSelect('center.operations', 'operation')
+      .leftJoin('center.operations', 'operation', cashOpsJoin)
       .select('center.name', 'center')
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
       .groupBy('center.name')
@@ -231,19 +256,27 @@ export const useCenterStore = defineStore('center', () => {
       .createQueryBuilder('operation')
       .select("'Total'", 'center')
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.is_active = 1')
+      .andWhere(
+        'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)',
+      )
       .getRawMany()
 
     return summary.concat(total)
   }
 
   async function getCurrentSummary() {
+    // Compras no crédito não entram no saldo de caixa.
+    const now = dayjs().format('YYYY-MM-DD')
+    const cashOpsJoin =
+      'operation.is_active = 1 AND operation.date <= :now AND NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)'
+
     const summary = await centerRepository
       .createQueryBuilder('center')
-      .leftJoinAndSelect('center.operations', 'operation')
+      .leftJoin('center.operations', 'operation', cashOpsJoin, { now })
       .select('center.name', 'center')
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
-      .where('operation.date <= :now', { now: dayjs().format('YYYY-MM-DD') })
-      .andWhere('center.is_active = 1')
+      .where('center.is_active = 1')
       .groupBy('center.name')
       .orderBy('center.id')
       .getRawMany()
@@ -251,8 +284,11 @@ export const useCenterStore = defineStore('center', () => {
       .createQueryBuilder('operation')
       .select("'Total'", 'center')
       .addSelect('SUM(operation.valueInCents)', 'valueInCents')
-      .where('operation.date <= :now', { now: dayjs().format('YYYY-MM-DD') })
+      .where('operation.date <= :now', { now })
       .andWhere('operation.is_active = 1')
+      .andWhere(
+        'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)',
+      )
       .getRawMany()
 
     return summary.concat(total)

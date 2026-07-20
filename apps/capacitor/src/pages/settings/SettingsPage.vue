@@ -7,6 +7,7 @@ import { backup, importBackup } from 'src/services/backup-service'
 import { notificationService } from 'src/services/notification-service'
 import { useCategoryStore } from 'src/stores/category-store'
 import { useCenterStore } from 'src/stores/center-store'
+import { useCardStore } from 'src/stores/card-store'
 import { useOperationStore } from 'src/stores/operation-store'
 
 const $q = useQuasar()
@@ -14,6 +15,7 @@ const { refreshScreen } = useOperationStore()
 
 const centerStore = useCenterStore()
 const categoryStore = useCategoryStore()
+const cardStore = useCardStore()
 // const operationStore = useOperationStore()
 
 async function doBackup() {
@@ -72,6 +74,14 @@ async function doImportBackup() {
           </q-item-section>
           <q-item-section>
             <q-item-label>Categorias</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item clickable v-ripple @click="cardStore.showCards()">
+          <q-item-section avatar>
+            <q-icon name="credit_card" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Cartões de crédito</q-item-label>
           </q-item-section>
         </q-item>
         <q-item clickable v-ripple :to="{ name: 'recurrence' }">

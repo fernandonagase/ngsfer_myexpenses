@@ -2,6 +2,7 @@
 import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { useDialogPluginComponent } from 'quasar'
+import { useRouter } from 'vue-router'
 import { getWeekdayName } from '@ngsfer-myexpenses/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
@@ -20,10 +21,16 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
+const router = useRouter()
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 
 const title = computed(() => props.operation.description || 'Não identificada')
+
+const isInvoicePayment = computed(() => props.operation.isInvoicePayment)
+const isReadOnly = computed(() => props.operation.isLockedByInvoice || isInvoicePayment.value)
+
+const cardName = computed(() => props.operation.cardInvoice?.creditCard?.name ?? null)
 
 const centerName = computed(
   () => props.operation.center?.name ?? operationStore.center?.name ?? '—',
@@ -34,7 +41,7 @@ const canMoveBetweenCenters = computed(() => centerStore.activeCenters.length > 
 const isFuture = computed(() => props.operation.date > dayjs().format('YYYY-MM-DD'))
 
 const weekdayLabel = computed(() => {
-  const day = dayjs(props.operation.date).day() as 0 | 1 | 2 | 3 | 4 | 5 | 6
+  const day = dayjs(props.operation.date).day()
   return getWeekdayName(day)
 })
 
@@ -68,12 +75,20 @@ const notificationLabel = computed(() => {
 function selectAction(action: OperationDetailsAction) {
   onDialogOK(action)
 }
+
+function goToInvoice() {
+  const cardId = props.operation.cardInvoice?.creditCard?.id
+  onDialogCancel()
+  void router.push(
+    cardId != null ? { name: 'invoices', query: { cardId } } : { name: 'invoices' },
+  )
+}
 </script>
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
     <BottomSheetDialog :title="title" @dismiss="onDialogCancel">
-      <template #header-side>
+      <template v-if="!isReadOnly" #header-side>
         <q-btn icon="more_vert" size="12px" flat dense round>
           <q-menu>
             <q-list style="min-width: 100px">
@@ -112,6 +127,30 @@ function selectAction(action: OperationDetailsAction) {
       </template>
 
       <div class="column q-gutter-md">
+        <q-banner
+          v-if="isInvoicePayment"
+          dense
+          class="bg-orange-1 text-orange-9 rounded-borders"
+        >
+          <template #avatar>
+            <q-icon name="lock" color="orange-9" />
+          </template>
+          Pagamento de fatura — somente leitura. Para desfazer, estorne o pagamento na tela de
+          Faturas.
+          <template #action>
+            <q-btn flat dense no-caps color="orange-9" label="Ir para a fatura" @click="goToInvoice" />
+          </template>
+        </q-banner>
+        <q-banner
+          v-else-if="isReadOnly"
+          dense
+          class="bg-orange-1 text-orange-9 rounded-borders"
+        >
+          <template #avatar>
+            <q-icon name="lock" color="orange-9" />
+          </template>
+          Compra em fatura fechada. Reabra a fatura para editar.
+        </q-banner>
         <div class="column items-center q-mb-sm">
           <ConcealableValue>
             <div
@@ -160,6 +199,16 @@ function selectAction(action: OperationDetailsAction) {
             <q-item-section>
               <q-item-label caption>Centro financeiro</q-item-label>
               <q-item-label>{{ centerName }}</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item v-if="cardName">
+            <q-item-section avatar>
+              <q-icon name="credit_card" color="grey-7" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label caption>Cartão de crédito</q-item-label>
+              <q-item-label>{{ cardName }}</q-item-label>
             </q-item-section>
           </q-item>
 

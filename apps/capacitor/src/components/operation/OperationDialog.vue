@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { useDialogPluginComponent } from 'quasar'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import OperationForm from './OperationForm.vue'
-import type { Category } from 'src/databases/entities/expenses'
+import type { Category, CreditCard } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { type RecurrenceType } from './recurrence-types'
 import type { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
@@ -24,6 +24,8 @@ const props = defineProps<{
   notificationEnabled?: boolean
   notificationDaysBefore?: number
   notificationTime?: string
+  paymentMethod?: 'cash' | 'credit'
+  creditCard?: CreditCard | null
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -42,9 +44,16 @@ const notes = ref<string | undefined>(props.notes)
 const notificationEnabled = ref<boolean>(props.notificationEnabled ?? false)
 const notificationDaysBefore = ref<number | undefined>(props.notificationDaysBefore)
 const notificationTime = ref<string | undefined>(props.notificationTime)
+const paymentMethod = ref<'cash' | 'credit'>(props.paymentMethod ?? 'cash')
+const creditCard = ref<CreditCard | null>(props.creditCard ?? null)
+
+const submitLabel = computed(() =>
+  paymentMethod.value === 'credit' ? 'Lançar na fatura' : 'Confirmar',
+)
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
+  const isCredit = paymentMethod.value === 'credit'
   onDialogOK({
     value: operationType.value === 'Entrada' ? valueInCents : -valueInCents,
     date: date.value,
@@ -57,6 +66,8 @@ function onSubmit() {
     notificationEnabled: notificationEnabled.value,
     notificationDaysBefore: notificationDaysBefore.value,
     notificationTime: notificationTime.value,
+    isCredit,
+    creditCard: isCredit ? creditCard.value : null,
   })
 }
 </script>
@@ -79,12 +90,14 @@ function onSubmit() {
             v-model:notification-enabled="notificationEnabled"
             v-model:notification-days-before="notificationDaysBefore"
             v-model:notification-time="notificationTime"
+            v-model:payment-method="paymentMethod"
+            v-model:credit-card="creditCard"
           />
           <template #fallback>Carregando...</template>
         </Suspense>
         <div class="flex justify-end">
           <q-btn label="Cancelar" color="negative" flat class="q-ml-sm" @click="onDialogCancel()" />
-          <q-btn label="Confirmar" type="submit" unelevated color="primary" />
+          <q-btn :label="submitLabel" type="submit" unelevated color="primary" />
         </div>
       </q-form>
     </BottomSheetDialog>

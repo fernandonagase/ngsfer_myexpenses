@@ -16,8 +16,12 @@ export const useCategoryStore = defineStore('category', () => {
   const datasetOutput = ref<Array<Category>>([])
 
   async function fetch() {
-    datasetInput.value = await categoryRepository.find({ where: { type: 'Entrada' } })
-    datasetOutput.value = await categoryRepository.find({ where: { type: 'Saída' } })
+    datasetInput.value = await categoryRepository.find({
+      where: { type: 'Entrada', isSystem: false },
+    })
+    datasetOutput.value = await categoryRepository.find({
+      where: { type: 'Saída', isSystem: false },
+    })
   }
 
   function showCategories() {

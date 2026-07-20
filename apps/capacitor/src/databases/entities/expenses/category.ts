@@ -20,6 +20,9 @@ export class Category {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean
 
+  @Column({ name: 'is_system', type: 'boolean', default: false })
+  isSystem!: boolean
+
   @OneToMany(() => Operation, (operation) => operation.category)
   operations!: Operation[]
 }
