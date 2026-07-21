@@ -171,7 +171,17 @@ function onReopenForEditing() {
           <div class="row justify-end q-gutter-sm q-mt-md">
             <template v-if="invoice.status === InvoiceStatus.FECHADA">
               <q-btn flat no-caps color="grey-8" label="Reabrir p/ editar" @click="onReopenForEditing" />
-              <q-btn unelevated no-caps color="primary" label="Pagar" @click="onPay" />
+              <q-btn
+                v-if="total !== 0"
+                unelevated
+                no-caps
+                color="primary"
+                label="Pagar"
+                @click="onPay"
+              />
+              <span v-else class="text-caption text-grey-7 self-center">
+                Fatura fechada sem compras.
+              </span>
             </template>
             <template v-else-if="invoice.status === InvoiceStatus.PAGA">
               <q-btn flat no-caps color="negative" label="Estornar pagamento" @click="onReopenPayment" />

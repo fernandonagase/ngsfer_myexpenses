@@ -50,6 +50,27 @@ export const useInvoiceStore = defineStore('invoice', () => {
     return raw?.total ?? 0
   }
 
+  /** Totais (centavos) por fatura do cartão — uma query agregada para classificar a lista. */
+  async function getInvoiceTotalsByCard(cardId: number): Promise<Record<number, number>> {
+    const rows = await operationRepository
+      .createQueryBuilder('operation')
+      .innerJoin('operation.cardInvoice', 'invoice')
+      .select('invoice.id', 'invoiceId')
+      .addSelect('SUM(operation.valueInCents)', 'total')
+      .where('invoice.cartao_credito_id = :cardId', { cardId })
+      .andWhere('invoice.is_active = 1')
+      .andWhere('operation.is_invoice_payment = 0')
+      .andWhere('operation.is_active = 1')
+      .groupBy('invoice.id')
+      .getRawMany<{ invoiceId: number; total: number | null }>()
+
+    const totals: Record<number, number> = {}
+    for (const row of rows) {
+      totals[Number(row.invoiceId)] = Number(row.total ?? 0)
+    }
+    return totals
+  }
+
   async function getInvoiceBreakdownByCenter(invoiceId: number): Promise<InvoiceCenterShare[]> {
     const rows = await operationRepository
       .createQueryBuilder('operation')
@@ -246,6 +267,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
     invoices,
     fetchInvoicesByCard,
     getInvoiceTotal,
+    getInvoiceTotalsByCard,
     getInvoiceBreakdownByCenter,
     getInvoiceOperations,
     payInvoice,

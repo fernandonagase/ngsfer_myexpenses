@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import type { EntityManager } from 'typeorm'
 
 import { CardInvoice, InvoiceStatus } from './card-invoice'
-import type { CreditCard } from './credit-card'
+import { CreditCard } from './credit-card'
 
 function clampDayInMonth(yearMonth: string, day: number): string {
   const monthStart = dayjs(`${yearMonth}-01`)
@@ -39,23 +39,6 @@ function nextReferenceMonth(referenceMonth: string): string {
   return dayjs(`${referenceMonth}-01`).add(1, 'month').format('YYYY-MM')
 }
 
-/**
- * Fecha faturas cujo fechamento já passou (`aberta` → `fechada`).
- * Idempotente; não altera faturas `paga`. Base para a regra de compra
- * retroativa e para a trava de edição.
- */
-export async function reconcileInvoiceStatuses(manager: EntityManager): Promise<void> {
-  const today = dayjs().format('YYYY-MM-DD')
-  await manager
-    .createQueryBuilder()
-    .update(CardInvoice)
-    .set({ status: InvoiceStatus.FECHADA })
-    .where('status = :status', { status: InvoiceStatus.ABERTA })
-    .andWhere('is_active = 1')
-    .andWhere('data_fechamento < :today', { today })
-    .execute()
-}
-
 async function findInvoice(
   manager: EntityManager,
   cardId: number,
@@ -90,6 +73,45 @@ async function createInvoice(
     isActive: true,
   })
   return manager.save(invoice)
+}
+
+/**
+ * Garante a fatura do ciclo atual do cartão (modelo bancário).
+ * Idempotente: só cria se ainda não existir fatura ativa para o mês.
+ */
+export async function ensureOpenInvoiceForCurrentCycle(
+  manager: EntityManager,
+  card: CreditCard,
+): Promise<CardInvoice> {
+  const today = dayjs().format('YYYY-MM-DD')
+  const referenceMonth = resolveReferenceMonth(today, card.closingDay)
+  const existing = await findInvoice(manager, card.id, referenceMonth)
+  if (existing) {
+    return existing
+  }
+  return createInvoice(manager, card, referenceMonth)
+}
+
+/**
+ * Fecha faturas cujo fechamento já passou (`aberta` → `fechada`) e garante
+ * a fatura aberta do ciclo atual por cartão ativo. Idempotente; não altera
+ * faturas `paga`. Base para a regra de compra retroativa e para a trava de edição.
+ */
+export async function reconcileInvoiceStatuses(manager: EntityManager): Promise<void> {
+  const today = dayjs().format('YYYY-MM-DD')
+  await manager
+    .createQueryBuilder()
+    .update(CardInvoice)
+    .set({ status: InvoiceStatus.FECHADA })
+    .where('status = :status', { status: InvoiceStatus.ABERTA })
+    .andWhere('is_active = 1')
+    .andWhere('data_fechamento < :today', { today })
+    .execute()
+
+  const activeCards = await manager.find(CreditCard, { where: { isActive: true } })
+  for (const card of activeCards) {
+    await ensureOpenInvoiceForCurrentCycle(manager, card)
+  }
 }
 
 /**

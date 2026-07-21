@@ -4,6 +4,7 @@ import { useQuasar } from 'quasar'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { CreditCard } from 'src/databases/entities/expenses'
+import { ensureOpenInvoiceForCurrentCycle } from 'src/databases/entities/expenses/card-invoice-helpers'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import CreditCardDialog from 'src/components/card/CreditCardDialog.vue'
 import CreditCardFormDialog from 'src/components/card/CreditCardFormDialog.vue'
@@ -72,7 +73,8 @@ export const useCardStore = defineStore('card', () => {
       card.isActive = true
       cardRepository
         .save(card)
-        .then(() => {
+        .then(async () => {
+          await ensureOpenInvoiceForCurrentCycle(expensesDataSource.dataSource.manager, card)
           cards.value = [...cards.value, card]
           $q.notify({
             type: 'positive',
@@ -169,7 +171,8 @@ export const useCardStore = defineStore('card', () => {
       card.isActive = true
       cardRepository
         .save(card)
-        .then(() => {
+        .then(async () => {
+          await ensureOpenInvoiceForCurrentCycle(expensesDataSource.dataSource.manager, card)
           $q.notify({
             type: 'positive',
             message: `O cartão ${card.name} foi reativado com sucesso!`,
