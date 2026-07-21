@@ -108,6 +108,10 @@ function onReopenPayment() {
 function onReopenForEditing() {
   invoiceStore.reopenInvoiceForEditing(props.invoice)
 }
+
+function onCloseEarly() {
+  invoiceStore.closeInvoiceEarly(props.invoice)
+}
 </script>
 
 <template>
@@ -190,6 +194,7 @@ function onReopenForEditing() {
               <span class="text-caption text-grey-7 self-center">
                 Fatura em aberto — acumulando compras.
               </span>
+              <q-btn flat no-caps color="grey-8" label="Fechar agora" @click="onCloseEarly" />
             </template>
           </div>
         </template>

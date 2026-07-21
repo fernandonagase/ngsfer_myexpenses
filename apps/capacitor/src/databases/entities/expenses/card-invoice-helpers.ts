@@ -93,6 +93,23 @@ export async function ensureOpenInvoiceForCurrentCycle(
 }
 
 /**
+ * Após fechar uma fatura antecipadamente, garante a próxima aberta.
+ * Cria o mês seguinte ao fechado (se ainda não existir) e reforça o ciclo atual.
+ */
+export async function ensureSuccessorOpenInvoice(
+  manager: EntityManager,
+  card: CreditCard,
+  closedReferenceMonth: string,
+): Promise<void> {
+  const nextMonth = nextReferenceMonth(closedReferenceMonth)
+  const existingNext = await findInvoice(manager, card.id, nextMonth)
+  if (!existingNext) {
+    await createInvoice(manager, card, nextMonth)
+  }
+  await ensureOpenInvoiceForCurrentCycle(manager, card)
+}
+
+/**
  * Fecha faturas cujo fechamento já passou (`aberta` → `fechada`) e garante
  * a fatura aberta do ciclo atual por cartão ativo. Idempotente; não altera
  * faturas `paga`. Base para a regra de compra retroativa e para a trava de edição.

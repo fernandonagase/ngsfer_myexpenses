@@ -6,10 +6,14 @@ import dayjs from 'dayjs'
 import {
   Category,
   CardInvoice,
+  CreditCard,
   Operation,
 } from 'src/databases/entities/expenses'
 import { InvoiceStatus } from 'src/databases/entities/expenses/card-invoice'
-import { reconcileInvoiceStatuses } from 'src/databases/entities/expenses/card-invoice-helpers'
+import {
+  ensureSuccessorOpenInvoice,
+  reconcileInvoiceStatuses,
+} from 'src/databases/entities/expenses/card-invoice-helpers'
 import { INVOICE_PAYMENT_CATEGORY_NAME } from 'src/databases/entities/expenses/invoice-constants'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import { useOperationStore } from 'src/stores/operation-store'
@@ -263,6 +267,69 @@ export const useInvoiceStore = defineStore('invoice', () => {
     })
   }
 
+  /**
+   * Fecha antecipadamente uma fatura aberta (aberta → fechada), sem alterar
+   * datas. Garante a próxima fatura aberta para novas compras.
+   */
+  function closeInvoiceEarly(invoice: CardInvoice) {
+    if (invoice.status !== InvoiceStatus.ABERTA) {
+      $q.notify({
+        type: 'warning',
+        message: 'Só é possível fechar faturas abertas.',
+      })
+      return
+    }
+
+    $q.dialog({
+      title: 'Fechar fatura agora?',
+      message:
+        'Ela deixa de receber compras e fica disponível para pagamento. Novas compras vão para a próxima fatura. Você pode reabrir depois se precisar editar.',
+      ok: { label: 'Fechar' },
+      cancel: { label: 'Cancelar', color: 'negative', flat: true },
+    }).onOk(() => {
+      void doCloseInvoiceEarly(invoice)
+    })
+  }
+
+  async function doCloseInvoiceEarly(invoice: CardInvoice) {
+    invoice.status = InvoiceStatus.FECHADA
+    try {
+      await invoiceRepository.save(invoice)
+
+      let card = invoice.creditCard
+      if (!card?.id) {
+        const withCard = await invoiceRepository.findOne({
+          where: { id: invoice.id },
+          relations: ['creditCard'],
+        })
+        card = withCard?.creditCard as CreditCard
+      }
+      if (!card) {
+        throw new Error('Cartão da fatura não encontrado')
+      }
+
+      await ensureSuccessorOpenInvoice(
+        expensesDataSource.dataSource.manager,
+        card,
+        invoice.referenceMonth,
+      )
+      await operationStore.refreshScreen()
+      $q.notify({ type: 'positive', message: 'Fatura fechada com sucesso.' })
+    } catch (error) {
+      invoice.status = InvoiceStatus.ABERTA
+      try {
+        await invoiceRepository.save(invoice)
+      } catch {
+        // mantém status local; falha de rollback já foi notificada abaixo
+      }
+      $q.notify({
+        type: 'negative',
+        message: 'Falha ao fechar fatura',
+        caption: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
   return {
     invoices,
     fetchInvoicesByCard,
@@ -273,5 +340,6 @@ export const useInvoiceStore = defineStore('invoice', () => {
     payInvoice,
     reopenInvoicePayment,
     reopenInvoiceForEditing,
+    closeInvoiceEarly,
   }
 })
