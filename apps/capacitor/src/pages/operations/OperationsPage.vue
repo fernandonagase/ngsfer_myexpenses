@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { StatusBar } from '@capacitor/status-bar'
 import { getCssVar, useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
 
 import { useOperationStore } from 'src/stores/operation-store'
@@ -22,6 +23,7 @@ if (qPrimaryColor) {
 }
 
 const $q = useQuasar()
+const router = useRouter()
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 const configStore = useConfigStore()
@@ -57,8 +59,42 @@ function openOperationDetails(operation: Operation) {
 }
 
 const totalForMonth = computed(() =>
-  operationStore.month ? BRL(operationStore.selectedMonthSummary.finalBalance / 100).format() : 0,
+  operationStore.month
+    ? BRL(operationStore.selectedMonthSummary.realizedBalance / 100).format()
+    : 0,
 )
+
+const scheduledInvoiceTotalInCents = computed(
+  () => operationStore.selectedMonthSummary.scheduledInvoiceTotalInCents,
+)
+const scheduledFutureOperationsTotalInCents = computed(
+  () => operationStore.selectedMonthSummary.scheduledFutureOperationsTotalInCents,
+)
+const scheduledTotalInCents = computed(
+  () => scheduledInvoiceTotalInCents.value + scheduledFutureOperationsTotalInCents.value,
+)
+
+const hasScheduledAmounts = computed(
+  () => operationStore.hasLoadedSelectedMonthSummary && scheduledTotalInCents.value !== 0,
+)
+
+const scheduledTotalForMonth = computed(() => BRL(scheduledTotalInCents.value / 100).format())
+const scheduledInvoiceTotalForMonth = computed(() =>
+  BRL(scheduledInvoiceTotalInCents.value / 100).format(),
+)
+const scheduledFutureOperationsTotalForMonth = computed(() =>
+  BRL(scheduledFutureOperationsTotalInCents.value / 100).format(),
+)
+
+const showScheduledDetails = ref(false)
+
+function toggleScheduledDetails() {
+  showScheduledDetails.value = !showScheduledDetails.value
+}
+
+function goToInvoices() {
+  void router.push({ name: 'invoices' })
+}
 </script>
 
 <template>
@@ -78,14 +114,50 @@ const totalForMonth = computed(() =>
           <p
             class="text-h4 q-ma-none text-weight-medium"
             :class="{
-              'text-negative': operationStore.selectedMonthSummary.finalBalance < 0,
+              'text-negative': operationStore.selectedMonthSummary.realizedBalance < 0,
             }"
           >
             {{ totalForMonth }}
           </p>
         </ConcealableValue>
       </div>
-      <p class="text-subtitle1 q-ma-none">Até o fim do mês</p>
+      <p class="text-subtitle1 q-ma-none">Até hoje</p>
+      <div
+        v-if="hasScheduledAmounts"
+        class="row items-center q-mt-xs cursor-pointer"
+        @click="toggleScheduledDetails"
+      >
+        <p class="text-body2 text-grey-8 q-ma-none">
+          Valores agendados:
+          <span class="text-weight-medium">{{ scheduledTotalForMonth }}</span>
+        </p>
+        <q-icon
+          :name="showScheduledDetails ? 'expand_less' : 'expand_more'"
+          size="18px"
+          color="grey-8"
+          class="q-ml-xs"
+        />
+      </div>
+      <div v-if="hasScheduledAmounts && showScheduledDetails" class="column q-mt-xs q-pl-sm">
+        <div
+          v-if="scheduledInvoiceTotalInCents !== 0"
+          class="row items-center cursor-pointer"
+          @click="goToInvoices"
+        >
+          <p class="text-body2 text-grey-8 q-ma-none">
+            Fatura de cartão:
+            <span class="text-weight-medium">{{ scheduledInvoiceTotalForMonth }}</span>
+          </p>
+          <q-icon name="chevron_right" size="18px" color="grey-8" class="q-ml-xs" />
+        </div>
+        <p
+          v-if="scheduledFutureOperationsTotalInCents !== 0"
+          class="text-body2 text-grey-8 q-ma-none"
+        >
+          Saídas previstas:
+          <span class="text-weight-medium">{{ scheduledFutureOperationsTotalForMonth }}</span>
+        </p>
+      </div>
     </div>
     <q-list v-if="operationStore.hasLoadedSelectedMonthSummary" class="operations-list">
       <template
@@ -110,7 +182,8 @@ const totalForMonth = computed(() =>
                         'text-negative': summary.dayBalance < 0,
                       }"
                     >
-                      {{ summary.dayBalance > 0 ? '+' : '' }}{{ BRL(summary.dayBalance / 100).format() }}
+                      {{ summary.dayBalance > 0 ? '+' : ''
+                      }}{{ BRL(summary.dayBalance / 100).format() }}
                     </span>
                   </ConcealableValue>
                 </span>

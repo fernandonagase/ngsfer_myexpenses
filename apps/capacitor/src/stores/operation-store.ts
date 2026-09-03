@@ -160,7 +160,9 @@ export const useOperationStore = defineStore('operation', () => {
       {
         initialBalance: number
         operations: Partial<Record<string, Array<Operation>>>
-        finalBalance: number
+        realizedBalance: number
+        scheduledInvoiceTotalInCents: number
+        scheduledFutureOperationsTotalInCents: number
       }
     >(),
   )
@@ -176,10 +178,13 @@ export const useOperationStore = defineStore('operation', () => {
   const selectedMonthSummary = computed(() => {
     if (!month.value) throw new Error('Operações por mês: nenhum mês selecionado')
     if (!summaryByMonth.has(month.value)) throw new Error('Mês solicitado não contém operações')
+    const monthSummary = summaryByMonth.get(month.value)!
     return {
       // Marcando com ! pois o mês já foi verificado acima com o summaryByMonth.has
-      initialBalance: summaryByMonth.get(month.value)!.initialBalance,
-      finalBalance: summaryByMonth.get(month.value)!.finalBalance,
+      initialBalance: monthSummary.initialBalance,
+      realizedBalance: monthSummary.realizedBalance,
+      scheduledInvoiceTotalInCents: monthSummary.scheduledInvoiceTotalInCents,
+      scheduledFutureOperationsTotalInCents: monthSummary.scheduledFutureOperationsTotalInCents,
     }
   })
 
@@ -218,7 +223,6 @@ export const useOperationStore = defineStore('operation', () => {
     return {
       summaries: Object.fromEntries(summary.toReversed()),
       initialBalance: currentMonthSummary.initialBalance,
-      finalBalance: currentMonthSummary.finalBalance,
     }
   })
 
@@ -580,9 +584,7 @@ export const useOperationStore = defineStore('operation', () => {
       .select("STRFTIME('%m', operation.date)", 'month')
       .addSelect("STRFTIME('%Y', date)", 'year')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
-      .andWhere(
-        'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)',
-      )
+      .andWhere('NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)')
       .groupBy('month')
       .addGroupBy('year')
       .orderBy('year')
@@ -590,11 +592,39 @@ export const useOperationStore = defineStore('operation', () => {
       .getRawMany()
   }
 
+  /**
+   * Meses de referência de faturas com compras lançadas no centro atual, mesmo quando o
+   * mês não tem nenhuma outra movimentação de caixa — sem isso, a aba do mês nunca aparece
+   * e "Valores agendados" fica sem lugar para ser mostrado.
+   */
+  async function getCurrentCenterScheduledInvoiceMonths(): Promise<string[]> {
+    const rows = await operationRepository
+      .createQueryBuilder('operation')
+      .innerJoin('operation.cardInvoice', 'invoice')
+      .select('invoice.mes_referencia', 'referenceMonth')
+      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
+      .andWhere('invoice.is_active = 1')
+      .andWhere('operation.is_invoice_payment = 0')
+      .andWhere('operation.is_active = 1')
+      .groupBy('invoice.mes_referencia')
+      .getRawMany<{ referenceMonth: string }>()
+    return rows.map((row) => row.referenceMonth)
+  }
+
   async function getMonthGroups() {
-    const dbMonths = await getCurrentCenterMonths()
-    return dbMonths.map((month) => ({
-      label: dayjs(`${month.year}-${month.month}`).format('MMM YYYY'),
-      value: `${month.year}-${month.month}`,
+    const [dbMonths, scheduledInvoiceMonths] = await Promise.all([
+      getCurrentCenterMonths(),
+      getCurrentCenterScheduledInvoiceMonths(),
+    ])
+    const monthValues = new Map(
+      dbMonths.map((month) => [`${month.year}-${month.month}`, `${month.year}-${month.month}`]),
+    )
+    for (const referenceMonth of scheduledInvoiceMonths) {
+      monthValues.set(referenceMonth, referenceMonth)
+    }
+    return [...monthValues.values()].sort().map((value) => ({
+      label: dayjs(value).format('MMM YYYY'),
+      value,
     }))
   }
 
@@ -644,18 +674,49 @@ export const useOperationStore = defineStore('operation', () => {
       .andWhere("STRFTIME('%Y', operation.date) = :year", { year: month.value.slice(0, 4) })
       .orderBy('operation.date', 'DESC')
       .getMany()
-    const finalBalance = await operationRepository
+    // Corte entre o que já saiu do centro (realizado) e o que ainda vai sair (agendado):
+    // hoje, ou o fim do mês selecionado, o que vier primeiro (mês passado = mês inteiro
+    // realizado; mês futuro = nada realizado ainda).
+    const today = dayjs().format('YYYY-MM-DD')
+    const endOfMonth = dayjs(month.value).endOf('month').format('YYYY-MM-DD')
+    const cutoffDate = today < endOfMonth ? today : endOfMonth
+
+    const realizedBalance = await operationRepository
       .createQueryBuilder('operation')
       .select('SUM(operation.valueInCents)', 'Total')
       .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
       .andWhere('operation.is_active = 1')
       .andWhere(excludeCardPurchases)
-      .andWhere('SUBSTR(operation.date, 0, 8) <= :month', { month: month.value })
+      .andWhere('operation.date <= :cutoffDate', { cutoffDate })
+      .getRawOne()
+    const scheduledFutureOperationsTotal = await operationRepository
+      .createQueryBuilder('operation')
+      .select('SUM(operation.valueInCents)', 'Total')
+      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
+      .andWhere('operation.is_active = 1')
+      .andWhere(excludeCardPurchases)
+      .andWhere("STRFTIME('%m', operation.date) = :monthIndex", {
+        monthIndex: month.value.slice(5, 7),
+      })
+      .andWhere("STRFTIME('%Y', operation.date) = :year", { year: month.value.slice(0, 4) })
+      .andWhere('operation.date > :cutoffDate', { cutoffDate })
+      .getRawOne()
+    const scheduledInvoiceTotal = await operationRepository
+      .createQueryBuilder('operation')
+      .innerJoin('operation.cardInvoice', 'invoice')
+      .select('SUM(operation.valueInCents)', 'Total')
+      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
+      .andWhere('invoice.mes_referencia = :month', { month: month.value })
+      .andWhere('invoice.is_active = 1')
+      .andWhere('operation.is_invoice_payment = 0')
+      .andWhere('operation.is_active = 1')
       .getRawOne()
     summaryByMonth.set(month.value, {
       operations: Object.groupBy(operations, ({ date }) => date),
       initialBalance: initialBalance.Total,
-      finalBalance: finalBalance.Total,
+      realizedBalance: realizedBalance.Total,
+      scheduledInvoiceTotalInCents: scheduledInvoiceTotal.Total ?? 0,
+      scheduledFutureOperationsTotalInCents: scheduledFutureOperationsTotal.Total ?? 0,
     })
   }
 
