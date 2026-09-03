@@ -3,10 +3,10 @@ import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
 
+import type { CreditCard } from 'src/databases/entities/expenses'
 import {
   Category,
   CardInvoice,
-  CreditCard,
   Operation,
 } from 'src/databases/entities/expenses'
 import { InvoiceStatus } from 'src/databases/entities/expenses/card-invoice'

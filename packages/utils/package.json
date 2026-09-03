@@ -8,7 +8,8 @@
   },
   "main": "./src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +17,8 @@
   "packageManager": "pnpm@10.12.4",
   "dependencies": {
     "currency.js": "^2.0.4"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.0"
   }
 }
