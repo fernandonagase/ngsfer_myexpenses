@@ -1,4 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// home-store.ts também importa a store de operações e o datasource TypeORM/Quasar,
+// que exigem um app Quasar/Capacitor real para inicializar. Isolamos aqui só o que
+// este arquivo testa: a função pura `sumBySign`.
+vi.mock('../databases/datasources/ExpensesDatasource', () => ({
+  default: { dataSource: { getRepository: () => ({}), manager: {} } },
+}))
+vi.mock('../databases/entities/expenses', () => ({ Operation: class {} }))
+vi.mock('../databases/entities/expenses/card-invoice-helpers', () => ({
+  getUnpaidInvoiceCenterLines: () => Promise.resolve([]),
+}))
+vi.mock('./operation-store', () => ({
+  useOperationStore: () => ({ center: null, dataRevision: 0 }),
+}))
 
 import { sumBySign } from './home-store'
 
