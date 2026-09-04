@@ -6,10 +6,14 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/CenterLayout.vue'),
     children: [
       {
-        name: 'operations',
+        name: 'home',
         path: '',
+        component: () => import('pages/home/HomePage.vue'),
+      },
+      {
+        name: 'operations',
+        path: 'operations',
         component: () => import('pages/operations/OperationsPage.vue'),
-        alias: 'operations',
       },
     ],
   },
