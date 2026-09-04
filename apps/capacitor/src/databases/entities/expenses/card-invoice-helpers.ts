@@ -3,6 +3,7 @@ import type { EntityManager } from 'typeorm'
 
 import { CardInvoice, InvoiceStatus } from './card-invoice'
 import { CreditCard } from './credit-card'
+import { Operation } from './operation'
 
 function clampDayInMonth(yearMonth: string, day: number): string {
   const monthStart = dayjs(`${yearMonth}-01`)
@@ -159,4 +160,59 @@ export async function getOrCreateInvoiceForPurchase(
   }
 
   throw new Error('Não foi possível resolver uma fatura aberta para a compra')
+}
+
+/** Linha derivada de fatura não paga (aberta/fechada) com saldo não-zero para um centro. */
+export type UnpaidInvoiceCenterLine = {
+  invoiceId: number
+  cardId: number
+  cardName: string
+  dueDate: string
+  valueInCents: number
+}
+
+/**
+ * Para cada fatura ativa `aberta`/`fechada` com compras do centro informado,
+ * retorna a soma das operações ativas não-pagamento dessa fatura para o
+ * centro. Faturas cujo total para o centro é zero não aparecem (a fatura
+ * pode ter compras de outros centros que se cancelam entre si).
+ */
+export async function getUnpaidInvoiceCenterLines(
+  manager: EntityManager,
+  centerId: number,
+): Promise<UnpaidInvoiceCenterLine[]> {
+  const rows = await manager
+    .createQueryBuilder(Operation, 'operation')
+    .innerJoin('operation.cardInvoice', 'invoice')
+    .innerJoin('invoice.creditCard', 'creditCard')
+    .select('invoice.id', 'invoiceId')
+    .addSelect('creditCard.id', 'cardId')
+    .addSelect('creditCard.name', 'cardName')
+    .addSelect('invoice.dueDate', 'dueDate')
+    .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+    .where('operation.centro_financeiro_id = :centerId', { centerId })
+    .andWhere('operation.is_active = 1')
+    .andWhere('operation.is_invoice_payment = 0')
+    .andWhere('invoice.is_active = 1')
+    .andWhere('invoice.status IN (:...statuses)', {
+      statuses: [InvoiceStatus.ABERTA, InvoiceStatus.FECHADA],
+    })
+    .groupBy('invoice.id')
+    .having('SUM(operation.valueInCents) != 0')
+    .orderBy('invoice.id')
+    .getRawMany<{
+      invoiceId: number
+      cardId: number
+      cardName: string
+      dueDate: string
+      valueInCents: number
+    }>()
+
+  return rows.map((row) => ({
+    invoiceId: Number(row.invoiceId),
+    cardId: Number(row.cardId),
+    cardName: row.cardName,
+    dueDate: row.dueDate,
+    valueInCents: Number(row.valueInCents),
+  }))
 }
