@@ -24,8 +24,13 @@ import {
 import { notificationService } from 'src/services/notification-service'
 import {
   getOrCreateInvoiceForPurchase,
+  getUnpaidInvoiceCenterLines,
   reconcileInvoiceStatuses,
 } from 'src/databases/entities/expenses/card-invoice-helpers'
+import {
+  toVirtualInvoiceLine,
+  type VirtualInvoiceLine,
+} from 'src/models/virtual-invoice-line'
 
 type OperationPayload = {
   value: number
@@ -159,7 +164,7 @@ export const useOperationStore = defineStore('operation', () => {
       string,
       {
         initialBalance: number
-        operations: Partial<Record<string, Array<Operation>>>
+        operations: Partial<Record<string, Array<Operation | VirtualInvoiceLine>>>
         realizedBalance: number
         scheduledInvoiceTotalInCents: number
         scheduledFutureOperationsTotalInCents: number
@@ -195,7 +200,11 @@ export const useOperationStore = defineStore('operation', () => {
 
     const summary: [
       string,
-      { operations: Array<Operation> | undefined; balance: number; dayBalance: number },
+      {
+        operations: Array<Operation | VirtualInvoiceLine> | undefined
+        balance: number
+        dayBalance: number
+      },
     ][] = []
 
     Object.entries(currentMonthSummary.operations)
@@ -711,8 +720,30 @@ export const useOperationStore = defineStore('operation', () => {
       .andWhere('operation.is_invoice_payment = 0')
       .andWhere('operation.is_active = 1')
       .getRawOne()
+    const unpaidInvoiceLines = await getUnpaidInvoiceCenterLines(
+      expensesDataSource.dataSource.manager,
+      center.value.id,
+    )
+    const virtualInvoiceLines = unpaidInvoiceLines
+      .filter((line) => line.dueDate.slice(0, 7) === month.value)
+      .map(toVirtualInvoiceLine)
+
+    const operationsByDate = Object.groupBy(operations, ({ date }) => date)
+    const virtualInvoiceLinesByDate = Object.groupBy(virtualInvoiceLines, ({ date }) => date)
+    const mergedOperationsByDate: Partial<Record<string, Array<Operation | VirtualInvoiceLine>>> =
+      {}
+    for (const date of new Set([
+      ...Object.keys(operationsByDate),
+      ...Object.keys(virtualInvoiceLinesByDate),
+    ])) {
+      mergedOperationsByDate[date] = [
+        ...(operationsByDate[date] ?? []),
+        ...(virtualInvoiceLinesByDate[date] ?? []),
+      ]
+    }
+
     summaryByMonth.set(month.value, {
-      operations: Object.groupBy(operations, ({ date }) => date),
+      operations: mergedOperationsByDate,
       initialBalance: initialBalance.Total,
       realizedBalance: realizedBalance.Total,
       scheduledInvoiceTotalInCents: scheduledInvoiceTotal.Total ?? 0,
