@@ -621,15 +621,24 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   async function getMonthGroups() {
-    const [dbMonths, scheduledInvoiceMonths] = await Promise.all([
+    const [dbMonths, scheduledInvoiceMonths, unpaidInvoiceLines] = await Promise.all([
       getCurrentCenterMonths(),
       getCurrentCenterScheduledInvoiceMonths(),
+      center.value
+        ? getUnpaidInvoiceCenterLines(expensesDataSource.dataSource.manager, center.value.id)
+        : Promise.resolve([]),
     ])
     const monthValues = new Map(
       dbMonths.map((month) => [`${month.year}-${month.month}`, `${month.year}-${month.month}`]),
     )
     for (const referenceMonth of scheduledInvoiceMonths) {
       monthValues.set(referenceMonth, referenceMonth)
+    }
+    // Garante a aba do mês de vencimento de cada lançamento virtual (HIST-04):
+    // ele é ancorado em dueDate, que pode cair num mês de referência diferente do fechamento.
+    for (const line of unpaidInvoiceLines) {
+      const dueMonth = line.dueDate.slice(0, 7)
+      monthValues.set(dueMonth, dueMonth)
     }
     return [...monthValues.values()].sort().map((value) => ({
       label: dayjs(value).format('MMM YYYY'),
