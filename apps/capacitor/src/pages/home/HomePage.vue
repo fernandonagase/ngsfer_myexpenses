@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { useHomeStore } from 'src/stores/home-store'
+import { useOperationStore } from 'src/stores/operation-store'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 
 const router = useRouter()
 const homeStore = useHomeStore()
+const operationStore = useOperationStore()
 
 const balanceForDisplay = computed(() =>
   homeStore.summary ? BRL(homeStore.summary.balanceInCents / 100).format() : '',
@@ -20,6 +23,10 @@ const scheduledInflowsForDisplay = computed(() =>
 )
 
 function goToOperations() {
+  const currentMonth = dayjs().format('YYYY-MM')
+  if (operationStore.months.some((month) => month.value === currentMonth)) {
+    operationStore.month = currentMonth
+  }
   void router.push({ name: 'operations' })
 }
 </script>
