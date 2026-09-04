@@ -16,6 +16,7 @@ import OperationDetailsDialog, {
 import type { Operation } from 'src/databases/entities/expenses'
 import { useConfigStore } from 'src/stores/config-store'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { isVirtualInvoiceLine } from 'src/models/virtual-invoice-line'
 
 const qPrimaryColor = getCssVar('primary')
 if (qPrimaryColor) {
@@ -94,6 +95,10 @@ function toggleScheduledDetails() {
 
 function goToInvoices() {
   void router.push({ name: 'invoices' })
+}
+
+function goToInvoicesForCard(cardId: number) {
+  void router.push({ name: 'invoices', query: { cardId } })
 }
 </script>
 
@@ -230,41 +235,62 @@ function goToInvoices() {
             </q-item-label>
           </q-item-section>
         </q-item>
-        <q-item
-          v-for="operation in summary.operations"
-          :key="operation.id"
-          clickable
-          v-ripple
-          @click="openOperationDetails(operation)"
-        >
-          <q-item-section>
-            <q-item-label class="text-body1">
-              <span v-if="operation.description">{{ operation.description }}</span>
-              <span v-else>Não identificada</span>
-            </q-item-label>
-            <q-item-label caption>{{ operation.category.name }}</q-item-label>
-            <q-item-label v-if="operation.recurringRule" caption>
-              <q-icon name="repeat" />
-              Repete
-              <template v-if="operation.recurringRule?.frequency === FrequencyType.WEEKLY">
-                toda(o) {{ getWeekdayName(operation.recurringRule.weeklyAnchorDay!) }}
-              </template>
-              <template v-if="operation.recurringRule?.frequency === FrequencyType.MONTHLY">
-                todo dia {{ operation.recurringRule.anchorDay }}
-              </template>
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <ConcealableValue>
-              <span
-                class="text-body2"
-                :class="operation.isExpense ? 'text-black' : 'text-positive'"
-              >
-                {{ operation.isExpense ? '' : '+' }}{{ operation.valueString }}
-              </span>
-            </ConcealableValue>
-          </q-item-section>
-        </q-item>
+        <template v-for="operation in summary.operations" :key="operation.id">
+          <q-item
+            v-if="isVirtualInvoiceLine(operation)"
+            clickable
+            v-ripple
+            @click="goToInvoicesForCard(operation.cardId)"
+          >
+            <q-item-section avatar>
+              <q-icon name="credit_card" color="grey-7" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label caption>Previsto</q-item-label>
+              <q-item-label class="text-body1">Fatura {{ operation.cardName }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <ConcealableValue>
+                <span
+                  class="text-body2"
+                  :class="operation.valueInCents < 0 ? 'text-black' : 'text-positive'"
+                >
+                  {{ operation.valueInCents >= 0 ? '+' : ''
+                  }}{{ BRL(operation.valueInCents / 100).format() }}
+                </span>
+              </ConcealableValue>
+            </q-item-section>
+          </q-item>
+          <q-item v-else clickable v-ripple @click="openOperationDetails(operation)">
+            <q-item-section>
+              <q-item-label class="text-body1">
+                <span v-if="operation.description">{{ operation.description }}</span>
+                <span v-else>Não identificada</span>
+              </q-item-label>
+              <q-item-label caption>{{ operation.category.name }}</q-item-label>
+              <q-item-label v-if="operation.recurringRule" caption>
+                <q-icon name="repeat" />
+                Repete
+                <template v-if="operation.recurringRule?.frequency === FrequencyType.WEEKLY">
+                  toda(o) {{ getWeekdayName(operation.recurringRule.weeklyAnchorDay!) }}
+                </template>
+                <template v-if="operation.recurringRule?.frequency === FrequencyType.MONTHLY">
+                  todo dia {{ operation.recurringRule.anchorDay }}
+                </template>
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <ConcealableValue>
+                <span
+                  class="text-body2"
+                  :class="operation.isExpense ? 'text-black' : 'text-positive'"
+                >
+                  {{ operation.isExpense ? '' : '+' }}{{ operation.valueString }}
+                </span>
+              </ConcealableValue>
+            </q-item-section>
+          </q-item>
+        </template>
       </template>
       <q-item>
         <q-item-section>
