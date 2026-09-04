@@ -2,10 +2,10 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import dayjs from 'dayjs'
 
-import { Operation } from '../databases/entities/expenses'
-import { getUnpaidInvoiceCenterLines } from '../databases/entities/expenses/card-invoice-helpers'
-import expensesDataSource from '../databases/datasources/ExpensesDatasource'
-import { useOperationStore } from './operation-store'
+import { Operation } from 'src/databases/entities/expenses'
+import { getUnpaidInvoiceCenterLines } from 'src/databases/entities/expenses/card-invoice-helpers'
+import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
+import { useOperationStore } from 'src/stores/operation-store'
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
 
