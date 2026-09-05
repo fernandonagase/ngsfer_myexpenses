@@ -12,6 +12,7 @@ import { ExpensesAddOperationNotes1773792148695 } from './1773792148695-Expenses
 import { ExpensesAddNotificationFields1774000000000 } from './1774000000000-ExpensesAddNotificationFields'
 import { ExpensesCreateCreditCard1775000000000 } from './1775000000000-ExpensesCreateCreditCard'
 import { ExpensesInvoicePaymentCategory1776000000000 } from './1776000000000-ExpensesInvoicePaymentCategory'
+import { ExpensesOptionalCenter1777000000000 } from './1777000000000-ExpensesOptionalCenter'
 
 export {
   InitialExpensesCenter1738203549000,
@@ -28,4 +29,5 @@ export {
   ExpensesAddNotificationFields1774000000000,
   ExpensesCreateCreditCard1775000000000,
   ExpensesInvoicePaymentCategory1776000000000,
+  ExpensesOptionalCenter1777000000000,
 }
