@@ -2,9 +2,7 @@
 import { useOperationStore } from 'src/stores/operation-store'
 import { FOOTER_TABS, type FooterTab } from 'src/router/chrome'
 
-const props = withDefaults(defineProps<{ activeTab?: FooterTab | null }>(), {
-  activeTab: null,
-})
+const props = defineProps<{ activeTab: FooterTab | null }>()
 const operationStore = useOperationStore()
 
 const leftTabs = FOOTER_TABS.slice(0, 2)
