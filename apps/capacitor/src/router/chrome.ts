@@ -51,6 +51,28 @@ export function resolveBackTarget(meta: NavigationMeta, hasAppHistory: boolean):
   return { type: 'replace', name: meta.parent ?? 'home' }
 }
 
+export type HardwareBackAction = { type: 'ignore' } | { type: 'exit' } | BackTarget
+
+export function resolveHardwareBack(
+  meta: NavigationMeta,
+  signals: { hasAppHistory: boolean; overlayOpen: boolean; routeName: string | null },
+): HardwareBackAction {
+  if (signals.overlayOpen) {
+    return { type: 'ignore' }
+  }
+  if (signals.hasAppHistory) {
+    return { type: 'ignore' }
+  }
+  const kind: RouteKind = meta.kind ?? 'detail'
+  if (kind === 'detail') {
+    return { type: 'replace', name: meta.parent ?? 'home' }
+  }
+  if (signals.routeName !== 'home') {
+    return { type: 'replace', name: 'home' }
+  }
+  return { type: 'exit' }
+}
+
 export const FOOTER_TABS: ReadonlyArray<{
   tab: FooterTab
   route: string

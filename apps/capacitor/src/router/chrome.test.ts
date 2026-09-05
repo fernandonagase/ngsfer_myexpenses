@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { FOOTER_TABS, resolveBackTarget, resolveChrome } from './chrome'
+import { FOOTER_TABS, resolveBackTarget, resolveChrome, resolveHardwareBack } from './chrome'
 
 describe('resolveChrome', () => {
   it('home: tab + toolbar center + activeTab home', () => {
@@ -168,6 +168,62 @@ describe('resolveBackTarget', () => {
 
   it('sem histórico com meta vazio (rota sem kind) → replace home', () => {
     expect(resolveBackTarget({}, false)).toEqual({ type: 'replace', name: 'home' })
+  })
+})
+
+describe('resolveHardwareBack', () => {
+  it('overlayOpen true → ignore, mesmo sem histórico e em home (precedência sobre exit)', () => {
+    expect(
+      resolveHardwareBack(
+        { kind: 'tab', tab: 'home' },
+        { hasAppHistory: false, overlayOpen: true, routeName: 'home' },
+      ),
+    ).toEqual({ type: 'ignore' })
+  })
+
+  it('overlayOpen false, hasAppHistory true → ignore (Quasar faz window.history.back())', () => {
+    expect(
+      resolveHardwareBack(
+        { kind: 'detail', parent: 'settings' },
+        { hasAppHistory: true, overlayOpen: false, routeName: 'recurrence' },
+      ),
+    ).toEqual({ type: 'ignore' })
+  })
+
+  it('detail sem overlay e sem histórico → replace para meta.parent', () => {
+    expect(
+      resolveHardwareBack(
+        { kind: 'detail', parent: 'settings' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'recurrence' },
+      ),
+    ).toEqual({ type: 'replace', name: 'settings' })
+  })
+
+  it('detail sem parent, sem overlay e sem histórico → replace home', () => {
+    expect(
+      resolveHardwareBack(
+        { kind: 'detail' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'settings' },
+      ),
+    ).toEqual({ type: 'replace', name: 'home' })
+  })
+
+  it('tab diferente de home sem overlay e sem histórico → replace home', () => {
+    expect(
+      resolveHardwareBack(
+        { kind: 'tab', tab: 'invoices' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'invoices' },
+      ),
+    ).toEqual({ type: 'replace', name: 'home' })
+  })
+
+  it('routeName home sem overlay e sem histórico → exit', () => {
+    expect(
+      resolveHardwareBack(
+        { kind: 'tab', tab: 'home' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'home' },
+      ),
+    ).toEqual({ type: 'exit' })
   })
 })
 
