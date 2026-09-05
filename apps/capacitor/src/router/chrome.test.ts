@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { FOOTER_TABS, resolveChrome } from './chrome'
+import { FOOTER_TABS, resolveBackTarget, resolveChrome } from './chrome'
 
 describe('resolveChrome', () => {
   it('home: tab + toolbar center + activeTab home', () => {
@@ -142,6 +142,32 @@ describe('resolveChrome', () => {
 
   it('centerLabel ausente → showCenterLabel falso', () => {
     expect(resolveChrome({ kind: 'tab', tab: 'invoices' }).showCenterLabel).toBe(false)
+  })
+})
+
+describe('resolveBackTarget', () => {
+  it('com histórico do app → back, independentemente de meta (P2 AC1)', () => {
+    expect(resolveBackTarget({ kind: 'detail', parent: 'settings' }, true)).toEqual({
+      type: 'back',
+    })
+  })
+
+  it('sem histórico com meta.parent="settings" → replace settings (P2 AC3)', () => {
+    expect(resolveBackTarget({ kind: 'detail', parent: 'settings' }, false)).toEqual({
+      type: 'replace',
+      name: 'settings',
+    })
+  })
+
+  it('sem histórico sem meta.parent → replace home (P2 AC4)', () => {
+    expect(resolveBackTarget({ kind: 'detail' }, false)).toEqual({
+      type: 'replace',
+      name: 'home',
+    })
+  })
+
+  it('sem histórico com meta vazio (rota sem kind) → replace home', () => {
+    expect(resolveBackTarget({}, false)).toEqual({ type: 'replace', name: 'home' })
   })
 })
 

@@ -42,6 +42,15 @@ export function resolveChrome(meta: NavigationMeta): Chrome {
   }
 }
 
+export type BackTarget = { type: 'back' } | { type: 'replace'; name: string }
+
+export function resolveBackTarget(meta: NavigationMeta, hasAppHistory: boolean): BackTarget {
+  if (hasAppHistory) {
+    return { type: 'back' }
+  }
+  return { type: 'replace', name: meta.parent ?? 'home' }
+}
+
 export const FOOTER_TABS: ReadonlyArray<{
   tab: FooterTab
   route: string
