@@ -81,7 +81,7 @@ function goToOperations() {
       <q-btn
         outline
         no-caps
-        label="Ver movimentações"
+        label="Ver lançamentos"
         icon="list_alt"
         color="primary"
         class="full-width q-mt-md"
