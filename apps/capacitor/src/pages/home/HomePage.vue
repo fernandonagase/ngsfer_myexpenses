@@ -78,6 +78,15 @@ function goToOperations() {
           </div>
         </div>
       </div>
+      <q-btn
+        outline
+        no-caps
+        label="Ver movimentações"
+        icon="list_alt"
+        color="primary"
+        class="full-width q-mt-md"
+        @click="goToOperations"
+      />
     </template>
   </q-page>
 </template>

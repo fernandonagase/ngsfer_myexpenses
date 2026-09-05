@@ -7,7 +7,7 @@ import { useOperationStore } from 'src/stores/operation-store'
 const route = useRoute()
 const operationStore = useOperationStore()
 
-type FooterTab = 'home' | 'operations' | 'invoices' | 'reports' | 'more'
+type FooterTab = 'home' | 'invoices' | 'reports' | 'more'
 
 const activeTab = computed<FooterTab>(() => {
   if (route.name === 'invoices' || route.path.startsWith('/invoices')) {
@@ -23,9 +23,6 @@ const activeTab = computed<FooterTab>(() => {
     route.path.startsWith('/recurrence')
   ) {
     return 'more'
-  }
-  if (route.name === 'operations') {
-    return 'operations'
   }
   return 'home'
 })
@@ -52,11 +49,11 @@ function tabColor(tab: FooterTab) {
         stack
         flat
         no-caps
-        label="Lançamentos"
-        icon="list_alt"
-        :color="tabColor('operations')"
+        label="Faturas"
+        icon="receipt_long"
+        :color="tabColor('invoices')"
         class="col-6"
-        :to="{ name: 'operations' }"
+        :to="{ name: 'invoices' }"
       />
     </div>
     <div class="fab-space"></div>
@@ -65,20 +62,10 @@ function tabColor(tab: FooterTab) {
         stack
         flat
         no-caps
-        label="Faturas"
-        icon="receipt_long"
-        :color="tabColor('invoices')"
-        class="col-4"
-        :to="{ name: 'invoices' }"
-      />
-      <q-btn
-        stack
-        flat
-        no-caps
         label="Relatório"
         icon="trending_up"
         :color="tabColor('reports')"
-        class="col-4"
+        class="col-6"
         :to="{ name: 'operations-by-category' }"
       />
       <q-btn
@@ -88,7 +75,7 @@ function tabColor(tab: FooterTab) {
         label="Mais"
         icon="menu"
         :color="tabColor('more')"
-        class="col-4"
+        class="col-6"
         :to="{ name: 'settings' }"
       />
     </div>
