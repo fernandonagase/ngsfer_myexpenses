@@ -21,6 +21,9 @@ importers:
       '@capacitor-community/sqlite':
         specifier: ^7.0.0
         version: 7.0.3(@capacitor/core@6.2.1)
+      '@capacitor/app':
+        specifier: ^7.0.0
+        version: 7.1.2(@capacitor/core@6.2.1)
       '@capacitor/filesystem':
         specifier: ^7.0.0
         version: 7.1.8(@capacitor/core@6.2.1)
@@ -167,6 +170,11 @@ packages:
   '@capacitor-community/sqlite@7.0.3':
     resolution: {integrity: sha512-aKOCM3RglhF9Q2XA7NMyT923tc+dY9ANLzB+FgKy6Q6jxJIHuJ6YRZbFHJKicBjheCOP1k7HpPIdnZ05GpsGVg==}
     engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
+
+  '@capacitor/app@7.1.2':
+    resolution: {integrity: sha512-d4I/oF/PRu4megL7/IGKYfe5j7yzSON1FRFgq6kH+m5kH6g7V+wyjHRLauCzGNjdRx4S+nWOumINds0qcRBtKg==}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
@@ -3720,6 +3728,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 6.2.1
       jeep-sqlite: 2.8.0
+
+  '@capacitor/app@7.1.2(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
 
   '@capacitor/core@6.2.1':
     dependencies:
