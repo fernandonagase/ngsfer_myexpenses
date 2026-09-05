@@ -10,9 +10,6 @@ export class Center {
   @Column({ name: 'nome', type: 'text', length: 25 })
   name!: string
 
-  @Column({ name: 'is_default_center', type: 'boolean' })
-  isDefaultCenter!: boolean
-
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean
 

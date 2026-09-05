@@ -41,12 +41,12 @@ export class RecurringRule {
   @Column({ name: 'type', type: 'text' })
   ruleType!: RecurringRuleType
 
-  @ManyToOne(() => Center, (center) => center.operations)
+  @ManyToOne(() => Center, (center) => center.operations, { nullable: true })
   @JoinColumn({
     name: 'centro_financeiro_id',
     referencedColumnName: 'id',
   })
-  center!: Center
+  center?: Center | null
 
   @ManyToOne(() => Category, (category) => category.operations)
   @JoinColumn({
