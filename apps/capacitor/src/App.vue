@@ -1,5 +1,8 @@
 <template>
-  <router-view />
+  <Suspense>
+    <router-view />
+    <template #fallback> Carregando... </template>
+  </Suspense>
 </template>
 
 <script setup lang="ts">
