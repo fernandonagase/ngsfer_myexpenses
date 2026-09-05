@@ -1,34 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-
 import { useOperationStore } from 'src/stores/operation-store'
+import { FOOTER_TABS, type FooterTab } from 'src/router/chrome'
 
-const route = useRoute()
+const props = withDefaults(defineProps<{ activeTab?: FooterTab | null }>(), {
+  activeTab: null,
+})
 const operationStore = useOperationStore()
 
-type FooterTab = 'home' | 'invoices' | 'reports' | 'more'
-
-const activeTab = computed<FooterTab>(() => {
-  if (route.name === 'invoices' || route.path.startsWith('/invoices')) {
-    return 'invoices'
-  }
-  if (route.name === 'operations-by-category' || route.path.startsWith('/reports')) {
-    return 'reports'
-  }
-  if (
-    route.name === 'settings' ||
-    route.name === 'recurrence' ||
-    route.path.startsWith('/settings') ||
-    route.path.startsWith('/recurrence')
-  ) {
-    return 'more'
-  }
-  return 'home'
-})
+const leftTabs = FOOTER_TABS.slice(0, 2)
+const rightTabs = FOOTER_TABS.slice(2)
 
 function tabColor(tab: FooterTab) {
-  return activeTab.value === tab ? 'primary' : 'grey-6'
+  return props.activeTab === tab ? 'primary' : 'grey-6'
 }
 </script>
 
@@ -36,47 +19,31 @@ function tabColor(tab: FooterTab) {
   <q-toolbar class="bg-white text-dark main-footer-toolbar q-px-xs">
     <div class="col row justify-center">
       <q-btn
+        v-for="item in leftTabs"
+        :key="item.tab"
         stack
         flat
         no-caps
-        label="Início"
-        icon="home"
-        :color="tabColor('home')"
+        :label="item.label"
+        :icon="item.icon"
+        :color="tabColor(item.tab)"
         class="col-6"
-        :to="{ name: 'home' }"
-      />
-      <q-btn
-        stack
-        flat
-        no-caps
-        label="Faturas"
-        icon="receipt_long"
-        :color="tabColor('invoices')"
-        class="col-6"
-        :to="{ name: 'invoices' }"
+        :to="{ name: item.route }"
       />
     </div>
     <div class="fab-space"></div>
     <div class="col row justify-center">
       <q-btn
+        v-for="item in rightTabs"
+        :key="item.tab"
         stack
         flat
         no-caps
-        label="Relatório"
-        icon="trending_up"
-        :color="tabColor('reports')"
+        :label="item.label"
+        :icon="item.icon"
+        :color="tabColor(item.tab)"
         class="col-6"
-        :to="{ name: 'operations-by-category' }"
-      />
-      <q-btn
-        stack
-        flat
-        no-caps
-        label="Mais"
-        icon="menu"
-        :color="tabColor('more')"
-        class="col-6"
-        :to="{ name: 'settings' }"
+        :to="{ name: item.route }"
       />
     </div>
     <q-btn
