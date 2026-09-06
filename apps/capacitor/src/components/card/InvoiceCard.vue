@@ -6,8 +6,10 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 
 import type { CardInvoice, Operation } from 'src/databases/entities/expenses'
 import { InvoiceStatus } from 'src/databases/entities/expenses/card-invoice'
+import { NONE_LABEL } from 'src/models/center-scope'
 import { useInvoiceStore, type InvoiceCenterShare } from 'src/stores/invoice-store'
 import { useOperationStore } from 'src/stores/operation-store'
+import { useCenterStore } from 'src/stores/center-store'
 import InvoicePaymentDialog from 'src/components/card/InvoicePaymentDialog.vue'
 import OperationDetailsDialog, {
   type OperationDetailsAction,
@@ -20,6 +22,7 @@ const props = defineProps<{
 const $q = useQuasar()
 const invoiceStore = useInvoiceStore()
 const operationStore = useOperationStore()
+const centerStore = useCenterStore()
 
 const total = ref(0)
 const breakdown = ref<InvoiceCenterShare[]>([])
@@ -133,18 +136,20 @@ function onCloseEarly() {
       <q-card-section>
         <div v-if="loading" class="text-grey-7">Carregando...</div>
         <template v-else>
-          <div class="text-subtitle2 q-mb-xs">Participação por centro</div>
-          <q-list dense>
-            <q-item v-for="share in breakdown" :key="share.centerId" class="q-px-none">
-              <q-item-section>{{ share.centerName }}</q-item-section>
-              <q-item-section side>
-                {{ BRL(Math.abs(share.valueInCents) / 100).format() }}
-              </q-item-section>
-            </q-item>
-            <q-item v-if="breakdown.length === 0" class="q-px-none">
-              <q-item-section class="text-grey-7">Nenhuma compra nesta fatura.</q-item-section>
-            </q-item>
-          </q-list>
+          <template v-if="centerStore.hasActiveCenters">
+            <div class="text-subtitle2 q-mb-xs">Participação por centro</div>
+            <q-list dense>
+              <q-item v-for="share in breakdown" :key="share.centerId ?? 'none'" class="q-px-none">
+                <q-item-section>{{ share.centerName ?? NONE_LABEL }}</q-item-section>
+                <q-item-section side>
+                  {{ BRL(Math.abs(share.valueInCents) / 100).format() }}
+                </q-item-section>
+              </q-item>
+              <q-item v-if="breakdown.length === 0" class="q-px-none">
+                <q-item-section class="text-grey-7">Nenhuma compra nesta fatura.</q-item-section>
+              </q-item>
+            </q-list>
+          </template>
 
           <template v-if="operations.length > 0">
             <q-separator spaced />
@@ -162,7 +167,7 @@ function onCloseEarly() {
                   <q-item-label>{{ operation.description || 'Não identificada' }}</q-item-label>
                   <q-item-label caption>
                     {{ operation.dateString }} · {{ operation.category.name }} ·
-                    {{ operation.center.name }}
+                    {{ operation.center?.name ?? NONE_LABEL }}
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
