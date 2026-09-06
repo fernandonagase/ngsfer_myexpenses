@@ -6,10 +6,10 @@ import dayjs from 'dayjs'
 import { BRL, splitInInstallments } from '@ngsfer-myexpenses/utils'
 
 import {
-  Category,
   Operation,
   RecurringRule,
   type CardInvoice,
+  type Category,
   type Center,
   type CreditCard,
 } from 'src/databases/entities/expenses'
@@ -28,9 +28,28 @@ import {
   reconcileInvoiceStatuses,
 } from 'src/databases/entities/expenses/card-invoice-helpers'
 import {
+  sumCashBalanceBeforeMonth,
+  sumCashBalanceUntil,
+  sumScheduledCashOfMonthAfter,
+  sumInvoicePurchasesOfReferenceMonth,
+  sumOperationsByCategory,
+  listCashMonths,
+  listCashOperationsOfMonth,
+  listInvoiceReferenceMonths,
+} from 'src/databases/entities/expenses/operation-queries'
+import {
   toVirtualInvoiceLine,
   type VirtualInvoiceLine,
 } from 'src/models/virtual-invoice-line'
+import {
+  ALL_SCOPE,
+  isSameScope,
+  reconcileScope,
+  defaultFormCenter,
+  scopeLabel as computeScopeLabel,
+  type CenterScope,
+} from 'src/models/center-scope'
+import { useCenterStore } from 'src/stores/center-store'
 
 type OperationPayload = {
   value: number
@@ -46,12 +65,13 @@ type OperationPayload = {
   notificationTime?: string
   isCredit?: boolean
   creditCard?: CreditCard | null
+  center: Center | null
 }
 
 type OperationData = {
   date: string
   category: Category
-  center: Center
+  center: Center | null
   description: string
   notes?: string | undefined
   notificationEnabled?: boolean
@@ -66,13 +86,12 @@ type RecurringRuleData = {
   startDate: string
   nextRunDate: string
   category: Category
-  center: Center
+  center: Center | null
   recurrenceFrequency: FrequencyType
   anchorDay: number
 }
 
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
-const categoryOperation = expensesDataSource.dataSource.getRepository(Category) // renomear para categoryRepository
 
 function addRecurringRule(
   recurringRuleData: RecurringRuleData,
@@ -149,7 +168,9 @@ async function addOperations(
 export const useOperationStore = defineStore('operation', () => {
   const $q = useQuasar()
   const router = useRouter()
-  const center = ref<Center | null>(null)
+  const centerStore = useCenterStore()
+  const scope = ref<CenterScope>(ALL_SCOPE)
+  const scopeLabel = computed(() => computeScopeLabel(scope.value, centerStore.activeCenters))
   const months = ref<Array<{ label: string; value: string }>>([])
   const month = ref<string>()
   const hasLoadedFirstTime = ref(false)
@@ -235,8 +256,8 @@ export const useOperationStore = defineStore('operation', () => {
     }
   })
 
-  function setCenter(newCenter: Center) {
-    center.value = newCenter
+  function setScope(next: CenterScope) {
+    scope.value = next
   }
 
   function notifyOperationSuccess(payload: OperationPayload) {
@@ -267,7 +288,16 @@ export const useOperationStore = defineStore('operation', () => {
 
   function addOperation() {
     async function doAddOperation(payload: OperationPayload) {
-      if (!center.value) throw new Error('Centro financeiro não informado')
+      if (
+        payload.center &&
+        !centerStore.activeCenters.some((activeCenter) => activeCenter.id === payload.center!.id)
+      ) {
+        $q.notify({
+          type: 'warning',
+          message: 'Centro inativado. Escolha outro ou deixe sem centro.',
+        })
+        return
+      }
 
       if (payload.recurrenceType === 'recurring') {
         if (!payload.recurrenceFrequency)
@@ -285,7 +315,7 @@ export const useOperationStore = defineStore('operation', () => {
                 category: payload.category,
                 recurrenceFrequency: payload.recurrenceFrequency!,
                 anchorDay: parseInt(dayjs(payload.date).format('DD')),
-                center: center.value!,
+                center: payload.center,
               },
               {
                 manager,
@@ -296,7 +326,7 @@ export const useOperationStore = defineStore('operation', () => {
                 date: payload.date,
                 category: payload.category,
                 description: payload.description,
-                center: center.value!,
+                center: payload.center,
               },
               { values: [payload.value], recurringRule: recurringRule, manager },
             )
@@ -325,7 +355,7 @@ export const useOperationStore = defineStore('operation', () => {
                 date: payload.date,
                 category: payload.category,
                 description: payload.description,
-                center: center.value!,
+                center: payload.center,
                 notes: payload.notes,
                 ...(payload.notificationEnabled
                   ? { notificationEnabled: payload.notificationEnabled }
@@ -350,6 +380,9 @@ export const useOperationStore = defineStore('operation', () => {
 
     $q.dialog({
       component: OperationDialog,
+      componentProps: {
+        center: defaultFormCenter(scope.value, centerStore.activeCenters),
+      },
       persistent: true,
     }).onOk((payload: OperationPayload) => {
       doAddOperation(payload).catch((error) => {
@@ -386,6 +419,8 @@ export const useOperationStore = defineStore('operation', () => {
         notificationEnabled: operation.notificationEnabled ?? false,
         notificationDaysBefore: operation.notificationDaysBefore,
         notificationTime: operation.notificationTime,
+        center: operation.center ?? null,
+        lockCenter: true,
       },
       persistent: true,
     }).onOk(
@@ -475,9 +510,6 @@ export const useOperationStore = defineStore('operation', () => {
       })
       return
     }
-    if (!center.value) {
-      throw new Error('Centro financeiro não informado')
-    }
 
     $q.dialog({
       component: OperationDialog,
@@ -488,6 +520,7 @@ export const useOperationStore = defineStore('operation', () => {
         description: operation.description,
         operationType: operation.isExpense ? 'Saída' : 'Entrada',
         notes: operation.notes,
+        center: operation.center ?? null,
       },
       persistent: true,
     }).onOk(
@@ -500,6 +533,7 @@ export const useOperationStore = defineStore('operation', () => {
         notificationEnabled?: boolean
         notificationDaysBefore?: number
         notificationTime?: string
+        center: Center | null
       }) => {
         const today = dayjs().format('YYYY-MM-DD')
         const isFuture = payload.date > today
@@ -509,7 +543,7 @@ export const useOperationStore = defineStore('operation', () => {
         newOperation.category = payload.category
         newOperation.description = payload.description
         newOperation.notes = payload.notes ?? ''
-        newOperation.center = center.value!
+        newOperation.center = payload.center
         newOperation.notificationEnabled = isFuture ? (payload.notificationEnabled ?? false) : false
         if (isFuture && payload.notificationDaysBefore) {
           newOperation.notificationDaysBefore = payload.notificationDaysBefore
@@ -530,7 +564,7 @@ export const useOperationStore = defineStore('operation', () => {
     )
   }
 
-  async function transferOperationToCenter(operation: Operation, center: Center) {
+  async function transferOperationToCenter(operation: Operation, center: Center | null) {
     if (operation.isInvoicePayment) {
       $q.notify({
         type: 'warning',
@@ -545,88 +579,20 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   async function getOperationsByCategory(monthValue?: string) {
-    const incomeQuery = categoryOperation
-      .createQueryBuilder('category')
-      .leftJoinAndSelect('category.operations', 'operation')
-      .select('category.name', 'category')
-      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
-      .andWhere('operation.is_active = 1')
-      .andWhere('operation.is_invoice_payment = 0')
-      .andWhere("category.type = 'Entrada'")
-      .groupBy('category.name')
-      .orderBy('SUM(operation.valueInCents)', 'DESC')
-
-    const expensesQuery = categoryOperation
-      .createQueryBuilder('category')
-      .leftJoinAndSelect('category.operations', 'operation')
-      .select('category.name', 'category')
-      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
-      .andWhere('operation.is_active = 1')
-      .andWhere('operation.is_invoice_payment = 0')
-      .andWhere("category.type = 'Saída'")
-      .groupBy('category.name')
-      .orderBy('SUM(operation.valueInCents)', 'ASC')
-
-    if (monthValue) {
-      const year = monthValue.slice(0, 4)
-      const monthIndex = monthValue.slice(5, 7)
-      incomeQuery
-        .andWhere("STRFTIME('%Y', operation.date) = :year", { year })
-        .andWhere("STRFTIME('%m', operation.date) = :monthIndex", { monthIndex })
-      expensesQuery
-        .andWhere("STRFTIME('%Y', operation.date) = :year", { year })
-        .andWhere("STRFTIME('%m', operation.date) = :monthIndex", { monthIndex })
-    }
-
+    const manager = expensesDataSource.dataSource.manager
     const [income, expenses] = await Promise.all([
-      incomeQuery.getRawMany(),
-      expensesQuery.getRawMany(),
+      sumOperationsByCategory(manager, scope.value, 'Entrada', monthValue),
+      sumOperationsByCategory(manager, scope.value, 'Saída', monthValue),
     ])
     return { income, expenses }
   }
 
-  async function getCurrentCenterMonths(): Promise<Array<{ month: string; year: string }>> {
-    return await operationRepository
-      .createQueryBuilder('operation')
-      .select("STRFTIME('%m', operation.date)", 'month')
-      .addSelect("STRFTIME('%Y', date)", 'year')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
-      .andWhere('NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)')
-      .groupBy('month')
-      .addGroupBy('year')
-      .orderBy('year')
-      .addOrderBy('month')
-      .getRawMany()
-  }
-
-  /**
-   * Meses de referência de faturas com compras lançadas no centro atual, mesmo quando o
-   * mês não tem nenhuma outra movimentação de caixa — sem isso, a aba do mês nunca aparece
-   * e "Valores agendados" fica sem lugar para ser mostrado.
-   */
-  async function getCurrentCenterScheduledInvoiceMonths(): Promise<string[]> {
-    const rows = await operationRepository
-      .createQueryBuilder('operation')
-      .innerJoin('operation.cardInvoice', 'invoice')
-      .select('invoice.mes_referencia', 'referenceMonth')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value?.id })
-      .andWhere('invoice.is_active = 1')
-      .andWhere('operation.is_invoice_payment = 0')
-      .andWhere('operation.is_active = 1')
-      .groupBy('invoice.mes_referencia')
-      .getRawMany<{ referenceMonth: string }>()
-    return rows.map((row) => row.referenceMonth)
-  }
-
   async function getMonthGroups() {
+    const manager = expensesDataSource.dataSource.manager
     const [dbMonths, scheduledInvoiceMonths, unpaidInvoiceLines] = await Promise.all([
-      getCurrentCenterMonths(),
-      getCurrentCenterScheduledInvoiceMonths(),
-      center.value
-        ? getUnpaidInvoiceCenterLines(expensesDataSource.dataSource.manager, center.value.id)
-        : Promise.resolve([]),
+      listCashMonths(manager, scope.value),
+      listInvoiceReferenceMonths(manager, scope.value),
+      getUnpaidInvoiceCenterLines(manager, scope.value),
     ])
     const monthValues = new Map(
       dbMonths.map((month) => [`${month.year}-${month.month}`, `${month.year}-${month.month}`]),
@@ -662,36 +628,12 @@ export const useOperationStore = defineStore('operation', () => {
   }
 
   async function refreshSummary() {
-    if (!center.value) return
     if (typeof month.value === 'undefined') return
 
-    // Compras no crédito não entram no saldo/lista de caixa
-    const excludeCardPurchases =
-      'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)'
+    const manager = expensesDataSource.dataSource.manager
 
-    const initialBalance = await operationRepository
-      .createQueryBuilder('operation')
-      .select('SUM(operation.valueInCents)', 'Total')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
-      .andWhere('operation.is_active = 1')
-      .andWhere(excludeCardPurchases)
-      .andWhere('SUBSTR(operation.date, 0, 8) < :month', { month: month.value })
-      .getRawOne()
-    const operations = await operationRepository
-      .createQueryBuilder('operation')
-      .leftJoinAndSelect('operation.category', 'category')
-      .leftJoinAndSelect('operation.recurringRule', 'recurringRule')
-      .leftJoinAndSelect('operation.cardInvoice', 'cardInvoice')
-      .leftJoinAndSelect('cardInvoice.creditCard', 'creditCard')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
-      .andWhere('operation.is_active = 1')
-      .andWhere(excludeCardPurchases)
-      .andWhere("STRFTIME('%m', operation.date) = :monthIndex", {
-        monthIndex: month.value.slice(5, 7),
-      })
-      .andWhere("STRFTIME('%Y', operation.date) = :year", { year: month.value.slice(0, 4) })
-      .orderBy('operation.date', 'DESC')
-      .getMany()
+    const initialBalance = await sumCashBalanceBeforeMonth(manager, scope.value, month.value)
+    const operations = await listCashOperationsOfMonth(manager, scope.value, month.value)
     // Corte entre o que já saiu do centro (realizado) e o que ainda vai sair (agendado):
     // hoje, ou o fim do mês selecionado, o que vier primeiro (mês passado = mês inteiro
     // realizado; mês futuro = nada realizado ainda).
@@ -699,40 +641,19 @@ export const useOperationStore = defineStore('operation', () => {
     const endOfMonth = dayjs(month.value).endOf('month').format('YYYY-MM-DD')
     const cutoffDate = today < endOfMonth ? today : endOfMonth
 
-    const realizedBalance = await operationRepository
-      .createQueryBuilder('operation')
-      .select('SUM(operation.valueInCents)', 'Total')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
-      .andWhere('operation.is_active = 1')
-      .andWhere(excludeCardPurchases)
-      .andWhere('operation.date <= :cutoffDate', { cutoffDate })
-      .getRawOne()
-    const scheduledFutureOperationsTotal = await operationRepository
-      .createQueryBuilder('operation')
-      .select('SUM(operation.valueInCents)', 'Total')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
-      .andWhere('operation.is_active = 1')
-      .andWhere(excludeCardPurchases)
-      .andWhere("STRFTIME('%m', operation.date) = :monthIndex", {
-        monthIndex: month.value.slice(5, 7),
-      })
-      .andWhere("STRFTIME('%Y', operation.date) = :year", { year: month.value.slice(0, 4) })
-      .andWhere('operation.date > :cutoffDate', { cutoffDate })
-      .getRawOne()
-    const scheduledInvoiceTotal = await operationRepository
-      .createQueryBuilder('operation')
-      .innerJoin('operation.cardInvoice', 'invoice')
-      .select('SUM(operation.valueInCents)', 'Total')
-      .where('operation.centro_financeiro_id = :centerId', { centerId: center.value.id })
-      .andWhere('invoice.mes_referencia = :month', { month: month.value })
-      .andWhere('invoice.is_active = 1')
-      .andWhere('operation.is_invoice_payment = 0')
-      .andWhere('operation.is_active = 1')
-      .getRawOne()
-    const unpaidInvoiceLines = await getUnpaidInvoiceCenterLines(
-      expensesDataSource.dataSource.manager,
-      center.value.id,
+    const realizedBalance = await sumCashBalanceUntil(manager, scope.value, cutoffDate)
+    const scheduledFutureOperationsTotal = await sumScheduledCashOfMonthAfter(
+      manager,
+      scope.value,
+      month.value,
+      cutoffDate,
     )
+    const scheduledInvoiceTotal = await sumInvoicePurchasesOfReferenceMonth(
+      manager,
+      scope.value,
+      month.value,
+    )
+    const unpaidInvoiceLines = await getUnpaidInvoiceCenterLines(manager, scope.value)
     const virtualInvoiceLines = unpaidInvoiceLines
       .filter((line) => line.dueDate.slice(0, 7) === month.value)
       .map(toVirtualInvoiceLine)
@@ -753,10 +674,10 @@ export const useOperationStore = defineStore('operation', () => {
 
     summaryByMonth.set(month.value, {
       operations: mergedOperationsByDate,
-      initialBalance: initialBalance.Total,
-      realizedBalance: realizedBalance.Total,
-      scheduledInvoiceTotalInCents: scheduledInvoiceTotal.Total ?? 0,
-      scheduledFutureOperationsTotalInCents: scheduledFutureOperationsTotal.Total ?? 0,
+      initialBalance,
+      realizedBalance,
+      scheduledInvoiceTotalInCents: scheduledInvoiceTotal,
+      scheduledFutureOperationsTotalInCents: scheduledFutureOperationsTotal,
     })
   }
 
@@ -794,7 +715,7 @@ export const useOperationStore = defineStore('operation', () => {
     month.value = getMonthToSelect()
   }
 
-  watch(center, async () => {
+  watch(scope, async () => {
     await refreshCenter()
   })
 
@@ -802,8 +723,17 @@ export const useOperationStore = defineStore('operation', () => {
     await refreshSummary()
   })
 
+  watch(
+    () => centerStore.activeCenters,
+    (centers) => {
+      const next = reconcileScope(scope.value, centers)
+      if (!isSameScope(next, scope.value)) scope.value = next
+    },
+  )
+
   return {
-    center,
+    scope,
+    scopeLabel,
     month,
     months,
     hasLoadedFirstTime,
@@ -813,7 +743,7 @@ export const useOperationStore = defineStore('operation', () => {
     hasLoadedSelectedMonthSummary,
     selectedMonthSummary,
     monthOperationsSummary,
-    setCenter,
+    setScope,
     addOperation,
     editOperation,
     removeOperation,
