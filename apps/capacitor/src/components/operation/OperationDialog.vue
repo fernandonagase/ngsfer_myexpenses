@@ -6,7 +6,7 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import OperationForm from './OperationForm.vue'
-import type { Category, CreditCard } from 'src/databases/entities/expenses'
+import type { Category, CreditCard, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { type RecurrenceType } from './recurrence-types'
 import type { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
@@ -26,6 +26,8 @@ const props = defineProps<{
   notificationTime?: string
   paymentMethod?: 'cash' | 'credit'
   creditCard?: CreditCard | null
+  center?: Center | null
+  lockCenter?: boolean
 }>()
 
 defineEmits([...useDialogPluginComponent.emits])
@@ -46,6 +48,7 @@ const notificationDaysBefore = ref<number | undefined>(props.notificationDaysBef
 const notificationTime = ref<string | undefined>(props.notificationTime)
 const paymentMethod = ref<'cash' | 'credit'>(props.paymentMethod ?? 'cash')
 const creditCard = ref<CreditCard | null>(props.creditCard ?? null)
+const center = ref<Center | null>(props.center ?? null)
 
 const submitLabel = computed(() =>
   paymentMethod.value === 'credit' ? 'Lançar na fatura' : 'Confirmar',
@@ -68,6 +71,7 @@ function onSubmit() {
     notificationTime: notificationTime.value,
     isCredit,
     creditCard: isCredit ? creditCard.value : null,
+    center: center.value,
   })
 }
 </script>
@@ -92,6 +96,8 @@ function onSubmit() {
             v-model:notification-time="notificationTime"
             v-model:payment-method="paymentMethod"
             v-model:credit-card="creditCard"
+            v-model:center="center"
+            :lock-center="lockCenter ?? false"
           />
           <template #fallback>Carregando...</template>
         </Suspense>

@@ -4,16 +4,20 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 import dayjs from 'dayjs'
 import { useQuasar } from 'quasar'
 
-import type { Category, CreditCard } from 'src/databases/entities/expenses'
+import type { Category, CreditCard, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'
 import { useCategoryStore } from 'src/stores/category-store'
 import { useCardStore } from 'src/stores/card-store'
+import { useCenterStore } from 'src/stores/center-store'
 import { type RecurrenceType, recurrenceTypeOptions } from './recurrence-types'
 import { recurrenceFrequencyOptions } from './recurrence-frequencies'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 import { notificationService } from 'src/services/notification-service'
+import { NONE_LABEL } from 'src/models/center-scope'
 
 const $q = useQuasar()
+
+defineProps<{ lockCenter?: boolean }>()
 
 const value = defineModel<string>('value')
 const installmentCount = defineModel<number>('installmentCount')
@@ -29,6 +33,7 @@ const notificationDaysBefore = defineModel<number | undefined>('notificationDays
 const notificationTime = defineModel<string | undefined>('notificationTime')
 const paymentMethod = defineModel<'cash' | 'credit'>('paymentMethod', { default: 'cash' })
 const creditCard = defineModel<CreditCard | null>('creditCard', { default: null })
+const center = defineModel<Center | null>('center', { default: null })
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -43,6 +48,12 @@ const categoryRules = [(val: string) => !!val || 'Informe a categoria da operaç
 
 const categoryStore = useCategoryStore()
 const cardStore = useCardStore()
+const centerStore = useCenterStore()
+
+const centerOptions = computed(() => [
+  { label: NONE_LABEL, value: null as number | null },
+  ...centerStore.activeCenters.map((c) => ({ label: c.name, value: c.id })),
+])
 
 const filteredCategories = computed<Array<Category>>(() =>
   operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
@@ -222,6 +233,16 @@ async function onNotificationToggle(val: boolean) {
       label="Categoria"
       option-label="name"
       :rules="categoryRules"
+      outlined
+    />
+    <q-select
+      v-if="centerStore.hasActiveCenters && !lockCenter"
+      :model-value="center?.id ?? null"
+      @update:model-value="(id) => (center = centerStore.activeCenters.find((c) => c.id === id) ?? null)"
+      :options="centerOptions"
+      label="Centro financeiro"
+      emit-value
+      map-options
       outlined
     />
     <q-input v-model="notes" type="text" label="Observações" outlined autogrow />
