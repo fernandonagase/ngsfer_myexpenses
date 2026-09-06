@@ -11,11 +11,11 @@ import { recurrenceFrequencyOptions } from './recurrence-frequencies.js'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 import { useCenterStore } from 'src/stores/center-store.js'
 import { notificationService } from 'src/services/notification-service'
+import { NONE_LABEL } from 'src/models/center-scope'
 
 const $q = useQuasar()
 
 const centerStore = useCenterStore()
-await centerStore.fetchCenters()
 
 const value = defineModel<string>('value')
 const category = defineModel<Category | null>('category')
@@ -30,7 +30,10 @@ const notificationEnabled = defineModel<boolean>('notificationEnabled', { defaul
 const notificationDaysBefore = defineModel<number | undefined>('notificationDaysBefore')
 const notificationTime = defineModel<string | undefined>('notificationTime')
 
-center.value = centerStore.activeCenters[0]
+const centerOptions = computed(() => [
+  { label: NONE_LABEL, value: null as number | null },
+  ...centerStore.activeCenters.map((c) => ({ label: c.name, value: c.id })),
+])
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -134,9 +137,12 @@ async function onNotificationToggle(val: boolean) {
       outlined
     />
     <q-select
-      v-model="center"
-      :options="centerStore.activeCenters"
-      option-label="name"
+      v-if="centerStore.hasActiveCenters"
+      :model-value="center?.id ?? null"
+      @update:model-value="(id) => (center = centerStore.activeCenters.find((c) => c.id === id) ?? null)"
+      :options="centerOptions"
+      emit-value
+      map-options
       label="Centro financeiro"
       outlined
     />
