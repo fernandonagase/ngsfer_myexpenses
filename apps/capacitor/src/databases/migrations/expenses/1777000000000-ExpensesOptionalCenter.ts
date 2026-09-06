@@ -199,7 +199,7 @@ ON operacao_financeira (generation_key);`)
     await queryRunner.query(`DROP TABLE recurring_rule_bak;`)
   }
 
-  public async down(): Promise<void> {
-    throw new Error('Migração irreversível: lançamentos sem centro não têm destino')
+  public down(): Promise<void> {
+    return Promise.reject(new Error('Migração irreversível: lançamentos sem centro não têm destino'))
   }
 }
