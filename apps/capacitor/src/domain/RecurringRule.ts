@@ -54,7 +54,7 @@ export class RecurringRule {
     description?: string
     valueInCents: number
     ruleType: RecurringRuleType
-    center?: Center
+    center?: Center | null
     category?: Category
     startDate: string
     nextRunDate: string

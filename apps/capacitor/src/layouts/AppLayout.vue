@@ -20,6 +20,7 @@ const operationStore = useOperationStore()
 
 await centerStore.fetchCenters()
 await categoryStore.fetch()
+await operationStore.refreshCenter()
 </script>
 
 <template>

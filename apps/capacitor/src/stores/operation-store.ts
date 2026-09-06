@@ -752,5 +752,6 @@ export const useOperationStore = defineStore('operation', () => {
     copyOperation,
     transferOperationToCenter,
     refreshScreen,
+    refreshCenter,
   }
 })

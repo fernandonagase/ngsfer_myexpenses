@@ -81,7 +81,7 @@ export const useHomeStore = defineStore('home', () => {
     }
   }
 
-  watch(() => operationStore.dataRevision, refresh)
+  watch(() => operationStore.dataRevision, refresh, { immediate: true })
 
   return {
     summary,
