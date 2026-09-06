@@ -8,9 +8,9 @@ import { useCategoryStore } from 'src/stores/category-store'
 import { recurrenceFrequencyOptions } from './recurrence-frequencies.js'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
 import { useCenterStore } from 'src/stores/center-store.js'
+import { NONE_LABEL } from 'src/models/center-scope'
 
 const centerStore = useCenterStore()
-await centerStore.fetchCenters()
 
 const value = defineModel<string>('value')
 const category = defineModel<Category | null>('category')
@@ -37,6 +37,11 @@ const categoryStore = useCategoryStore()
 const filteredCategories = computed<Array<Category>>(() =>
   operationType.value === 'Entrada' ? categoryStore.datasetInput : categoryStore.datasetOutput,
 )
+
+const centerOptions = computed(() => [
+  { label: NONE_LABEL, value: null as number | null },
+  ...centerStore.activeCenters.map((c) => ({ label: c.name, value: c.id })),
+])
 
 watch(
   [operationType, filteredCategories],
@@ -107,12 +112,14 @@ watch(
       outlined
     />
     <q-select
-      v-model="center"
-      :options="centerStore.activeCenters"
-      option-label="name"
+      v-if="centerStore.hasActiveCenters"
+      :model-value="center?.id ?? null"
+      @update:model-value="(id) => (center = centerStore.activeCenters.find((c) => c.id === id) ?? null)"
+      :options="centerOptions"
+      emit-value
+      map-options
       label="Centro financeiro"
       outlined
-      readonly
     />
     <q-toggle v-model="isActive" color="green" label="Ativa" />
   </div>
