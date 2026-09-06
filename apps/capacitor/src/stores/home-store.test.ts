@@ -10,8 +10,12 @@ vi.mock('src/databases/entities/expenses', () => ({ Operation: class {} }))
 vi.mock('src/databases/entities/expenses/card-invoice-helpers', () => ({
   getUnpaidInvoiceCenterLines: () => Promise.resolve([]),
 }))
+vi.mock('src/databases/entities/expenses/operation-queries', () => ({
+  sumCashBalanceUntil: () => Promise.resolve(0),
+  listScheduledCashValues: () => Promise.resolve([]),
+}))
 vi.mock('src/stores/operation-store', () => ({
-  useOperationStore: () => ({ center: null, dataRevision: 0 }),
+  useOperationStore: () => ({ scope: { kind: 'all' }, dataRevision: 0 }),
 }))
 
 import { sumBySign } from './home-store'
