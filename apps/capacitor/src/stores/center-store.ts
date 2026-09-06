@@ -7,6 +7,9 @@ import { Center, Operation } from 'src/databases/entities/expenses'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
 import CenterDialog from 'src/components/center/CenterDialog.vue'
 import SelectCenterDialog from 'src/components/center/SelectCenterDialog.vue'
+import { NONE_LABEL } from 'src/models/center-scope'
+
+export type CenterPick = { center: Center | null }
 
 const centerRepository = expensesDataSource.dataSource.getRepository(Center)
 const operationRepository = expensesDataSource.dataSource.getRepository(Operation)
@@ -19,6 +22,8 @@ export const useCenterStore = defineStore('center', () => {
   const activeCenters = computed(() => {
     return centers.value.filter((center) => center.isActive)
   })
+
+  const hasActiveCenters = computed(() => activeCenters.value.length > 0)
 
   async function fetchCenters() {
     centers.value = await centerRepository.find()
@@ -49,7 +54,6 @@ export const useCenterStore = defineStore('center', () => {
     }).onOk((payload) => {
       const center = new Center()
       center.name = payload
-      center.isDefaultCenter = false
       centerRepository
         .save(center)
         .then(() => {
@@ -214,14 +218,6 @@ export const useCenterStore = defineStore('center', () => {
         flat: true,
       },
     }).onOk(() => {
-      if (center.isDefaultCenter) {
-        $q.notify({
-          type: 'negative',
-          message: `Falha ao excluir centro financeiro`,
-          caption: 'Não é permitido excluir o centro financeiro padrão',
-        })
-        return
-      }
       const centerIndex = centers.value.findIndex((element) => element.id === center.id)
       centerRepository
         .remove(center)
@@ -252,6 +248,20 @@ export const useCenterStore = defineStore('center', () => {
       .groupBy('center.name')
       .orderBy('center.id')
       .getRawMany()
+    const noneRow = await operationRepository
+      .createQueryBuilder('operation')
+      .select('COUNT(*)', 'count')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.centro_financeiro_id IS NULL')
+      .andWhere('operation.is_active = 1')
+      .andWhere(
+        'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)',
+      )
+      .getRawOne<{ count: number; valueInCents: number }>()
+    const noneLine =
+      noneRow && Number(noneRow.count) > 0
+        ? [{ center: NONE_LABEL, valueInCents: noneRow.valueInCents }]
+        : []
     const total = await operationRepository
       .createQueryBuilder('operation')
       .select("'Total'", 'center')
@@ -262,7 +272,7 @@ export const useCenterStore = defineStore('center', () => {
       )
       .getRawMany()
 
-    return summary.concat(total)
+    return summary.concat(noneLine, total)
   }
 
   async function getCurrentSummary() {
@@ -280,6 +290,21 @@ export const useCenterStore = defineStore('center', () => {
       .groupBy('center.name')
       .orderBy('center.id')
       .getRawMany()
+    const noneRow = await operationRepository
+      .createQueryBuilder('operation')
+      .select('COUNT(*)', 'count')
+      .addSelect('SUM(operation.valueInCents)', 'valueInCents')
+      .where('operation.centro_financeiro_id IS NULL')
+      .andWhere('operation.date <= :now', { now })
+      .andWhere('operation.is_active = 1')
+      .andWhere(
+        'NOT (operation.fatura_cartao_id IS NOT NULL AND operation.is_invoice_payment = 0)',
+      )
+      .getRawOne<{ count: number; valueInCents: number }>()
+    const noneLine =
+      noneRow && Number(noneRow.count) > 0
+        ? [{ center: NONE_LABEL, valueInCents: noneRow.valueInCents }]
+        : []
     const total = await operationRepository
       .createQueryBuilder('operation')
       .select("'Total'", 'center')
@@ -291,19 +316,23 @@ export const useCenterStore = defineStore('center', () => {
       )
       .getRawMany()
 
-    return summary.concat(total)
+    return summary.concat(noneLine, total)
   }
 
-  function selectCenter(exceptFn?: (center: Center) => boolean) {
-    return new Promise<Center | null>((resolve) => {
+  function selectCenter(
+    exceptFn?: (center: Center) => boolean,
+    options?: { allowNone?: boolean },
+  ): Promise<CenterPick | null> {
+    return new Promise<CenterPick | null>((resolve) => {
       $q.dialog({
         component: SelectCenterDialog,
         componentProps: {
           exceptFn,
+          allowNone: options?.allowNone ?? false,
         },
       })
-        .onOk((center: Center) => {
-          resolve(center)
+        .onOk((pick: CenterPick) => {
+          resolve(pick)
         })
         .onCancel(() => {
           resolve(null)
@@ -314,6 +343,7 @@ export const useCenterStore = defineStore('center', () => {
   return {
     centers,
     activeCenters,
+    hasActiveCenters,
     fetchCenters,
     showCenters,
     addCenter,
