@@ -9,8 +9,8 @@ import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import type { Operation } from 'src/databases/entities/expenses'
 import { FrequencyType } from 'src/databases/entities/expenses/recurring-rule'
+import { NONE_LABEL } from 'src/models/center-scope'
 import { useCenterStore } from 'src/stores/center-store'
-import { useOperationStore } from 'src/stores/operation-store'
 
 export type OperationDetailsAction = 'edit' | 'duplicate' | 'move' | 'delete'
 
@@ -22,7 +22,6 @@ defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const router = useRouter()
-const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 
 const title = computed(() => props.operation.description || 'Não identificada')
@@ -32,11 +31,7 @@ const isReadOnly = computed(() => props.operation.isLockedByInvoice || isInvoice
 
 const cardName = computed(() => props.operation.cardInvoice?.creditCard?.name ?? null)
 
-const centerName = computed(
-  () => props.operation.center?.name ?? operationStore.center?.name ?? '—',
-)
-
-const canMoveBetweenCenters = computed(() => centerStore.activeCenters.length > 1)
+const centerName = computed(() => props.operation.center?.name ?? NONE_LABEL)
 
 const isFuture = computed(() => props.operation.date > dayjs().format('YYYY-MM-DD'))
 
@@ -105,7 +100,7 @@ function goToInvoice() {
                 </q-item-section>
               </q-item>
               <q-item
-                v-if="canMoveBetweenCenters"
+                v-if="centerStore.hasActiveCenters"
                 clickable
                 v-close-popup
                 @click="selectAction('move')"
@@ -192,7 +187,7 @@ function goToInvoice() {
             </q-item-section>
           </q-item>
 
-          <q-item>
+          <q-item v-if="centerStore.hasActiveCenters">
             <q-item-section avatar>
               <q-icon name="account_balance_wallet" color="grey-7" />
             </q-item-section>

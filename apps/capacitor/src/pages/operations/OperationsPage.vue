@@ -34,11 +34,12 @@ function isDayDetailsShown(day: string) {
 }
 
 async function transferOperationToAnotherCenter(operation: Operation) {
-  const targetCenter = await centerStore.selectCenter(
-    (center) => center.id === operationStore.center?.id || !center.isActive,
+  const pick = await centerStore.selectCenter(
+    (center) => center.id === operation.center?.id || !center.isActive,
+    { allowNone: operation.center != null },
   )
-  if (targetCenter) {
-    await operationStore.transferOperationToCenter(operation, targetCenter)
+  if (pick) {
+    await operationStore.transferOperationToCenter(operation, pick.center)
   }
 }
 
