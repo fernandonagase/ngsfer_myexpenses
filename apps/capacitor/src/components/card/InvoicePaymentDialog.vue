@@ -5,6 +5,8 @@ import { BRL } from '@ngsfer-myexpenses/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import type { CardInvoice } from 'src/databases/entities/expenses'
+import { NONE_LABEL } from 'src/models/center-scope'
+import { useCenterStore } from 'src/stores/center-store'
 import type { InvoiceCenterShare } from 'src/stores/invoice-store'
 
 const props = defineProps<{
@@ -15,6 +17,7 @@ const props = defineProps<{
 defineEmits([...useDialogPluginComponent.emits])
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
+const centerStore = useCenterStore()
 
 const moneyFormatForDirective = {
   prefix: 'R$',
@@ -56,8 +59,11 @@ function onSubmit() {
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
     <BottomSheetDialog title="Pagar fatura" @dismiss="onDialogCancel">
       <q-form @submit="onSubmit" class="q-gutter-md">
-        <p class="text-body2 text-grey-8 q-mb-none">
+        <p v-if="centerStore.hasActiveCenters" class="text-body2 text-grey-8 q-mb-none">
           Uma transferência será gerada por centro. Ajuste os valores e a data se necessário.
+        </p>
+        <p v-else class="text-body2 text-grey-8 q-mb-none">
+          Ajuste o valor e a data se necessário.
         </p>
         <q-input
           v-model="paymentDate"
@@ -69,9 +75,9 @@ function onSubmit() {
         />
         <q-field
           v-for="row in rows"
-          :key="row.centerId"
+          :key="row.centerId ?? 'none'"
           v-model="row.value"
-          :label="row.centerName"
+          :label="row.centerName ?? NONE_LABEL"
           outlined
         >
           <template v-slot:control="{ id, floatingLabel, modelValue, emitValue }">
