@@ -5,6 +5,7 @@ import { useCenterStore } from 'src/stores/center-store'
 import { useOperationStore } from 'src/stores/operation-store'
 import SummaryDialog from '../summary/SummaryDialog.vue'
 import { useConfigStore } from 'src/stores/config-store'
+import { scopeFromKey, scopeKey, scopeOptions } from 'src/models/center-scope'
 
 const $q = useQuasar()
 const centerStore = useCenterStore()
@@ -21,15 +22,16 @@ function showSummary() {
 <template>
   <div class="row full-width items-center">
     <div class="col-xs-6 col-sm-5 col-md-4 flex justify-start">
-      <div class="center-select">
+      <div v-if="centerStore.hasActiveCenters" class="center-select">
         <q-select
-          v-model="operationStore.center"
-          :options="centerStore.activeCenters"
-          option-label="name"
+          :model-value="scopeKey(operationStore.scope)"
+          :options="scopeOptions(centerStore.activeCenters)"
+          emit-value
+          map-options
           borderless
           label-color="negative"
           hide-dropdown-icon
-          @update:model-value="operationStore.setCenter"
+          @update:model-value="(key) => operationStore.setScope(scopeFromKey(key))"
         >
           <template #append> <q-icon name="arrow_drop_down" color="white" /> </template>
         </q-select>
@@ -48,7 +50,14 @@ function showSummary() {
           {{ configStore.hideValues ? 'Mostrar valores' : 'Ocultar valores' }}
         </q-tooltip>
       </q-btn>
-      <q-btn icon="description" flat round dense @click="showSummary()" />
+      <q-btn
+        v-if="centerStore.hasActiveCenters"
+        icon="description"
+        flat
+        round
+        dense
+        @click="showSummary()"
+      />
     </div>
   </div>
 </template>
