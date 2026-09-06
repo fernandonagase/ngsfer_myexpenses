@@ -20,9 +20,6 @@ const operationStore = useOperationStore()
 
 await centerStore.fetchCenters()
 await categoryStore.fetch()
-if (operationStore.center === null) {
-  operationStore.center = centerStore.activeCenters[0] ?? null
-}
 </script>
 
 <template>
@@ -41,8 +38,8 @@ if (operationStore.center === null) {
         <CenterToolbar v-if="chrome.toolbar === 'center'" />
         <q-toolbar-title v-else>
           {{ chrome.title }}
-          <span v-if="chrome.showCenterLabel && operationStore.center" class="text-subtitle2">
-            · {{ operationStore.center.name }}
+          <span v-if="chrome.showCenterLabel && centerStore.hasActiveCenters" class="text-subtitle2">
+            · {{ operationStore.scopeLabel }}
           </span>
         </q-toolbar-title>
         <q-btn
