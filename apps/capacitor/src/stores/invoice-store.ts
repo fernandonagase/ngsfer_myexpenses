@@ -23,8 +23,8 @@ const operationRepository = expensesDataSource.dataSource.getRepository(Operatio
 
 /** Participação de um centro no total da fatura (valor em centavos, negativo = saída). */
 export type InvoiceCenterShare = {
-  centerId: number
-  centerName: string
+  centerId: number | null
+  centerName: string | null
   valueInCents: number
 }
 
@@ -88,10 +88,10 @@ export const useInvoiceStore = defineStore('invoice', () => {
       .groupBy('center.id')
       .addGroupBy('center.name')
       .orderBy('center.id')
-      .getRawMany<{ centerId: number; centerName: string; valueInCents: number }>()
+      .getRawMany<{ centerId: number | null; centerName: string | null; valueInCents: number }>()
 
     return rows.map((row) => ({
-      centerId: Number(row.centerId),
+      centerId: row.centerId == null ? null : Number(row.centerId),
       centerName: row.centerName,
       valueInCents: Number(row.valueInCents),
     }))
@@ -149,7 +149,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
             date: options.paymentDate,
             category: paymentCategory,
             description,
-            center: { id: share.centerId },
+            center: share.centerId == null ? null : { id: share.centerId },
             cardInvoice: invoice,
             isInvoicePayment: true,
             notificationEnabled: false,
