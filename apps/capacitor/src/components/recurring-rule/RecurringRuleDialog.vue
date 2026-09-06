@@ -44,6 +44,7 @@ function onSubmit() {
     valueInCents: operationType.value === 'Entrada' ? valueInCents : -valueInCents,
     description: description.value,
     category: category.value,
+    center: center.value,
     isActive: isActive.value,
   })
 }

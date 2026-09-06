@@ -11,6 +11,7 @@ export type ShowEditRecurringRulePayload = {
   valueInCents: number
   description: string
   category: Category
+  center: Center | null
   isActive: boolean
 }
 
@@ -18,7 +19,7 @@ export type ShowAddRecurringRulePayload = {
   valueInCents: number
   description: string
   category: Category
-  center: Center
+  center: Center | null
   startDate: string
   isActive: boolean
   frequency: FrequencyType
@@ -35,6 +36,7 @@ export type ShowAddRecurringRulePayload = {
 export interface IRecurringRuleController {
   showAddRecurringRule(options: {
     addCallback: (payload: ShowAddRecurringRulePayload) => void
+    defaultCenter: Center | null
   }): void
   showEditRecurringRule(
     recurringRule: RecurringRule,

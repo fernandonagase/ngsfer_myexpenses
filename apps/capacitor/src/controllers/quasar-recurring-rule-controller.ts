@@ -1,6 +1,7 @@
 import { Dialog } from 'quasar'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
+import type { Center } from 'src/databases/entities/expenses'
 import type {
   IRecurringRuleController,
   ShowAddRecurringRulePayload,
@@ -13,12 +14,14 @@ import { type RecurringRule } from 'src/domain/RecurringRule'
 export class QuasarRecurringRuleController implements IRecurringRuleController {
   showAddRecurringRule({
     addCallback,
+    defaultCenter,
   }: {
     addCallback: (payload: ShowAddRecurringRulePayload) => void
+    defaultCenter: Center | null
   }): void {
     Dialog.create({
       component: AddRecurringRuleDialog,
-      componentProps: {},
+      componentProps: { center: defaultCenter },
       persistent: true,
     }).onOk((payload: ShowAddRecurringRulePayload) => {
       addCallback(payload)

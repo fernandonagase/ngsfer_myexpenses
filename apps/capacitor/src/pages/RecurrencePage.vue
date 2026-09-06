@@ -11,9 +11,14 @@ import type {
 } from 'src/controllers/types/IRecurringRuleController'
 import { RecurringRule } from 'src/domain/RecurringRule'
 import { useRecurringRuleStore } from 'src/stores/recurring-rule-store'
+import { useOperationStore } from 'src/stores/operation-store'
+import { useCenterStore } from 'src/stores/center-store'
+import { defaultFormCenter } from 'src/models/center-scope'
 import { notificationService } from 'src/services/notification-service'
 
 const recurringRuleStore = useRecurringRuleStore()
+const operationStore = useOperationStore()
+const centerStore = useCenterStore()
 const recurringRuleController: IRecurringRuleController = new QuasarRecurringRuleController()
 
 await recurringRuleStore.fetchRecurringRules({ relations: ['category', 'center'] })
@@ -67,6 +72,7 @@ async function addRecurringRule(payload: ShowAddRecurringRulePayload) {
           @click="
             recurringRuleController.showAddRecurringRule({
               addCallback: addRecurringRule,
+              defaultCenter: defaultFormCenter(operationStore.scope, centerStore.activeCenters),
             })
           "
         />
