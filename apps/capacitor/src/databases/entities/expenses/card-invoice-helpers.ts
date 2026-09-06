@@ -1,6 +1,8 @@
 import dayjs from 'dayjs'
 import type { EntityManager } from 'typeorm'
 
+import { applyCenterScope, type CenterScope } from '../../../models/center-scope'
+
 import { CardInvoice, InvoiceStatus } from './card-invoice'
 import { CreditCard } from './credit-card'
 import { Operation } from './operation'
@@ -172,16 +174,16 @@ export type UnpaidInvoiceCenterLine = {
 }
 
 /**
- * Para cada fatura ativa `aberta`/`fechada` com compras do centro informado,
- * retorna a soma das operações ativas não-pagamento dessa fatura para o
- * centro. Faturas cujo total para o centro é zero não aparecem (a fatura
- * pode ter compras de outros centros que se cancelam entre si).
+ * Para cada fatura ativa `aberta`/`fechada` com compras do escopo informado,
+ * retorna a soma das operações ativas não-pagamento dessa fatura nesse
+ * escopo. Faturas cujo total no escopo é zero não aparecem (a fatura pode
+ * ter compras de outros centros que se cancelam entre si).
  */
 export async function getUnpaidInvoiceCenterLines(
   manager: EntityManager,
-  centerId: number,
+  scope: CenterScope,
 ): Promise<UnpaidInvoiceCenterLine[]> {
-  const rows = await manager
+  const qb = manager
     .createQueryBuilder(Operation, 'operation')
     .innerJoin('operation.cardInvoice', 'invoice')
     .innerJoin('invoice.creditCard', 'creditCard')
@@ -190,8 +192,9 @@ export async function getUnpaidInvoiceCenterLines(
     .addSelect('creditCard.name', 'cardName')
     .addSelect('invoice.dueDate', 'dueDate')
     .addSelect('SUM(operation.valueInCents)', 'valueInCents')
-    .where('operation.centro_financeiro_id = :centerId', { centerId })
-    .andWhere('operation.is_active = 1')
+    .where('operation.is_active = 1')
+  applyCenterScope(qb, scope)
+  const rows = await qb
     .andWhere('operation.is_invoice_payment = 0')
     .andWhere('invoice.is_active = 1')
     .andWhere('invoice.status IN (:...statuses)', {
