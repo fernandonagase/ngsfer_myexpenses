@@ -21,6 +21,7 @@ const scheduledOutflowsForDisplay = computed(() =>
 const scheduledInflowsForDisplay = computed(() =>
   homeStore.summary ? BRL(homeStore.summary.scheduledInflowsInCents / 100).format() : '',
 )
+const currentMonthLabel = computed(() => dayjs().format('MMMM'))
 
 function goToOperations() {
   const currentMonth = dayjs().format('YYYY-MM')
@@ -78,15 +79,7 @@ function goToOperations() {
           </div>
         </div>
       </div>
-      <q-btn
-        outline
-        no-caps
-        label="Ver lançamentos"
-        icon="list_alt"
-        color="primary"
-        class="full-width q-mt-md"
-        @click="goToOperations"
-      />
+      <p class="text-caption text-grey-6 q-mt-sm">Agendamentos até o fim de {{ currentMonthLabel }}</p>
     </template>
   </q-page>
 </template>
