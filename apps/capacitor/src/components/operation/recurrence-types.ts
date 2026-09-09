@@ -1,11 +1,11 @@
 export const recurrenceTypeOptions = [
   {
     value: 'one-time',
-    label: 'À vista',
+    label: 'Único',
   },
   {
     value: 'installments',
-    label: 'A prazo',
+    label: 'Parcelado',
   },
   {
     value: 'recurring',

@@ -50,9 +50,19 @@ const paymentMethod = ref<'cash' | 'credit'>(props.paymentMethod ?? 'cash')
 const creditCard = ref<CreditCard | null>(props.creditCard ?? null)
 const center = ref<Center | null>(props.center ?? null)
 
-const submitLabel = computed(() =>
-  paymentMethod.value === 'credit' ? 'Lançar na fatura' : 'Confirmar',
-)
+const isDespesa = computed(() => operationType.value === 'Saída')
+const accent = computed(() => (isDespesa.value ? '#c10015' : '#21ba45'))
+
+const formattedTotal = computed(() => BRL(BRL(value.value || '0').value).format())
+const submitLabel = computed(() => {
+  const base =
+    paymentMethod.value === 'credit'
+      ? 'Lançar na fatura'
+      : isDespesa.value
+        ? 'Salvar despesa'
+        : 'Salvar receita'
+  return `${base} · ${formattedTotal.value}`
+})
 
 function onSubmit() {
   const valueInCents = Math.abs(BRL(value.value).multiply(100).value)
@@ -101,11 +111,32 @@ function onSubmit() {
           />
           <template #fallback>Carregando...</template>
         </Suspense>
-        <div class="flex justify-end">
-          <q-btn label="Cancelar" color="negative" flat class="q-ml-sm" @click="onDialogCancel()" />
-          <q-btn :label="submitLabel" type="submit" unelevated color="primary" />
+        <div class="op-dialog-footer">
+          <q-btn
+            :label="submitLabel"
+            type="submit"
+            unelevated
+            :style="{ background: accent, color: '#fff' }"
+            class="op-dialog-footer__submit"
+          />
         </div>
       </q-form>
     </BottomSheetDialog>
   </q-dialog>
 </template>
+
+<style lang="scss" scoped>
+.op-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.op-dialog-footer__submit {
+  flex: 1;
+  border-radius: 12px;
+  font-weight: 700;
+  padding: 10px 0;
+}
+</style>
