@@ -19,11 +19,10 @@ function tabColor(tab: FooterTab) {
       <q-btn
         v-for="item in leftTabs"
         :key="item.tab"
-        stack
         flat
         no-caps
-        :label="item.label"
         :icon="item.icon"
+        :aria-label="item.label"
         :color="tabColor(item.tab)"
         class="col-6"
         :to="{ name: item.route }"
@@ -34,11 +33,10 @@ function tabColor(tab: FooterTab) {
       <q-btn
         v-for="item in rightTabs"
         :key="item.tab"
-        stack
         flat
         no-caps
-        :label="item.label"
         :icon="item.icon"
+        :aria-label="item.label"
         :color="tabColor(item.tab)"
         class="col-6"
         :to="{ name: item.route }"
