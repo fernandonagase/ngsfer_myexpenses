@@ -3,94 +3,83 @@ import { describe, expect, it } from 'vitest'
 import { FOOTER_TABS, resolveBackTarget, resolveChrome, resolveHardwareBack } from './chrome'
 
 describe('resolveChrome', () => {
-  it('home: tab + toolbar center + activeTab home', () => {
-    expect(resolveChrome({ kind: 'tab', toolbar: 'center', tab: 'home' })).toEqual({
+  it('home: tab com cabeçalho próprio + activeTab home', () => {
+    expect(resolveChrome({ kind: 'tab', tab: 'home', ownHeader: true })).toEqual({
       kind: 'tab',
       showFooter: true,
       showFab: true,
       showBack: false,
-      showSettings: true,
-      toolbar: 'center',
+      showHeader: false,
       title: '',
       activeTab: 'home',
       parent: 'home',
-      showCenterLabel: false,
     })
   })
 
-  it('operations: tab + toolbar center + activeTab operations + title Lançamentos', () => {
+  it('operations: tab com cabeçalho próprio + activeTab operations + título Operações', () => {
     expect(
-      resolveChrome({ kind: 'tab', toolbar: 'center', tab: 'operations', title: 'Lançamentos' }),
+      resolveChrome({ kind: 'tab', tab: 'operations', title: 'Operações', ownHeader: true }),
     ).toEqual({
       kind: 'tab',
       showFooter: true,
       showFab: true,
       showBack: false,
-      showSettings: true,
-      toolbar: 'center',
-      title: 'Lançamentos',
+      showHeader: false,
+      title: 'Operações',
       activeTab: 'operations',
       parent: 'home',
-      showCenterLabel: false,
     })
   })
 
-  it('invoices: tab + toolbar title + activeTab invoices', () => {
-    expect(
-      resolveChrome({ kind: 'tab', toolbar: 'title', tab: 'invoices', title: 'Faturas' }),
-    ).toEqual({
-      kind: 'tab',
-      showFooter: true,
-      showFab: true,
-      showBack: false,
-      showSettings: true,
-      toolbar: 'title',
-      title: 'Faturas',
-      activeTab: 'invoices',
-      parent: 'home',
-      showCenterLabel: false,
-    })
-  })
-
-  it('operations-by-category: tab + toolbar title + activeTab reports + showCenterLabel (SHELL-04)', () => {
+  it('operations-by-category: tab reports com cabeçalho próprio', () => {
     expect(
       resolveChrome({
         kind: 'tab',
-        toolbar: 'title',
         tab: 'reports',
-        title: 'Operações por categoria',
-        centerLabel: true,
+        title: 'Relatórios',
+        ownHeader: true,
       }),
     ).toEqual({
       kind: 'tab',
       showFooter: true,
       showFab: true,
       showBack: false,
-      showSettings: true,
-      toolbar: 'title',
-      title: 'Operações por categoria',
+      showHeader: false,
+      title: 'Relatórios',
       activeTab: 'reports',
       parent: 'home',
-      showCenterLabel: true,
     })
   })
 
-  it('settings: detail + showBack + sem rodapé/fab/engrenagem + parent home', () => {
-    expect(resolveChrome({ kind: 'detail', title: 'Configurações', parent: 'home' })).toEqual({
+  it('settings: vira a aba "Mais", com rodapé e fab', () => {
+    expect(resolveChrome({ kind: 'tab', tab: 'more', title: 'Mais', ownHeader: true })).toEqual({
+      kind: 'tab',
+      showFooter: true,
+      showFab: true,
+      showBack: false,
+      showHeader: false,
+      title: 'Mais',
+      activeTab: 'more',
+      parent: 'home',
+    })
+  })
+
+  it('invoices: tela empilhada (detail) com cabeçalho próprio e parent settings', () => {
+    expect(
+      resolveChrome({ kind: 'detail', title: 'Faturas', parent: 'settings', ownHeader: true }),
+    ).toEqual({
       kind: 'detail',
       showFooter: false,
       showFab: false,
       showBack: true,
-      showSettings: false,
-      toolbar: 'title',
-      title: 'Configurações',
+      showHeader: false,
+      title: 'Faturas',
       activeTab: null,
-      parent: 'home',
-      showCenterLabel: false,
+      parent: 'settings',
     })
   })
 
-  it('recurrence: detail + parent settings', () => {
+  it('recurrence: detail com toolbar padrão + parent settings', () => {
     expect(
       resolveChrome({ kind: 'detail', title: 'Operações recorrentes', parent: 'settings' }),
     ).toEqual({
@@ -98,12 +87,10 @@ describe('resolveChrome', () => {
       showFooter: false,
       showFab: false,
       showBack: true,
-      showSettings: false,
-      toolbar: 'title',
+      showHeader: true,
       title: 'Operações recorrentes',
       activeTab: null,
       parent: 'settings',
-      showCenterLabel: false,
     })
   })
 
@@ -115,12 +102,10 @@ describe('resolveChrome', () => {
       showFooter: false,
       showFab: false,
       showBack: true,
-      showSettings: false,
-      toolbar: 'title',
+      showHeader: true,
       title: 'Página não encontrada',
       activeTab: null,
       parent: 'home',
-      showCenterLabel: false,
     })
   })
 
@@ -130,18 +115,13 @@ describe('resolveChrome', () => {
     expect(chrome.showBack).toBe(true)
     expect(chrome.showFooter).toBe(false)
     expect(chrome.showFab).toBe(false)
-    expect(chrome.showSettings).toBe(false)
+    expect(chrome.showHeader).toBe(true)
     expect(chrome.activeTab).toBeNull()
     expect(chrome.parent).toBe('home')
   })
 
-  it('toolbar center declarado numa rota detail resolve para title (só é center em tab)', () => {
-    const chrome = resolveChrome({ kind: 'detail', toolbar: 'center', title: 'X' })
-    expect(chrome.toolbar).toBe('title')
-  })
-
-  it('centerLabel ausente → showCenterLabel falso', () => {
-    expect(resolveChrome({ kind: 'tab', tab: 'invoices' }).showCenterLabel).toBe(false)
+  it('ownHeader ausente → layout desenha a toolbar padrão', () => {
+    expect(resolveChrome({ kind: 'tab', tab: 'home' }).showHeader).toBe(true)
   })
 })
 
@@ -194,7 +174,7 @@ describe('resolveHardwareBack', () => {
     expect(
       resolveHardwareBack(
         { kind: 'detail', parent: 'settings' },
-        { hasAppHistory: false, overlayOpen: false, routeName: 'recurrence' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'invoices' },
       ),
     ).toEqual({ type: 'replace', name: 'settings' })
   })
@@ -203,7 +183,7 @@ describe('resolveHardwareBack', () => {
     expect(
       resolveHardwareBack(
         { kind: 'detail' },
-        { hasAppHistory: false, overlayOpen: false, routeName: 'settings' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'not-found' },
       ),
     ).toEqual({ type: 'replace', name: 'home' })
   })
@@ -211,8 +191,8 @@ describe('resolveHardwareBack', () => {
   it('tab diferente de home sem overlay e sem histórico → replace home', () => {
     expect(
       resolveHardwareBack(
-        { kind: 'tab', tab: 'invoices' },
-        { hasAppHistory: false, overlayOpen: false, routeName: 'invoices' },
+        { kind: 'tab', tab: 'more' },
+        { hasAppHistory: false, overlayOpen: false, routeName: 'settings' },
       ),
     ).toEqual({ type: 'replace', name: 'home' })
   })
@@ -228,17 +208,16 @@ describe('resolveHardwareBack', () => {
 })
 
 describe('FOOTER_TABS', () => {
-  it('contém exatamente 4 destinos, nesta ordem: home, operations, invoices, reports (TAB-02 AC4)', () => {
-    expect(FOOTER_TABS.map((item) => item.tab)).toEqual([
-      'home',
-      'operations',
-      'invoices',
-      'reports',
-    ])
+  it('contém exatamente 4 destinos, nesta ordem: home, operations, reports, more', () => {
+    expect(FOOTER_TABS.map((item) => item.tab)).toEqual(['home', 'operations', 'reports', 'more'])
   })
 
-  it('nenhum destino "Mais" (SET-01 AC3)', () => {
-    expect(FOOTER_TABS.some((item) => item.label === 'Mais')).toBe(false)
+  it('Faturas não fica na barra inferior (vira tela empilhada acessada por "Mais")', () => {
+    expect(FOOTER_TABS.some((item) => item.route === 'invoices')).toBe(false)
+  })
+
+  it('a aba "Mais" leva para settings', () => {
+    expect(FOOTER_TABS.find((item) => item.tab === 'more')?.route).toBe('settings')
   })
 
   it('cada destino tem route, label e icon definidos', () => {

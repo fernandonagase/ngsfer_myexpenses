@@ -19,9 +19,5 @@ export function useAppNavigation() {
     }
   }
 
-  function goToSettings() {
-    void router.push({ name: 'settings' })
-  }
-
-  return { goBack, goToSettings }
+  return { goBack }
 }

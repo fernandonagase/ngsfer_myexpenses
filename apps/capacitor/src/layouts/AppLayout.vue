@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { StatusBar } from '@capacitor/status-bar'
+import { Capacitor } from '@capacitor/core'
+import { getCssVar } from 'quasar'
 
-import CenterToolbar from 'src/components/center/CenterToolbar.vue'
 import MainFooterToolbar from 'src/components/MainFooterToolbar.vue'
 import { resolveChrome } from 'src/router/chrome'
 import { useAppNavigation } from 'src/composables/useAppNavigation'
@@ -12,11 +14,18 @@ import { useOperationStore } from 'src/stores/operation-store'
 
 const route = useRoute()
 const chrome = computed(() => resolveChrome(route.meta))
-const { goBack, goToSettings } = useAppNavigation()
+const { goBack } = useAppNavigation()
 
 const centerStore = useCenterStore()
 const categoryStore = useCategoryStore()
 const operationStore = useOperationStore()
+
+if (Capacitor.isNativePlatform()) {
+  const qPrimaryColor = getCssVar('primary')
+  if (qPrimaryColor) {
+    void StatusBar.setBackgroundColor({ color: qPrimaryColor })
+  }
+}
 
 await centerStore.fetchCenters()
 await categoryStore.fetch()
@@ -24,8 +33,8 @@ await operationStore.refreshCenter()
 </script>
 
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header>
+  <q-layout view="lHh Lpr lFf" class="app-layout">
+    <q-header v-if="chrome.showHeader">
       <q-toolbar>
         <q-btn
           v-if="chrome.showBack"
@@ -36,22 +45,7 @@ await operationStore.refreshCenter()
           aria-label="Voltar"
           @click="goBack"
         />
-        <CenterToolbar v-if="chrome.toolbar === 'center'" />
-        <q-toolbar-title v-else>
-          {{ chrome.title }}
-          <span v-if="chrome.showCenterLabel && centerStore.hasActiveCenters" class="text-subtitle2">
-            · {{ operationStore.scopeLabel }}
-          </span>
-        </q-toolbar-title>
-        <q-btn
-          v-if="chrome.showSettings"
-          flat
-          dense
-          round
-          icon="settings"
-          aria-label="Configurações"
-          @click="goToSettings"
-        />
+        <q-toolbar-title>{{ chrome.title }}</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
@@ -59,13 +53,31 @@ await operationStore.refreshCenter()
       <router-view v-slot="{ Component }">
         <Suspense>
           <component :is="Component" />
-          <template #fallback> Carregando... </template>
+          <template #fallback>
+            <div class="app-layout__fallback">Carregando...</div>
+          </template>
         </Suspense>
       </router-view>
     </q-page-container>
 
-    <q-footer v-if="chrome.showFooter">
+    <q-footer v-if="chrome.showFooter" class="app-layout__footer">
       <MainFooterToolbar :active-tab="chrome.activeTab" />
     </q-footer>
   </q-layout>
 </template>
+
+<style lang="scss" scoped>
+.app-layout {
+  background: var(--ds-surface);
+}
+
+.app-layout__fallback {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--ds-faint);
+}
+
+.app-layout__footer {
+  background: transparent;
+}
+</style>

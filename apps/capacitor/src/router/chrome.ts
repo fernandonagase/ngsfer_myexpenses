@@ -1,14 +1,12 @@
 export type RouteKind = 'tab' | 'detail'
-export type ToolbarKind = 'center' | 'title'
-export type FooterTab = 'home' | 'operations' | 'invoices' | 'reports'
+export type FooterTab = 'home' | 'operations' | 'reports' | 'more'
 
 export interface NavigationMeta {
   kind?: RouteKind // ausente → 'detail' (SHELL-01 / AC7)
   title?: string
-  toolbar?: ToolbarKind // só relevante em 'tab'; ausente → 'title'
   tab?: FooterTab // obrigatório em 'tab'
   parent?: string // nome de rota; ausente → 'home' (BACK-02 / AC4)
-  centerLabel?: boolean // Relatório: título + nome do centro (SHELL-04)
+  ownHeader?: boolean // a página desenha o próprio cabeçalho verde (ScreenHeader)
 }
 
 export interface Chrome {
@@ -16,12 +14,10 @@ export interface Chrome {
   showFooter: boolean // kind === 'tab'
   showFab: boolean // kind === 'tab'
   showBack: boolean // kind === 'detail'
-  showSettings: boolean // kind === 'tab'
-  toolbar: ToolbarKind // 'center' só quando tab && meta.toolbar === 'center'
+  showHeader: boolean // layout desenha a toolbar padrão (só quando a página não tem a sua)
   title: string // meta.title ?? ''
   activeTab: FooterTab | null
   parent: string // meta.parent ?? 'home'
-  showCenterLabel: boolean
 }
 
 export function resolveChrome(meta: NavigationMeta): Chrome {
@@ -33,12 +29,10 @@ export function resolveChrome(meta: NavigationMeta): Chrome {
     showFooter: isTab,
     showFab: isTab,
     showBack: !isTab,
-    showSettings: isTab,
-    toolbar: isTab && meta.toolbar === 'center' ? 'center' : 'title',
+    showHeader: meta.ownHeader !== true,
     title: meta.title ?? '',
     activeTab: isTab ? (meta.tab ?? null) : null,
     parent: meta.parent ?? 'home',
-    showCenterLabel: meta.centerLabel === true,
   }
 }
 
@@ -73,6 +67,10 @@ export function resolveHardwareBack(
   return { type: 'exit' }
 }
 
+/**
+ * Barra inferior: quatro abas + botão de adicionar no centro.
+ * Faturas sai da barra e vira tela empilhada acessada por "Mais".
+ */
 export const FOOTER_TABS: ReadonlyArray<{
   tab: FooterTab
   route: string
@@ -80,7 +78,7 @@ export const FOOTER_TABS: ReadonlyArray<{
   icon: string
 }> = [
   { tab: 'home', route: 'home', label: 'Início', icon: 'home' },
-  { tab: 'operations', route: 'operations', label: 'Lançamentos', icon: 'list_alt' },
-  { tab: 'invoices', route: 'invoices', label: 'Faturas', icon: 'receipt_long' },
-  { tab: 'reports', route: 'operations-by-category', label: 'Relatório', icon: 'trending_up' },
+  { tab: 'operations', route: 'operations', label: 'Operações', icon: 'list_alt' },
+  { tab: 'reports', route: 'operations-by-category', label: 'Relatórios', icon: 'trending_up' },
+  { tab: 'more', route: 'settings', label: 'Mais', icon: 'more_horiz' },
 ]
