@@ -195,7 +195,41 @@ export async function sumOperationsByCategory(
     )
   }
 
-  qb.groupBy('category.name').orderBy('SUM(operation.valueInCents)', type === 'Entrada' ? 'DESC' : 'ASC')
+  qb.groupBy('category.name').orderBy(
+    'SUM(operation.valueInCents)',
+    type === 'Entrada' ? 'DESC' : 'ASC',
+  )
 
   return qb.getRawMany<{ category: string; valueInCents: number }>()
+}
+
+/** Operações de uma categoria (pelo nome), de um tipo, no escopo informado — mesma base de `sumOperationsByCategory`. */
+export async function listOperationsOfCategory(
+  manager: EntityManager,
+  scope: CenterScope,
+  type: 'Entrada' | 'Saída',
+  categoryName: string,
+  month?: string,
+): Promise<Operation[]> {
+  const qb = manager
+    .createQueryBuilder(Operation, 'operation')
+    .innerJoinAndSelect('operation.category', 'category')
+    .leftJoinAndSelect('operation.recurringRule', 'recurringRule')
+    .leftJoinAndSelect('operation.cardInvoice', 'cardInvoice')
+    .leftJoinAndSelect('cardInvoice.creditCard', 'creditCard')
+    .leftJoinAndSelect('operation.center', 'center')
+    .where('operation.is_active = 1')
+  applyCenterScope(qb, scope)
+  qb.andWhere('operation.is_invoice_payment = 0')
+    .andWhere('category.type = :type', { type })
+    .andWhere('category.name = :categoryName', { categoryName })
+
+  if (month) {
+    qb.andWhere("STRFTIME('%Y', operation.date) = :year", { year: month.slice(0, 4) }).andWhere(
+      "STRFTIME('%m', operation.date) = :monthIndex",
+      { monthIndex: month.slice(5, 7) },
+    )
+  }
+
+  return qb.orderBy('operation.date', 'DESC').getMany()
 }

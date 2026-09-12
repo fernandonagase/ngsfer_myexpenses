@@ -36,11 +36,9 @@ import {
   listCashMonths,
   listCashOperationsOfMonth,
   listInvoiceReferenceMonths,
+  listOperationsOfCategory,
 } from 'src/databases/entities/expenses/operation-queries'
-import {
-  toVirtualInvoiceLine,
-  type VirtualInvoiceLine,
-} from 'src/models/virtual-invoice-line'
+import { toVirtualInvoiceLine, type VirtualInvoiceLine } from 'src/models/virtual-invoice-line'
 import {
   ALL_SCOPE,
   isSameScope,
@@ -587,6 +585,15 @@ export const useOperationStore = defineStore('operation', () => {
     return { income, expenses }
   }
 
+  async function getOperationsOfCategory(
+    type: 'Entrada' | 'Saída',
+    categoryName: string,
+    monthValue?: string,
+  ) {
+    const manager = expensesDataSource.dataSource.manager
+    return listOperationsOfCategory(manager, scope.value, type, categoryName, monthValue)
+  }
+
   async function getMonthGroups() {
     const manager = expensesDataSource.dataSource.manager
     const [dbMonths, scheduledInvoiceMonths, unpaidInvoiceLines] = await Promise.all([
@@ -748,6 +755,7 @@ export const useOperationStore = defineStore('operation', () => {
     editOperation,
     removeOperation,
     getOperationsByCategory,
+    getOperationsOfCategory,
     getMonthGroups,
     copyOperation,
     transferOperationToCenter,
