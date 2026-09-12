@@ -28,7 +28,10 @@ const props = defineProps<{
   creditCard?: CreditCard | null
   center?: Center | null
   lockCenter?: boolean
+  title?: string
 }>()
+
+const title = computed(() => props.title ?? 'Nova operação')
 
 defineEmits([...useDialogPluginComponent.emits])
 
@@ -88,7 +91,12 @@ function onSubmit() {
 
 <template>
   <q-dialog ref="dialogRef" position="bottom" @hide="onDialogHide">
-    <BottomSheetDialog title="Nova operação" @dismiss="onDialogCancel">
+    <BottomSheetDialog :title="title" @dismiss="onDialogCancel">
+      <template #header-side>
+        <button type="button" class="op-dialog-close" aria-label="Fechar" @click="onDialogCancel">
+          <q-icon name="close" size="20px" />
+        </button>
+      </template>
       <q-form @submit="onSubmit" class="q-gutter-md">
         <Suspense>
           <OperationForm
@@ -135,8 +143,22 @@ function onSubmit() {
 
 .op-dialog-footer__submit {
   flex: 1;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 700;
   padding: 10px 0;
+}
+
+.op-dialog-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ds-neutral-soft);
+  color: #5c6b66;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
 }
 </style>
