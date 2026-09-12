@@ -67,13 +67,13 @@ const registries = computed(() => [
     meta: centerStore.activeCenters.length
       ? plural(centerStore.activeCenters.length, 'ativo', 'ativos')
       : 'Nenhum cadastrado',
-    action: () => centerStore.showCenters(),
+    action: () => void router.push({ name: 'centers' }),
   },
   {
     icon: 'label',
     label: 'Categorias',
     meta: `${categoryStore.datasetOutput.length} de saída · ${categoryStore.datasetInput.length} de entrada`,
-    action: () => categoryStore.showCategories(),
+    action: () => void router.push({ name: 'categories' }),
   },
   {
     icon: 'credit_card',
@@ -81,7 +81,7 @@ const registries = computed(() => [
     meta: hasCards.value
       ? plural(cardStore.activeCards.length, 'cartão', 'cartões')
       : 'Nenhum cadastrado',
-    action: () => cardStore.showCards(),
+    action: () => void router.push({ name: 'cards' }),
   },
   {
     icon: 'event_repeat',

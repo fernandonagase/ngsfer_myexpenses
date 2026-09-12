@@ -284,7 +284,11 @@ export const useOperationStore = defineStore('operation', () => {
     $q.notify({ type: 'positive', message: 'Operação lançada' })
   }
 
-  function addOperation() {
+  /**
+   * Abre a folha de nova operação. `initial` pré-configura o formulário
+   * (ex.: "Nova regra" abre já com Repetir ligado).
+   */
+  function addOperation(initial?: { recurrenceType?: RecurrenceType; title?: string }) {
     async function doAddOperation(payload: OperationPayload) {
       if (
         payload.center &&
@@ -380,6 +384,8 @@ export const useOperationStore = defineStore('operation', () => {
       component: OperationDialog,
       componentProps: {
         center: defaultFormCenter(scope.value, centerStore.activeCenters),
+        ...(initial?.recurrenceType ? { recurrenceType: initial.recurrenceType } : {}),
+        ...(initial?.title ? { title: initial.title } : {}),
       },
       persistent: true,
     }).onOk((payload: OperationPayload) => {

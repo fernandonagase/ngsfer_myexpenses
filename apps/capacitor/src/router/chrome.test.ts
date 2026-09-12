@@ -79,19 +79,41 @@ describe('resolveChrome', () => {
     })
   })
 
-  it('recurrence: detail com toolbar padrão + parent settings', () => {
+  it('recurrence: detail com cabeçalho próprio + parent settings', () => {
     expect(
-      resolveChrome({ kind: 'detail', title: 'Operações recorrentes', parent: 'settings' }),
+      resolveChrome({
+        kind: 'detail',
+        title: 'Operações recorrentes',
+        parent: 'settings',
+        ownHeader: true,
+      }),
     ).toEqual({
       kind: 'detail',
       showFooter: false,
       showFab: false,
       showBack: true,
-      showHeader: true,
+      showHeader: false,
       title: 'Operações recorrentes',
       activeTab: null,
       parent: 'settings',
     })
+  })
+
+  it('cadastros (categorias/cartões/centros): detail com cabeçalho próprio + parent settings', () => {
+    for (const title of ['Categorias', 'Cartões de crédito', 'Centros financeiros']) {
+      expect(resolveChrome({ kind: 'detail', title, parent: 'settings', ownHeader: true })).toEqual(
+        {
+          kind: 'detail',
+          showFooter: false,
+          showFab: false,
+          showBack: true,
+          showHeader: false,
+          title,
+          activeTab: null,
+          parent: 'settings',
+        },
+      )
+    }
   })
 
   it('not-found: detail + parent home', () => {

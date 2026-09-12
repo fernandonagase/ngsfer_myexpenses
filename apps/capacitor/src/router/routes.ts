@@ -39,7 +39,30 @@ const routes: RouteRecordRaw[] = [
         name: 'recurrence',
         path: 'recurrence',
         component: () => import('src/pages/RecurrencePage.vue'),
-        meta: { kind: 'detail', title: 'Operações recorrentes', parent: 'settings' },
+        meta: {
+          kind: 'detail',
+          title: 'Operações recorrentes',
+          parent: 'settings',
+          ownHeader: true,
+        },
+      },
+      {
+        name: 'categories',
+        path: 'categories',
+        component: () => import('src/pages/registries/CategoriesPage.vue'),
+        meta: { kind: 'detail', title: 'Categorias', parent: 'settings', ownHeader: true },
+      },
+      {
+        name: 'cards',
+        path: 'cards',
+        component: () => import('src/pages/registries/CardsPage.vue'),
+        meta: { kind: 'detail', title: 'Cartões de crédito', parent: 'settings', ownHeader: true },
+      },
+      {
+        name: 'centers',
+        path: 'centers',
+        component: () => import('src/pages/registries/CentersPage.vue'),
+        meta: { kind: 'detail', title: 'Centros financeiros', parent: 'settings', ownHeader: true },
       },
 
       // Always leave this as last one,

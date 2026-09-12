@@ -90,6 +90,26 @@ export const useInvoiceStore = defineStore('invoice', () => {
     return stats
   }
 
+  /** Total da fatura aberta (centavos, negativo = compras) por cartão — id do cartão → total. */
+  async function getOpenInvoiceTotalsByCard(): Promise<Record<number, number>> {
+    await reconcileInvoiceStatuses(expensesDataSource.dataSource.manager)
+    const rows = await operationRepository
+      .createQueryBuilder('operation')
+      .innerJoin('operation.cardInvoice', 'invoice')
+      .select('invoice.cartao_credito_id', 'cardId')
+      .addSelect('SUM(operation.valueInCents)', 'total')
+      .where('invoice.is_active = 1')
+      .andWhere('invoice.status = :status', { status: InvoiceStatus.ABERTA })
+      .andWhere('operation.is_invoice_payment = 0')
+      .andWhere('operation.is_active = 1')
+      .groupBy('invoice.cartao_credito_id')
+      .getRawMany<{ cardId: number; total: number | null }>()
+
+    const totals: Record<number, number> = {}
+    for (const row of rows) totals[Number(row.cardId)] = Number(row.total ?? 0)
+    return totals
+  }
+
   /** Visão resumida para a aba "Mais": fatura aberta do primeiro cartão ativo e nº de faturas a pagar. */
   async function getInvoicesOverview(): Promise<InvoicesOverview> {
     await reconcileInvoiceStatuses(expensesDataSource.dataSource.manager)
@@ -385,6 +405,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
     fetchInvoicesByCard,
     getInvoiceTotal,
     getInvoiceStats,
+    getOpenInvoiceTotalsByCard,
     getInvoicesOverview,
     getInvoiceBreakdownByCenter,
     getInvoiceOperations,

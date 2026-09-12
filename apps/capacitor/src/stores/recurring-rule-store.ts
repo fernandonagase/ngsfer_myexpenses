@@ -37,6 +37,13 @@ export const useRecurringRuleStore = defineStore('recurringRuleStore', {
         throw new Error('Falha ao salvar regra de recorrência', { cause: result })
       }
     },
+    /** Apaga a regra; as operações já geradas ficam (FK sem cascade). */
+    async remove(id: number) {
+      const result = await recurringRuleService.remove(id)
+      if (!result.ok) {
+        throw new Error('Falha ao excluir regra de recorrência', { cause: result })
+      }
+    },
     async generateRecurringOperationsForCurrentWindow() {
       await recurringRuleService.generateRecurringOperationsForCurrentWindow()
     },

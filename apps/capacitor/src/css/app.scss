@@ -206,6 +206,112 @@ body {
   background: var(--ds-expense-soft);
 }
 
+.ds-badge--income {
+  color: var(--ds-income);
+  background: var(--ds-income-soft);
+}
+
+.ds-badge--neutral {
+  color: var(--ds-muted);
+  background: #eef1f0;
+}
+
+.ds-badge--tag {
+  padding: 2px 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+// Formulários em folha (cadastros)
+.ds-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ds-field__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #77857f;
+
+  small {
+    font-size: inherit;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+}
+
+.ds-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--ds-border);
+  border-radius: 12px;
+  padding: 13px 14px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ds-ink);
+  background: var(--ds-card);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &:focus {
+    border-color: var(--ds-header);
+  }
+
+  &::placeholder {
+    color: var(--ds-hairline);
+  }
+}
+
+.ds-field__error {
+  font-size: 12px;
+  color: var(--ds-expense);
+}
+
+.ds-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ds-faint);
+}
+
+.ds-toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  padding: 3px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-start;
+  background: #cfd8d3;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.ds-toggle--on {
+  justify-content: flex-end;
+  background: var(--ds-header);
+}
+
+.ds-toggle__knob {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.ds-block-btn--disabled {
+  background: var(--ds-hairline);
+  color: #fff;
+  cursor: default;
+}
+
 .ds-segment {
   display: flex;
   background: #eef1f0;

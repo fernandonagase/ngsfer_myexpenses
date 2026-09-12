@@ -1,12 +1,13 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
 import { CreditCard } from 'src/databases/entities/expenses'
 import { ensureOpenInvoiceForCurrentCycle } from 'src/databases/entities/expenses/card-invoice-helpers'
 import expensesDataSource from 'src/databases/datasources/ExpensesDatasource'
-import CreditCardDialog from 'src/components/card/CreditCardDialog.vue'
+import ConfirmSheetDialog from 'src/components/ConfirmSheetDialog.vue'
 import CreditCardFormDialog from 'src/components/card/CreditCardFormDialog.vue'
 
 export { getOrCreateInvoiceForPurchase } from 'src/databases/entities/expenses/card-invoice-helpers'
@@ -22,6 +23,7 @@ export type CreditCardFormPayload = {
 
 export const useCardStore = defineStore('card', () => {
   const $q = useQuasar()
+  const router = useRouter()
 
   const cards = ref<Array<CreditCard>>([])
 
@@ -34,10 +36,7 @@ export const useCardStore = defineStore('card', () => {
   }
 
   function showCards() {
-    $q.dialog({
-      component: CreditCardDialog,
-      persistent: true,
-    })
+    void router.push({ name: 'cards' })
   }
 
   function openCardForm(initial?: Partial<CreditCardFormPayload> & { title?: string }) {
@@ -124,16 +123,12 @@ export const useCardStore = defineStore('card', () => {
 
   function softRemoveCard(card: CreditCard) {
     $q.dialog({
-      title: 'Inativar cartão?',
-      message:
-        'Este cartão será inativado e não poderá receber novos lançamentos. As faturas existentes serão preservadas.',
-      ok: {
-        label: 'Confirmar',
-      },
-      cancel: {
-        label: 'Cancelar',
-        color: 'negative',
-        flat: true,
+      component: ConfirmSheetDialog,
+      componentProps: {
+        title: `Inativar "${card.name}"?`,
+        message:
+          'O cartão deixa de receber novos lançamentos. As faturas existentes ficam preservadas e você pode reativá-lo depois.',
+        confirmLabel: 'Inativar',
       },
     }).onOk(() => {
       card.isActive = false
@@ -157,15 +152,11 @@ export const useCardStore = defineStore('card', () => {
 
   function reactivateCard(card: CreditCard) {
     $q.dialog({
-      title: 'Reativar cartão?',
-      message: 'Este cartão será reativado e poderá receber novos lançamentos.',
-      ok: {
-        label: 'Confirmar',
-      },
-      cancel: {
-        label: 'Cancelar',
-        color: 'negative',
-        flat: true,
+      component: ConfirmSheetDialog,
+      componentProps: {
+        title: `Reativar "${card.name}"?`,
+        message: 'O cartão volta a receber novos lançamentos.',
+        confirmLabel: 'Reativar',
       },
     }).onOk(() => {
       card.isActive = true

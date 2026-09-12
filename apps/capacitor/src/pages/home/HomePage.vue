@@ -9,12 +9,10 @@ import ScreenBody from 'src/components/shell/ScreenBody.vue'
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import { useHomeStore } from 'src/stores/home-store'
 import { useOperationStore } from 'src/stores/operation-store'
-import { useCardStore } from 'src/stores/card-store'
 
 const router = useRouter()
 const homeStore = useHomeStore()
 const operationStore = useOperationStore()
-const cardStore = useCardStore()
 
 const now = dayjs()
 const todayLabel = now.format('D [de] MMM').replace('.', '')
@@ -52,7 +50,7 @@ const shortcuts = [
     label: 'Recorrências',
     action: () => void router.push({ name: 'recurrence' }),
   },
-  { icon: 'credit_card', label: 'Cartões', action: () => cardStore.showCards() },
+  { icon: 'credit_card', label: 'Cartões', action: () => void router.push({ name: 'cards' }) },
   {
     icon: 'pie_chart',
     label: 'Por categoria',
