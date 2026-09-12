@@ -1,1 +1,255 @@
 // app global css in SCSS form
+
+// Tokens do redesign (Claude Design · Fluxo)
+:root {
+  --ds-ink: #17211d;
+  --ds-muted: #6b7a75;
+  --ds-faint: #90a09a;
+  --ds-hairline: #b7c1bc;
+  --ds-accent: #2f6f5e;
+  --ds-income: #1e7d54;
+  --ds-expense: #b3261e;
+  --ds-expense-soft: #fbeae8;
+  --ds-income-soft: #e6f3ec;
+  --ds-accent-soft: #e8efeb;
+  --ds-neutral-soft: #f1f3f2;
+  --ds-surface: #f5f7f6;
+  --ds-card: #ffffff;
+  --ds-line: #f0f3f2;
+  --ds-border: #d9e0dd;
+  --ds-header: #3a5a40;
+  --ds-header-fg-muted: rgba(255, 255, 255, 0.78);
+  --ds-header-pill: rgba(255, 255, 255, 0.14);
+  --ds-negative-on-header: #ffb4ab;
+  --ds-shadow: 0 4px 18px rgba(23, 33, 29, 0.08);
+  --ds-shadow-soft: 0 2px 10px rgba(23, 33, 29, 0.06);
+}
+
+body {
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+}
+
+// Blocos reutilizados por todas as telas
+.ds-card {
+  background: var(--ds-card);
+  border-radius: 18px;
+  box-shadow: var(--ds-shadow);
+}
+
+.ds-card--flat {
+  box-shadow: var(--ds-shadow-soft);
+}
+
+.ds-section-label {
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #77857f;
+}
+
+.ds-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  color: var(--ds-ink);
+  text-decoration: none;
+
+  & + & {
+    border-top: 1px solid var(--ds-line);
+  }
+}
+
+.ds-row--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.ds-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ds-row__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ds-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-row__meta {
+  font-size: 12px;
+  color: var(--ds-faint);
+}
+
+.ds-row__value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ds-ink);
+  white-space: nowrap;
+}
+
+.ds-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--ds-accent-soft);
+  color: var(--ds-accent);
+}
+
+.ds-avatar--neutral {
+  background: var(--ds-neutral-soft);
+  color: #5c6b66;
+}
+
+.ds-avatar--income {
+  background: var(--ds-income-soft);
+  color: var(--ds-income);
+}
+
+.ds-avatar--expense {
+  background: var(--ds-expense-soft);
+  color: var(--ds-expense);
+}
+
+.ds-chevron {
+  color: var(--ds-hairline);
+}
+
+.ds-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.ds-pill-btn--primary {
+  background: var(--ds-header);
+  color: #fff;
+  font-weight: 700;
+}
+
+.ds-pill-btn--outline {
+  border-color: var(--ds-border);
+  color: var(--ds-accent);
+  background: transparent;
+}
+
+.ds-block-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.ds-block-btn--primary {
+  background: var(--ds-header);
+  color: #fff;
+}
+
+.ds-block-btn--danger {
+  background: var(--ds-expense);
+  color: #fff;
+}
+
+.ds-block-btn--outline {
+  border-color: var(--ds-border);
+  color: #5c6b66;
+  font-weight: 500;
+  background: transparent;
+}
+
+.ds-block-btn--grow {
+  flex: 1;
+}
+
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ds-badge--expense {
+  color: var(--ds-expense);
+  background: var(--ds-expense-soft);
+}
+
+.ds-segment {
+  display: flex;
+  background: #eef1f0;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.ds-segment__item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 0;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ds-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ds-segment__item--active {
+  background: #fff;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.ds-scroll-x {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.ds-empty {
+  text-align: center;
+  color: var(--ds-faint);
+  font-size: 14px;
+  padding: 24px 0;
+}

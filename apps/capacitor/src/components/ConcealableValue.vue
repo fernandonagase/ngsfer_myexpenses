@@ -12,5 +12,5 @@ const configStore = useConfigStore()
   <template v-if="!configStore.hideValues">
     <slot></slot>
   </template>
-  <span v-else :class="concealedClass ?? ''">***</span>
+  <span v-else :class="concealedClass ?? ''">••••••</span>
 </template>
