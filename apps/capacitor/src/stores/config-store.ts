@@ -40,9 +40,24 @@ export const useConfigStore = defineStore('config', () => {
     return {}
   }
 
+  const LAST_BACKUP_AT_STORAGE_KEY = 'config.lastBackupAt'
+
+  function getInitialLastBackupAt(): string | null {
+    return localStorage.getItem(LAST_BACKUP_AT_STORAGE_KEY)
+  }
+
   const hideValues = ref(getInitialHideValues())
   const showOperationDetails = ref(getInitialShowOperationDetails())
-  const showOperationDetailsByDay = ref<Record<string, boolean>>(getInitialShowOperationDetailsByDay())
+  const showOperationDetailsByDay = ref<Record<string, boolean>>(
+    getInitialShowOperationDetailsByDay(),
+  )
+  /** ISO 8601 do último backup exportado com sucesso neste aparelho; null se nunca. */
+  const lastBackupAt = ref<string | null>(getInitialLastBackupAt())
+
+  function markBackupDone(at: Date = new Date()) {
+    lastBackupAt.value = at.toISOString()
+    localStorage.setItem(LAST_BACKUP_AT_STORAGE_KEY, lastBackupAt.value)
+  }
 
   function persistHideValues() {
     localStorage.setItem(HIDE_VALUES_STORAGE_KEY, String(hideValues.value))
@@ -53,7 +68,10 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   function persistShowOperationDetailsByDay() {
-    localStorage.setItem(SHOW_OPERATION_DETAILS_BY_DAY_STORAGE_KEY, JSON.stringify(showOperationDetailsByDay.value))
+    localStorage.setItem(
+      SHOW_OPERATION_DETAILS_BY_DAY_STORAGE_KEY,
+      JSON.stringify(showOperationDetailsByDay.value),
+    )
   }
 
   function toggleValuesVisibility() {
@@ -87,6 +105,8 @@ export const useConfigStore = defineStore('config', () => {
     hideValues,
     showOperationDetails,
     showOperationDetailsByDay,
+    lastBackupAt,
+    markBackupDone,
     toggleValuesVisibility,
     toggleOperationDetailsVisibility,
     toggleOperationDetailsVisibilityForDay,
