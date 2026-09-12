@@ -4,10 +4,17 @@ import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
 import { BRL } from '@ngsfer-myexpenses/utils'
 
+import ConcealableValue from 'src/components/ConcealableValue.vue'
+import OperationListItem from 'src/components/operation/OperationListItem.vue'
 import type { CardInvoice, Operation } from 'src/databases/entities/expenses'
 import { InvoiceStatus } from 'src/databases/entities/expenses/card-invoice'
 import { NONE_LABEL } from 'src/models/center-scope'
-import { useInvoiceStore, type InvoiceCenterShare } from 'src/stores/invoice-store'
+import { categoryIcon } from 'src/helpers/category-icons'
+import {
+  useInvoiceStore,
+  type InvoiceCenterShare,
+  type InvoiceStats,
+} from 'src/stores/invoice-store'
 import { useOperationStore } from 'src/stores/operation-store'
 import { useCenterStore } from 'src/stores/center-store'
 import InvoicePaymentDialog from 'src/components/card/InvoicePaymentDialog.vue'
@@ -17,6 +24,8 @@ import OperationDetailsDialog, {
 
 const props = defineProps<{
   invoice: CardInvoice
+  stats: InvoiceStats
+  variant: 'payable' | 'open' | 'history'
 }>()
 
 const $q = useQuasar()
@@ -24,36 +33,66 @@ const invoiceStore = useInvoiceStore()
 const operationStore = useOperationStore()
 const centerStore = useCenterStore()
 
-const total = ref(0)
+const SHARE_COLORS = ['#3a5a40', '#26a69a', '#90a09a', '#c99a8f', '#6b6c6a']
+
 const breakdown = ref<InvoiceCenterShare[]>([])
 const operations = ref<Operation[]>([])
 const loading = ref(true)
+// Aberta: compras sempre visíveis. A pagar e histórico: recolhidas até o toque.
+const expanded = ref(props.variant === 'open')
+
+const fmt = (cents: number) => BRL(Math.abs(cents) / 100).format()
 
 const monthLabel = computed(() => {
   const label = dayjs(`${props.invoice.referenceMonth}-01`).format('MMMM [de] YYYY')
   return label.charAt(0).toUpperCase() + label.slice(1)
 })
 
-const totalString = computed(() => BRL(Math.abs(total.value) / 100).format())
+const dueShort = computed(() => dayjs(props.invoice.dueDate).format('DD/MM'))
 
-const statusMeta = computed(() => {
-  switch (props.invoice.status) {
-    case InvoiceStatus.PAGA:
-      return { label: 'Paga', color: 'positive' }
-    case InvoiceStatus.FECHADA:
-      return { label: 'Fechada', color: 'warning' }
-    default:
-      return { label: 'Aberta', color: 'primary' }
-  }
+const purchasesLabel = computed(
+  () => `${props.stats.count} ${props.stats.count === 1 ? 'compra' : 'compras'}`,
+)
+
+const dueInLabel = computed(() => {
+  const days = dayjs(props.invoice.dueDate).startOf('day').diff(dayjs().startOf('day'), 'day')
+  if (days === 0) return 'vence hoje'
+  if (days === 1) return 'vence amanhã'
+  if (days > 1) return `vence em ${days} dias`
+  if (days === -1) return 'venceu ontem'
+  return `venceu há ${-days} dias`
 })
 
-const dueDateString = computed(() => dayjs(props.invoice.dueDate).format('DD/MM/YYYY'))
+const isOverdue = computed(() => dayjs(props.invoice.dueDate).isBefore(dayjs(), 'day'))
+
+const historyMeta = computed(() => {
+  if (props.invoice.status === InvoiceStatus.PAGA) {
+    return props.invoice.paymentDate
+      ? `Paga em ${dayjs(props.invoice.paymentDate).format('DD/MM')}`
+      : 'Paga'
+  }
+  return 'Fechada sem compras'
+})
+
+const shares = computed(() => {
+  const total = breakdown.value.reduce((sum, share) => sum + Math.abs(share.valueInCents), 0)
+  return breakdown.value.map((share, index) => ({
+    key: share.centerId ?? 'none',
+    name: share.centerName ?? NONE_LABEL,
+    text: fmt(share.valueInCents),
+    pct: total ? (Math.abs(share.valueInCents) / total) * 100 : 0,
+    color: SHARE_COLORS[index % SHARE_COLORS.length]!,
+  }))
+})
+
+const showShares = computed(
+  () => centerStore.hasActiveCenters && shares.value.length > 0 && props.variant !== 'history',
+)
 
 async function load() {
   loading.value = true
   try {
-    ;[total.value, breakdown.value, operations.value] = await Promise.all([
-      invoiceStore.getInvoiceTotal(props.invoice.id),
+    ;[breakdown.value, operations.value] = await Promise.all([
       invoiceStore.getInvoiceBreakdownByCenter(props.invoice.id),
       invoiceStore.getInvoiceOperations(props.invoice.id),
     ])
@@ -70,6 +109,12 @@ watch(
     void load()
   },
 )
+
+function purchaseMeta(operation: Operation) {
+  const parts = [dayjs(operation.date).format('DD/MM'), operation.category.name]
+  if (centerStore.hasActiveCenters) parts.push(operation.center?.name ?? NONE_LABEL)
+  return parts.join(' · ')
+}
 
 function openPurchaseDetails(operation: Operation) {
   $q.dialog({
@@ -96,11 +141,9 @@ function onPay() {
       shares: breakdown.value,
     },
   }).onOk((payload: { paymentDate: string; shares: InvoiceCenterShare[] }) => {
-    void invoiceStore
-      .payInvoice(props.invoice, payload)
-      .then((ok) => {
-        if (ok) void load()
-      })
+    void invoiceStore.payInvoice(props.invoice, payload).then((ok) => {
+      if (ok) void load()
+    })
   })
 }
 
@@ -118,98 +161,354 @@ function onCloseEarly() {
 </script>
 
 <template>
-  <q-expansion-item class="invoice-card q-mb-sm" bordered>
-    <template #header>
-      <q-item-section>
-        <q-item-label class="text-weight-medium">{{ monthLabel }}</q-item-label>
-        <q-item-label caption>Vence em {{ dueDateString }}</q-item-label>
-      </q-item-section>
-      <q-item-section side>
-        <div class="column items-end">
-          <span class="text-weight-medium">{{ totalString }}</span>
-          <q-badge :color="statusMeta.color" :label="statusMeta.label" class="q-mt-xs" />
+  <!-- Histórico: linha compacta expansível -->
+  <div v-if="variant === 'history'" class="history-item">
+    <div class="ds-row ds-row--clickable history-item__row" @click="expanded = !expanded">
+      <q-icon
+        :name="invoice.status === InvoiceStatus.PAGA ? 'check_circle' : 'remove_circle_outline'"
+        size="20px"
+        :class="
+          invoice.status === InvoiceStatus.PAGA
+            ? 'history-item__icon--paid'
+            : 'history-item__icon--empty'
+        "
+      />
+      <div class="ds-row__body">
+        <div class="history-item__title">{{ monthLabel }}</div>
+        <div class="ds-row__meta">{{ historyMeta }}</div>
+      </div>
+      <ConcealableValue concealed-class="history-item__value">
+        <div class="history-item__value">
+          {{ stats.totalInCents ? fmt(stats.totalInCents) : '—' }}
         </div>
-      </q-item-section>
-    </template>
+      </ConcealableValue>
+    </div>
+    <div v-if="expanded" class="history-item__details">
+      <div v-if="loading" class="ds-empty">Carregando...</div>
+      <template v-else>
+        <OperationListItem
+          v-for="operation in operations"
+          :key="operation.id"
+          :icon="categoryIcon(operation.category.name)"
+          :title="operation.description || 'Não identificada'"
+          :meta="purchaseMeta(operation)"
+          :value-in-cents="operation.valueInCents"
+          absolute
+          @click="openPurchaseDetails(operation)"
+        />
+        <div v-if="operations.length === 0" class="ds-empty">Nenhuma compra nesta fatura.</div>
+        <div class="invoice-card__actions invoice-card__actions--history">
+          <button
+            v-if="invoice.status === InvoiceStatus.PAGA"
+            type="button"
+            class="ds-block-btn ds-block-btn--outline invoice-card__danger"
+            @click="onReopenPayment"
+          >
+            <q-icon name="undo" size="18px" />
+            Estornar pagamento
+          </button>
+          <button
+            v-else
+            type="button"
+            class="ds-block-btn ds-block-btn--outline"
+            @click="onReopenForEditing"
+          >
+            <q-icon name="edit" size="18px" />
+            Reabrir
+          </button>
+        </div>
+      </template>
+    </div>
+  </div>
 
-    <q-card>
-      <q-card-section>
-        <div v-if="loading" class="text-grey-7">Carregando...</div>
-        <template v-else>
-          <template v-if="centerStore.hasActiveCenters">
-            <div class="text-subtitle2 q-mb-xs">Participação por centro</div>
-            <q-list dense>
-              <q-item v-for="share in breakdown" :key="share.centerId ?? 'none'" class="q-px-none">
-                <q-item-section>{{ share.centerName ?? NONE_LABEL }}</q-item-section>
-                <q-item-section side>
-                  {{ BRL(Math.abs(share.valueInCents) / 100).format() }}
-                </q-item-section>
-              </q-item>
-              <q-item v-if="breakdown.length === 0" class="q-px-none">
-                <q-item-section class="text-grey-7">Nenhuma compra nesta fatura.</q-item-section>
-              </q-item>
-            </q-list>
+  <!-- A pagar / Aberta: card completo -->
+  <section v-else class="ds-card invoice-card">
+    <div
+      class="invoice-card__head"
+      :class="{ 'invoice-card__head--clickable': variant === 'payable' }"
+      @click="variant === 'payable' && (expanded = !expanded)"
+    >
+      <div class="invoice-card__head-text">
+        <div class="invoice-card__status">
+          <template v-if="variant === 'payable'">
+            <span class="invoice-card__status-label invoice-card__status-label--payable"
+              >A pagar</span
+            >
+            <span class="ds-badge ds-badge--expense">{{ dueInLabel }}</span>
           </template>
-
-          <template v-if="operations.length > 0">
-            <q-separator spaced />
-            <div class="text-subtitle2 q-mb-xs">Compras</div>
-            <q-list dense>
-              <q-item
-                v-for="operation in operations"
-                :key="operation.id"
-                clickable
-                v-ripple
-                class="q-px-none"
-                @click="openPurchaseDetails(operation)"
-              >
-                <q-item-section>
-                  <q-item-label>{{ operation.description || 'Não identificada' }}</q-item-label>
-                  <q-item-label caption>
-                    {{ operation.dateString }} · {{ operation.category.name }} ·
-                    {{ operation.center?.name ?? NONE_LABEL }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  {{ BRL(Math.abs(operation.valueInCents) / 100).format() }}
-                </q-item-section>
-              </q-item>
-            </q-list>
+          <template v-else>
+            <span class="invoice-card__status-label invoice-card__status-label--open">Aberta</span>
+            <span class="invoice-card__dot"></span>
           </template>
+        </div>
+        <div class="invoice-card__month">{{ monthLabel }}</div>
+        <div class="invoice-card__meta">
+          <span :class="{ 'invoice-card__meta--overdue': variant === 'payable' && isOverdue }">
+            Vence em {{ dueShort }}
+          </span>
+          · {{ purchasesLabel }}
+        </div>
+      </div>
 
-          <div class="row justify-end q-gutter-sm q-mt-md">
-            <template v-if="invoice.status === InvoiceStatus.FECHADA">
-              <q-btn flat no-caps color="grey-8" label="Reabrir p/ editar" @click="onReopenForEditing" />
-              <q-btn
-                v-if="total !== 0"
-                unelevated
-                no-caps
-                color="primary"
-                label="Pagar"
-                @click="onPay"
-              />
-              <span v-else class="text-caption text-grey-7 self-center">
-                Fatura fechada sem compras.
-              </span>
-            </template>
-            <template v-else-if="invoice.status === InvoiceStatus.PAGA">
-              <q-btn flat no-caps color="negative" label="Estornar pagamento" @click="onReopenPayment" />
-            </template>
-            <template v-else>
-              <span class="text-caption text-grey-7 self-center">
-                Fatura em aberto — acumulando compras.
-              </span>
-              <q-btn flat no-caps color="grey-8" label="Fechar agora" @click="onCloseEarly" />
-            </template>
-          </div>
-        </template>
-      </q-card-section>
-    </q-card>
-  </q-expansion-item>
+      <ConcealableValue v-if="variant === 'payable'" concealed-class="invoice-card__total">
+        <div class="invoice-card__total">{{ fmt(stats.totalInCents) }}</div>
+      </ConcealableValue>
+      <button v-else type="button" class="invoice-card__close-btn" @click.stop="onCloseEarly">
+        <q-icon name="lock" size="16px" />
+        Fechar agora
+      </button>
+    </div>
+
+    <div v-if="variant === 'payable'" class="invoice-card__actions">
+      <button
+        type="button"
+        class="ds-block-btn ds-block-btn--primary ds-block-btn--grow"
+        @click="onPay"
+      >
+        Pagar fatura
+      </button>
+      <button
+        type="button"
+        class="ds-block-btn ds-block-btn--outline invoice-card__reopen"
+        @click="onReopenForEditing"
+      >
+        <q-icon name="edit" size="18px" />
+        Reabrir
+      </button>
+    </div>
+
+    <div v-if="showShares && !loading" class="invoice-card__shares">
+      <div class="invoice-card__shares-bar" aria-hidden="true">
+        <div
+          v-for="share in shares"
+          :key="share.key"
+          :style="{ width: `${share.pct}%`, background: share.color }"
+        ></div>
+      </div>
+      <div class="invoice-card__legend">
+        <div v-for="share in shares" :key="share.key" class="invoice-card__legend-item">
+          <span class="invoice-card__legend-dot" :style="{ background: share.color }"></span>
+          {{ share.name }}
+          <ConcealableValue concealed-class="invoice-card__legend-value">
+            <span class="invoice-card__legend-value">{{ share.text }}</span>
+          </ConcealableValue>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="expanded" class="invoice-card__purchases">
+      <div v-if="loading" class="ds-empty">Carregando...</div>
+      <template v-else>
+        <OperationListItem
+          v-for="operation in operations"
+          :key="operation.id"
+          :icon="categoryIcon(operation.category.name)"
+          :title="operation.description || 'Não identificada'"
+          :meta="purchaseMeta(operation)"
+          :value-in-cents="operation.valueInCents"
+          absolute
+          @click="openPurchaseDetails(operation)"
+        />
+        <div v-if="operations.length === 0" class="ds-empty">Nenhuma compra nesta fatura.</div>
+      </template>
+    </div>
+  </section>
 </template>
 
 <style lang="scss" scoped>
 .invoice-card {
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.invoice-card__head {
+  padding: 16px 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.invoice-card__head--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.invoice-card__head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.invoice-card__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invoice-card__status-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.invoice-card__status-label--payable {
+  color: var(--ds-expense);
+}
+
+.invoice-card__status-label--open {
+  color: var(--ds-accent);
+}
+
+.invoice-card__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ds-income);
+}
+
+.invoice-card__month {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ds-ink);
+}
+
+.invoice-card__meta {
+  font-size: 12.5px;
+  color: var(--ds-muted);
+}
+
+.invoice-card__meta--overdue {
+  color: var(--ds-expense);
+  font-weight: 500;
+}
+
+.invoice-card__total {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ds-ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.invoice-card__close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--ds-border);
+  border-radius: 999px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #5c6b66;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.invoice-card__actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.invoice-card__actions--history {
+  padding: 8px 12px 12px;
+  justify-content: flex-end;
+}
+
+.invoice-card__reopen {
+  color: var(--ds-accent);
+}
+
+.invoice-card__danger {
+  color: var(--ds-expense);
+}
+
+.invoice-card__shares {
+  margin: 0 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invoice-card__shares-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 2px;
+
+  > div {
+    border-radius: 3px;
+    min-width: 2px;
+  }
+}
+
+.invoice-card__legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.invoice-card__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ds-muted);
+}
+
+.invoice-card__legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.invoice-card__legend-value {
+  font-weight: 700;
+  color: var(--ds-ink);
+}
+
+.invoice-card__purchases {
+  border-top: 1px solid var(--ds-line);
+}
+
+.history-item + .history-item {
+  border-top: 1px solid var(--ds-line);
+}
+
+.history-item__row {
+  padding: 12px 16px;
+}
+
+.history-item__icon--paid {
+  color: var(--ds-income);
+}
+
+.history-item__icon--empty {
+  color: var(--ds-hairline);
+}
+
+.history-item__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-ink);
+}
+
+.history-item__value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-muted);
+}
+
+.history-item__details {
+  background: #fafbfa;
+  border-top: 1px solid var(--ds-line);
 }
 </style>

@@ -2,13 +2,11 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
+import { In } from 'typeorm'
 
+import ConfirmSheetDialog from 'src/components/ConfirmSheetDialog.vue'
 import type { CreditCard } from 'src/databases/entities/expenses'
-import {
-  Category,
-  CardInvoice,
-  Operation,
-} from 'src/databases/entities/expenses'
+import { Category, CardInvoice, Operation } from 'src/databases/entities/expenses'
 import { InvoiceStatus } from 'src/databases/entities/expenses/card-invoice'
 import {
   ensureSuccessorOpenInvoice,
@@ -26,6 +24,13 @@ export type InvoiceCenterShare = {
   centerId: number | null
   centerName: string | null
   valueInCents: number
+}
+
+export type InvoiceStats = { totalInCents: number; count: number }
+
+export type InvoicesOverview = {
+  openInvoice: { cardName: string; totalInCents: number } | null
+  payableCount: number
 }
 
 export const useInvoiceStore = defineStore('invoice', () => {
@@ -54,25 +59,68 @@ export const useInvoiceStore = defineStore('invoice', () => {
     return raw?.total ?? 0
   }
 
-  /** Totais (centavos) por fatura do cartão — uma query agregada para classificar a lista. */
-  async function getInvoiceTotalsByCard(cardId: number): Promise<Record<number, number>> {
-    const rows = await operationRepository
+  /**
+   * Total (centavos) e quantidade de compras por fatura — uma query agregada
+   * para classificar a lista. Sem `cardId`, cobre todos os cartões.
+   */
+  async function getInvoiceStats(cardId?: number): Promise<Record<number, InvoiceStats>> {
+    const qb = operationRepository
       .createQueryBuilder('operation')
       .innerJoin('operation.cardInvoice', 'invoice')
       .select('invoice.id', 'invoiceId')
       .addSelect('SUM(operation.valueInCents)', 'total')
-      .where('invoice.cartao_credito_id = :cardId', { cardId })
-      .andWhere('invoice.is_active = 1')
+      .addSelect('COUNT(operation.id)', 'count')
+      .where('invoice.is_active = 1')
       .andWhere('operation.is_invoice_payment = 0')
       .andWhere('operation.is_active = 1')
-      .groupBy('invoice.id')
-      .getRawMany<{ invoiceId: number; total: number | null }>()
-
-    const totals: Record<number, number> = {}
-    for (const row of rows) {
-      totals[Number(row.invoiceId)] = Number(row.total ?? 0)
+    if (cardId != null) {
+      qb.andWhere('invoice.cartao_credito_id = :cardId', { cardId })
     }
-    return totals
+    const rows = await qb
+      .groupBy('invoice.id')
+      .getRawMany<{ invoiceId: number; total: number | null; count: number | null }>()
+
+    const stats: Record<number, InvoiceStats> = {}
+    for (const row of rows) {
+      stats[Number(row.invoiceId)] = {
+        totalInCents: Number(row.total ?? 0),
+        count: Number(row.count ?? 0),
+      }
+    }
+    return stats
+  }
+
+  /** Visão resumida para a aba "Mais": fatura aberta do primeiro cartão ativo e nº de faturas a pagar. */
+  async function getInvoicesOverview(): Promise<InvoicesOverview> {
+    await reconcileInvoiceStatuses(expensesDataSource.dataSource.manager)
+    const [candidates, stats] = await Promise.all([
+      invoiceRepository.find({
+        where: {
+          isActive: true,
+          creditCard: { isActive: true },
+          status: In([InvoiceStatus.ABERTA, InvoiceStatus.FECHADA]),
+        },
+        relations: ['creditCard'],
+        order: { creditCard: { id: 'ASC' }, referenceMonth: 'ASC' },
+      }),
+      getInvoiceStats(),
+    ])
+
+    const open = candidates.find((invoice) => invoice.status === InvoiceStatus.ABERTA) ?? null
+    const payableCount = candidates.filter(
+      (invoice) =>
+        invoice.status === InvoiceStatus.FECHADA && (stats[invoice.id]?.totalInCents ?? 0) !== 0,
+    ).length
+
+    return {
+      openInvoice: open
+        ? {
+            cardName: open.creditCard.name,
+            totalInCents: stats[open.id]?.totalInCents ?? 0,
+          }
+        : null,
+      payableCount,
+    }
   }
 
   async function getInvoiceBreakdownByCenter(invoiceId: number): Promise<InvoiceCenterShare[]> {
@@ -198,8 +246,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
   async function doReopenInvoicePayment(invoice: CardInvoice) {
     try {
       const today = dayjs().format('YYYY-MM-DD')
-      const nextStatus =
-        invoice.closingDate < today ? InvoiceStatus.FECHADA : InvoiceStatus.ABERTA
+      const nextStatus = invoice.closingDate < today ? InvoiceStatus.FECHADA : InvoiceStatus.ABERTA
 
       await expensesDataSource.dataSource.manager.transaction(async (manager) => {
         const payments = await manager.find(Operation, {
@@ -280,12 +327,15 @@ export const useInvoiceStore = defineStore('invoice', () => {
       return
     }
 
+    const monthName = dayjs(`${invoice.referenceMonth}-01`).format('MMMM')
+    const nextMonthName = dayjs(`${invoice.referenceMonth}-01`).add(1, 'month').format('MMMM')
     $q.dialog({
-      title: 'Fechar fatura agora?',
-      message:
-        'Ela deixa de receber compras e fica disponível para pagamento. Novas compras vão para a próxima fatura. Você pode reabrir depois se precisar editar.',
-      ok: { label: 'Fechar' },
-      cancel: { label: 'Cancelar', color: 'negative', flat: true },
+      component: ConfirmSheetDialog,
+      componentProps: {
+        title: `Fechar a fatura de ${monthName} agora?`,
+        message: `Novas compras vão para a fatura de ${nextMonthName}. Você pode reabrir para editar antes de pagar.`,
+        confirmLabel: 'Fechar fatura',
+      },
     }).onOk(() => {
       void doCloseInvoiceEarly(invoice)
     })
@@ -334,7 +384,8 @@ export const useInvoiceStore = defineStore('invoice', () => {
     invoices,
     fetchInvoicesByCard,
     getInvoiceTotal,
-    getInvoiceTotalsByCard,
+    getInvoiceStats,
+    getInvoicesOverview,
     getInvoiceBreakdownByCenter,
     getInvoiceOperations,
     payInvoice,
