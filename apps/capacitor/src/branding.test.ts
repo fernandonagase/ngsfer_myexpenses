@@ -26,6 +26,11 @@ const LEGACY_DAO = 'apps/capacitor/src/persistence/plumifinDao.ts'
 const SETTINGS_PAGE = 'apps/capacitor/src/pages/settings/SettingsPage.vue'
 const CAPACITOR_CONFIG = 'apps/capacitor/src-capacitor/capacitor.config.json'
 
+// Este arquivo assevera os literais de identidade, então necessariamente os contém: ele se
+// exclui das duas varreduras. A lacuna é conhecida e estreita — um resíduo escondido aqui dentro
+// não é pego por elas.
+const SELF = 'apps/capacitor/src/branding.test.ts'
+
 // Os únicos arquivos autorizados a conter `myexpenses`: identidade do app no Android e nome do
 // banco. Renomear qualquer um deles troca o applicationId ou deixa o banco existente órfão.
 const IDENTITY_FILES = [
@@ -91,7 +96,10 @@ describe('identificadores internos', () => {
     expect(readJson('apps/capacitor/src-capacitor/package.json').name).toBe('@plumifin/capacitor')
 
     const comEscopoAntigo = trackedFiles().filter(
-      (file) => !file.startsWith('.specs/') && read(file).includes('@ngsfer-myexpenses/'),
+      (file) =>
+        !file.startsWith('.specs/') &&
+        file !== SELF &&
+        read(file).includes('@ngsfer-myexpenses/'),
     )
     expect(comEscopoAntigo).toEqual([])
   })
@@ -152,7 +160,7 @@ describe('identidade técnica preservada', () => {
   })
 
   it('nenhum resíduo de myexpenses fora da identidade preservada', () => {
-    const autorizados = new Set(IDENTITY_FILES)
+    const autorizados = new Set([...IDENTITY_FILES, SELF])
     const residuos = trackedFiles()
       .filter((file) => !file.startsWith('.specs/') && file !== 'pnpm-lock.yaml')
       .filter((file) => !autorizados.has(file))
