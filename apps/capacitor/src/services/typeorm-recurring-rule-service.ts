@@ -16,8 +16,12 @@ import { deleteRecurringRuleDetachingOperations } from 'src/databases/entities/e
 export class TypeOrmRecurringRuleService implements IRecurringRuleService {
   repository: Repository<RecurringRuleEntity>
 
-  constructor() {
-    this.repository = getRecurringRuleRepository()
+  /**
+   * O repositório é injetável para que o caminho real de exclusão possa ser exercitado contra o
+   * SQLite em memória; sem argumento, usa o datasource do app, como todo chamador faz.
+   */
+  constructor(repository: Repository<RecurringRuleEntity> = getRecurringRuleRepository()) {
+    this.repository = repository
   }
 
   static modelFromEntity(entity: RecurringRuleEntity) {
