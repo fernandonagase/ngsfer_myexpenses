@@ -11,6 +11,7 @@ import { getRecurringRuleRepository } from 'src/databases/repositories/recurring
 import type { IServiceListFilters, IServiceListOptions, WithRequiredId } from './types/IService'
 import { ServiceResult } from './service-result'
 import { getOperationRepository } from 'src/databases/repositories/operation-repository'
+import { deleteRecurringRuleDetachingOperations } from 'src/databases/entities/expenses/recurring-rule-queries'
 
 export class TypeOrmRecurringRuleService implements IRecurringRuleService {
   repository: Repository<RecurringRuleEntity>
@@ -75,7 +76,7 @@ export class TypeOrmRecurringRuleService implements IRecurringRuleService {
   }
   async remove(id: number): Promise<IServiceResult<void>> {
     try {
-      await this.repository.delete(id)
+      await deleteRecurringRuleDetachingOperations(this.repository.manager, id)
       return ServiceResult.ok(undefined)
     } catch (error) {
       return ServiceResult.error(error)

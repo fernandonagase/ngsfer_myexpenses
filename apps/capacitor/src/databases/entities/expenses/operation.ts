@@ -35,7 +35,7 @@ export class Operation {
     name: 'recurring_rule_id',
     referencedColumnName: 'id',
   })
-  recurringRule?: RecurringRule
+  recurringRule?: RecurringRule | null
 
   @ManyToOne(() => Center, (center) => center.operations, { nullable: true })
   @JoinColumn({
