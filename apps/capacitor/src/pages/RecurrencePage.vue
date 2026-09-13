@@ -18,6 +18,7 @@ import type {
 } from 'src/controllers/types/IRecurringRuleController'
 import { RecurringRule } from 'src/domain/RecurringRule'
 import { categoryIcon } from 'src/helpers/category-icons'
+import { getErrorMessage } from 'src/helpers/error-handling'
 import { notificationService } from 'src/services/notification-service'
 import type { WithRequiredId } from 'src/services/types/IService'
 import { useOperationStore } from 'src/stores/operation-store'
@@ -83,7 +84,7 @@ function notifyError(message: string, error: unknown) {
   $q.notify({
     type: 'negative',
     message,
-    caption: error instanceof Error ? error.message : String(error),
+    caption: getErrorMessage(error),
   })
 }
 
