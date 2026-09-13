@@ -2,7 +2,7 @@
 import dayjs from 'dayjs'
 import { useDialogPluginComponent } from 'quasar'
 import { ref } from 'vue'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import AddRecurringRuleForm from './AddRecurringRuleForm.vue'

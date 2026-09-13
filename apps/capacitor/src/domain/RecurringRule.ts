@@ -1,4 +1,4 @@
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 import dayjs from 'dayjs'
 import { Operation } from 'src/databases/entities/expenses/operation'
 

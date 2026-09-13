@@ -36,7 +36,7 @@ importers:
       '@capawesome/capacitor-file-picker':
         specifier: ^7.0.0
         version: 7.2.0(@capacitor/core@6.2.1)
-      '@ngsfer-myexpenses/utils':
+      '@plumifin/utils':
         specifier: workspace:*
         version: link:../../packages/utils
       '@quasar/extras':

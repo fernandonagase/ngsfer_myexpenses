@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { useDialogPluginComponent } from 'quasar'
 import { useRouter } from 'vue-router'
-import { getWeekdayName } from '@ngsfer-myexpenses/utils'
+import { getWeekdayName } from '@plumifin/utils'
 
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import { useSheetDrag } from 'src/composables/useSheetDrag'

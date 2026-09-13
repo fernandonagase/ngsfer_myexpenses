@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useQuasar } from 'quasar'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import ScreenHeader from 'src/components/shell/ScreenHeader.vue'
 import ScreenBody from 'src/components/shell/ScreenBody.vue'

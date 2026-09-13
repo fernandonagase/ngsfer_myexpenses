@@ -1,4 +1,4 @@
-## My Expenses (ngsfer-myexpenses)
+## Plumifin
 
 Aplicativo mobile para controle de finanças pessoais, com armazenamento local em SQLite e experiência rápida usando Quasar Framework.
 

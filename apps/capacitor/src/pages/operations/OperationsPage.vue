@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
-import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
+import { BRL, getWeekdayName } from '@plumifin/utils'
 
 import ScreenHeader from 'src/components/shell/ScreenHeader.vue'
 import ScreenBody from 'src/components/shell/ScreenBody.vue'

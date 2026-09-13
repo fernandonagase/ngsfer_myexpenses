@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import ScreenHeader from 'src/components/shell/ScreenHeader.vue'
 import ScreenBody from 'src/components/shell/ScreenBody.vue'

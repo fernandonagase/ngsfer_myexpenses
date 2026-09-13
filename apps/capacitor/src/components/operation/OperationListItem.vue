@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 

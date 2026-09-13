@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
+import { BRL, getWeekdayName } from '@plumifin/utils'
 
 import type { Category, Center } from 'src/databases/entities/expenses'
 import type { CategoryType } from 'src/databases/entities/expenses/types/category.types'

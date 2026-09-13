@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import { Center } from './center'
 import { Category } from './category'

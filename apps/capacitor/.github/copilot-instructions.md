@@ -1,4 +1,4 @@
-# Copilot Instructions — ngsfer_myexpenses
+# Copilot Instructions — Plumifin
 
 ## Contexto rápido
 

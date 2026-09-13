@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import ConcealableValue from 'src/components/ConcealableValue.vue'
 import OperationListItem from 'src/components/operation/OperationListItem.vue'

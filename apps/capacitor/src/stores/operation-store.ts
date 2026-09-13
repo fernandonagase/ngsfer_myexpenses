@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { BRL, splitInInstallments } from '@ngsfer-myexpenses/utils'
+import { BRL, splitInInstallments } from '@plumifin/utils'
 
 import {
   Operation,

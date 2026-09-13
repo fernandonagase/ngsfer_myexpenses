@@ -1,5 +1,5 @@
 import { Dialog } from 'quasar'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import type { Center } from 'src/databases/entities/expenses'
 import type {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import { useCenterStore } from 'src/stores/center-store'
 

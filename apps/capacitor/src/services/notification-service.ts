@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 import { MoreThanOrEqual } from 'typeorm'
 
 import { getOperationRepository } from 'src/databases/repositories/operation-repository'

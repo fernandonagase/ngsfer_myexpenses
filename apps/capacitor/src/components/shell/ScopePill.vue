@@ -32,7 +32,7 @@ const operationStore = useOperationStore()
   </div>
   <div v-else class="scope-pill scope-pill--static">
     <q-icon name="account_balance_wallet" size="18px" />
-    <span class="scope-pill__label">MyExpenses</span>
+    <span class="scope-pill__label">Plumifin</span>
   </div>
 </template>
 

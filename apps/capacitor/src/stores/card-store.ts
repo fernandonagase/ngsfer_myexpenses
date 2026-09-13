@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import { CreditCard } from 'src/databases/entities/expenses'
 import { ensureOpenInvoiceForCurrentCycle } from 'src/databases/entities/expenses/card-invoice-helpers'

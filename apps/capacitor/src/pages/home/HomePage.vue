@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import ScreenHeader from 'src/components/shell/ScreenHeader.vue'
 import ScreenBody from 'src/components/shell/ScreenBody.vue'

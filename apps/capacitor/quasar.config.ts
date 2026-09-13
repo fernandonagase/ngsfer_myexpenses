@@ -206,7 +206,7 @@ export default defineConfig((/* ctx */) => {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'ngsfer-myexpenses',
+        appId: 'ngsfer-plumifin',
       },
     },
 

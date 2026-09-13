@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { BRL, getWeekdayName } from '@ngsfer-myexpenses/utils'
+import { BRL, getWeekdayName } from '@plumifin/utils'
 
 import ScreenHeader from 'src/components/shell/ScreenHeader.vue'
 import ScreenBody from 'src/components/shell/ScreenBody.vue'

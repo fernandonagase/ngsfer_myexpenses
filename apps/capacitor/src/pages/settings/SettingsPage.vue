@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import dayjs from 'dayjs'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import ScreenHeader from 'src/components/shell/ScreenHeader.vue'
 import ScreenBody from 'src/components/shell/ScreenBody.vue'
@@ -341,7 +341,7 @@ async function doImportBackup() {
         </section>
 
         <div class="version">
-          MyExpenses<template v-if="appVersion"> · versão {{ appVersion }}</template>
+          Plumifin<template v-if="appVersion"> · versão {{ appVersion }}</template>
         </div>
       </ErrorBoundary>
     </ScreenBody>

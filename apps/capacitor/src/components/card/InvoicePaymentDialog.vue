@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useDialogPluginComponent } from 'quasar'
-import { BRL } from '@ngsfer-myexpenses/utils'
+import { BRL } from '@plumifin/utils'
 
 import BottomSheetDialog from 'src/components/BottomSheetDialog.vue'
 import type { CardInvoice } from 'src/databases/entities/expenses'
