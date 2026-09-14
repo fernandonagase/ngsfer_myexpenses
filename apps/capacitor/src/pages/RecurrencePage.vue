@@ -132,6 +132,7 @@ function removeRule(rule: Rule) {
       .remove(rule.id)
       .then(async () => {
         await load()
+        await operationStore.refreshScreen()
         await notificationService.rescheduleAll()
         $q.notify({ type: 'positive', message: 'Regra de recorrência excluída' })
       })
