@@ -44,8 +44,8 @@ function readPng(relative: string): Png {
   const buf = readFileSync(abs(relative))
   const width = buf.readUInt32BE(16)
   const height = buf.readUInt32BE(20)
-  const bitDepth = buf[24]
-  const colorType = buf[25]
+  const bitDepth = buf.readUInt8(24)
+  const colorType = buf.readUInt8(25)
 
   if (bitDepth !== 8) throw new Error(`${relative}: bit depth ${bitDepth} não suportado`)
   if (![2, 3, 6].includes(colorType))
