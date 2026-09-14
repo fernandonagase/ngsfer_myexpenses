@@ -18,7 +18,7 @@ import CategoryPickerDialog from './CategoryPickerDialog.vue'
 
 const $q = useQuasar()
 
-defineProps<{ lockCenter?: boolean }>()
+defineProps<{ lockCenter?: boolean; lockRecurrenceType?: boolean }>()
 
 const value = defineModel<string>('value')
 const installmentCount = defineModel<number>('installmentCount')
@@ -130,11 +130,15 @@ watch(
   },
 )
 
-watch(recurrenceType, () => {
-  if (recurrenceType.value === 'recurring' && !recurrenceFrequency.value) {
-    recurrenceFrequency.value = FrequencyType.MONTHLY
-  }
-})
+watch(
+  recurrenceType,
+  () => {
+    if (recurrenceType.value === 'recurring' && !recurrenceFrequency.value) {
+      recurrenceFrequency.value = FrequencyType.MONTHLY
+    }
+  },
+  { immediate: true },
+)
 
 watch([operationType, recurrenceType], () => {
   if (!canUseCredit.value) {
@@ -372,29 +376,31 @@ function initial(name: string) {
     </div>
 
     <div class="op-field-group">
-      <div class="op-field-label-row">
-        <div class="op-field-label">Como se repete</div>
-      </div>
-      <div class="op-scroll-row op-scroll-row--spread">
-        <div
-          v-for="option in recurrenceTypeOptions"
-          :key="option.value"
-          class="op-pill op-pill--flex"
-          :class="{ 'op-pill--active': recurrenceType === option.value }"
-          :style="
-            recurrenceType === option.value
-              ? {
-                  borderColor: accent,
-                  background: `${accent}14`,
-                  color: accent,
-                }
-              : undefined
-          "
-          @click="recurrenceType = option.value"
-        >
-          {{ option.label }}
+      <template v-if="!lockRecurrenceType">
+        <div class="op-field-label-row">
+          <div class="op-field-label">Como se repete</div>
         </div>
-      </div>
+        <div class="op-scroll-row op-scroll-row--spread">
+          <div
+            v-for="option in recurrenceTypeOptions"
+            :key="option.value"
+            class="op-pill op-pill--flex"
+            :class="{ 'op-pill--active': recurrenceType === option.value }"
+            :style="
+              recurrenceType === option.value
+                ? {
+                    borderColor: accent,
+                    background: `${accent}14`,
+                    color: accent,
+                  }
+                : undefined
+            "
+            @click="recurrenceType = option.value"
+          >
+            {{ option.label }}
+          </div>
+        </div>
+      </template>
 
       <template v-if="hasInstallments">
         <div class="op-stepper">
@@ -419,6 +425,9 @@ function initial(name: string) {
       </template>
 
       <template v-if="isRecurring">
+        <div v-if="lockRecurrenceType" class="op-field-label-row">
+          <div class="op-field-label">Frequência</div>
+        </div>
         <div class="op-scroll-row">
           <div
             v-for="option in recurrenceFrequencyOptions"

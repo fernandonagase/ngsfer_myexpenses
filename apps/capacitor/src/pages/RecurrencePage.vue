@@ -159,7 +159,11 @@ function openActions(rule: Rule) {
 }
 
 function addRule() {
-  operationStore.addOperation({ recurrenceType: 'recurring', title: 'Nova regra' })
+  operationStore.addOperation({
+    recurrenceType: 'recurring',
+    title: 'Nova regra',
+    lockRecurrenceType: true,
+  })
 }
 </script>
 

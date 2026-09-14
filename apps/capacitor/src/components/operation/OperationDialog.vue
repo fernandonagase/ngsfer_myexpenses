@@ -28,6 +28,7 @@ const props = defineProps<{
   creditCard?: CreditCard | null
   center?: Center | null
   lockCenter?: boolean
+  lockRecurrenceType?: boolean
   title?: string
 }>()
 
@@ -116,6 +117,7 @@ function onSubmit() {
             v-model:credit-card="creditCard"
             v-model:center="center"
             :lock-center="lockCenter ?? false"
+            :lock-recurrence-type="lockRecurrenceType ?? false"
           />
           <template #fallback>Carregando...</template>
         </Suspense>

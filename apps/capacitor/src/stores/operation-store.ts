@@ -288,7 +288,11 @@ export const useOperationStore = defineStore('operation', () => {
    * Abre a folha de nova operação. `initial` pré-configura o formulário
    * (ex.: "Nova regra" abre já com Repetir ligado).
    */
-  function addOperation(initial?: { recurrenceType?: RecurrenceType; title?: string }) {
+  function addOperation(initial?: {
+    recurrenceType?: RecurrenceType
+    title?: string
+    lockRecurrenceType?: boolean
+  }) {
     async function doAddOperation(payload: OperationPayload) {
       if (
         payload.center &&
@@ -386,6 +390,7 @@ export const useOperationStore = defineStore('operation', () => {
         center: defaultFormCenter(scope.value, centerStore.activeCenters),
         ...(initial?.recurrenceType ? { recurrenceType: initial.recurrenceType } : {}),
         ...(initial?.title ? { title: initial.title } : {}),
+        ...(initial?.lockRecurrenceType ? { lockRecurrenceType: initial.lockRecurrenceType } : {}),
       },
       persistent: true,
     }).onOk((payload: OperationPayload) => {
