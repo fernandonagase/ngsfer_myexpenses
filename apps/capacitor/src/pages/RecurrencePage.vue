@@ -133,7 +133,7 @@ function removeRule(rule: Rule) {
       .then(async () => {
         await load()
         await notificationService.rescheduleAll()
-        $q.notify({ type: 'positive', message: `"${rule.description}" excluída` })
+        $q.notify({ type: 'positive', message: 'Regra de recorrência excluída' })
       })
       .catch((error) => notifyError('Falha ao excluir regra', error))
   })
