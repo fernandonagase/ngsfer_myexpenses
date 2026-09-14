@@ -112,7 +112,7 @@ function toggleRule(rule: Rule) {
     .then(() =>
       $q.notify({
         type: 'positive',
-        message: `"${rule.description}" ${next ? 'retomada' : 'pausada'}`,
+        message: next ? 'Regra de recorrência retomada' : 'Regra de recorrência pausada',
       }),
     )
     .catch((error) => notifyError(next ? 'Falha ao retomar regra' : 'Falha ao pausar regra', error))
