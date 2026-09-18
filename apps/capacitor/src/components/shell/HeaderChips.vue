@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends string">
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 
 export type HeaderChip<T extends string> = { value: T; label: string; icon?: string }
 
@@ -30,10 +30,14 @@ function scrollActiveIntoView(behavior: ScrollBehavior) {
   chipRefs.get(model.value)?.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' })
 }
 
+// onMounted (não a 1a chamada do watch immediate) garante que containerRef já esteja
+// vinculado: dentro de componentes async + <Suspense>, o nextTick do watch immediate pode
+// disparar antes do DOM deste componente ser realmente montado.
+onMounted(() => scrollActiveIntoView('auto'))
+
 watch(
   () => [model.value, props.options] as const,
   () => nextTick(() => scrollActiveIntoView('auto')),
-  { immediate: true },
 )
 </script>
 
