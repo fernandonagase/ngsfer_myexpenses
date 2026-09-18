@@ -320,7 +320,8 @@ export const useInvoiceStore = defineStore('invoice', () => {
       invoice.status = InvoiceStatus.ABERTA
       invoiceRepository
         .save(invoice)
-        .then(() => {
+        .then(async () => {
+          await operationStore.refreshScreen()
           $q.notify({ type: 'positive', message: 'Fatura reaberta para edição.' })
         })
         .catch((error) => {
