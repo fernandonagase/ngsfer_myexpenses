@@ -1,18 +1,48 @@
 <script setup lang="ts" generic="T extends string">
+import { nextTick, ref, watch } from 'vue'
+
 export type HeaderChip<T extends string> = { value: T; label: string; icon?: string }
 
-defineProps<{
+const props = defineProps<{
   options: ReadonlyArray<HeaderChip<T>>
 }>()
 
 const model = defineModel<T | undefined>({ required: true })
+
+const containerRef = ref<HTMLElement>()
+const chipRefs = new Map<T, HTMLButtonElement>()
+
+function setChipRef(value: T, el: Element | null) {
+  if (el) chipRefs.set(value, el as HTMLButtonElement)
+  else chipRefs.delete(value)
+}
+
+function scrollActiveIntoView(behavior: ScrollBehavior) {
+  const container = containerRef.value
+  if (!container || !model.value) return
+
+  const isLastOption = props.options.at(-1)?.value === model.value
+  if (isLastOption) {
+    container.scrollTo({ left: container.scrollWidth, behavior })
+    return
+  }
+
+  chipRefs.get(model.value)?.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' })
+}
+
+watch(
+  () => [model.value, props.options] as const,
+  () => nextTick(() => scrollActiveIntoView('auto')),
+  { immediate: true },
+)
 </script>
 
 <template>
-  <div class="header-chips ds-scroll-x">
+  <div ref="containerRef" class="header-chips ds-scroll-x">
     <button
       v-for="option in options"
       :key="option.value"
+      :ref="(el) => setChipRef(option.value, el as Element | null)"
       type="button"
       class="header-chips__chip"
       :class="{ 'header-chips__chip--active': option.value === model }"
