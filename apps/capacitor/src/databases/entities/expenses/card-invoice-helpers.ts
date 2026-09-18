@@ -115,7 +115,9 @@ export async function ensureSuccessorOpenInvoice(
 /**
  * Fecha faturas cujo fechamento já passou (`aberta` → `fechada`) e garante
  * a fatura aberta do ciclo atual por cartão ativo. Idempotente; não altera
- * faturas `paga`. Base para a regra de compra retroativa e para a trava de edição.
+ * faturas `paga` nem faturas reabertas manualmente para edição (essas só
+ * voltam a fechar quando o usuário fecha de novo, veja `reopenedForEditing`).
+ * Base para a regra de compra retroativa e para a trava de edição.
  */
 export async function reconcileInvoiceStatuses(manager: EntityManager): Promise<void> {
   const today = dayjs().format('YYYY-MM-DD')
@@ -125,6 +127,7 @@ export async function reconcileInvoiceStatuses(manager: EntityManager): Promise<
     .set({ status: InvoiceStatus.FECHADA })
     .where('status = :status', { status: InvoiceStatus.ABERTA })
     .andWhere('is_active = 1')
+    .andWhere('reaberta_para_edicao = 0')
     .andWhere('data_fechamento < :today', { today })
     .execute()
 

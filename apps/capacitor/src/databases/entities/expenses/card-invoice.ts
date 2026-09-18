@@ -39,6 +39,14 @@ export class CardInvoice {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean
 
+  /**
+   * Marca que a fatura foi reaberta manualmente para edição após já ter
+   * fechamento no passado. Usado por `reconcileInvoiceStatuses` para não
+   * fechá-la de volta automaticamente até o usuário fechá-la de novo.
+   */
+  @Column({ name: 'reaberta_para_edicao', type: 'boolean', default: false })
+  reopenedForEditing!: boolean
+
   @OneToMany(() => Operation, (operation) => operation.cardInvoice)
   operations!: Operation[]
 }

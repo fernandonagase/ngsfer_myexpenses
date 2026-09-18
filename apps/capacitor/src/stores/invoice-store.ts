@@ -227,13 +227,18 @@ export const useInvoiceStore = defineStore('invoice', () => {
         await manager
           .createQueryBuilder()
           .update(CardInvoice)
-          .set({ status: InvoiceStatus.PAGA, paymentDate: options.paymentDate })
+          .set({
+            status: InvoiceStatus.PAGA,
+            paymentDate: options.paymentDate,
+            reopenedForEditing: false,
+          })
           .where('id = :id', { id: invoice.id })
           .execute()
       })
 
       invoice.status = InvoiceStatus.PAGA
       invoice.paymentDate = options.paymentDate
+      invoice.reopenedForEditing = false
       await operationStore.refreshScreen()
       $q.notify({ type: 'positive', message: 'Fatura paga com sucesso!' })
       return true
@@ -318,6 +323,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
       cancel: { label: 'Cancelar', color: 'negative', flat: true },
     }).onOk(() => {
       invoice.status = InvoiceStatus.ABERTA
+      invoice.reopenedForEditing = true
       invoiceRepository
         .save(invoice)
         .then(async () => {
@@ -326,6 +332,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
         })
         .catch((error) => {
           invoice.status = InvoiceStatus.FECHADA
+          invoice.reopenedForEditing = false
           $q.notify({
             type: 'negative',
             message: 'Falha ao reabrir fatura',
@@ -364,6 +371,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
 
   async function doCloseInvoiceEarly(invoice: CardInvoice) {
     invoice.status = InvoiceStatus.FECHADA
+    invoice.reopenedForEditing = false
     try {
       await invoiceRepository.save(invoice)
 

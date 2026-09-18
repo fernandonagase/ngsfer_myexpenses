@@ -9,7 +9,7 @@ import { Center } from './center'
 import { CreditCard } from './credit-card'
 import { CardInvoice, InvoiceStatus } from './card-invoice'
 import { Operation } from './operation'
-import { getUnpaidInvoiceCenterLines } from './card-invoice-helpers'
+import { getUnpaidInvoiceCenterLines, reconcileInvoiceStatuses } from './card-invoice-helpers'
 
 let dataSource: DataSource | null = null
 
@@ -112,5 +112,43 @@ describe('getUnpaidInvoiceCenterLines', () => {
     const all = await getUnpaidInvoiceCenterLines(manager, ALL_SCOPE)
 
     expect(all).toEqual([])
+  })
+})
+
+describe('reconcileInvoiceStatuses', () => {
+  it('não refecha uma fatura reaberta manualmente mesmo com fechamento no passado (WOR-106)', async () => {
+    const { manager, card } = await setup()
+    const invoice = await manager.save(CardInvoice, {
+      creditCard: card,
+      referenceMonth: '2026-01',
+      closingDate: '2026-01-10',
+      dueDate: '2026-01-20',
+      status: InvoiceStatus.ABERTA,
+      reopenedForEditing: true,
+      isActive: true,
+    })
+
+    await reconcileInvoiceStatuses(manager)
+
+    const reloaded = await manager.findOneOrFail(CardInvoice, { where: { id: invoice.id } })
+    expect(reloaded.status).toBe(InvoiceStatus.ABERTA)
+  })
+
+  it('fecha normalmente uma fatura aberta vencida que não foi reaberta manualmente', async () => {
+    const { manager, card } = await setup()
+    const invoice = await manager.save(CardInvoice, {
+      creditCard: card,
+      referenceMonth: '2026-01',
+      closingDate: '2026-01-10',
+      dueDate: '2026-01-20',
+      status: InvoiceStatus.ABERTA,
+      reopenedForEditing: false,
+      isActive: true,
+    })
+
+    await reconcileInvoiceStatuses(manager)
+
+    const reloaded = await manager.findOneOrFail(CardInvoice, { where: { id: invoice.id } })
+    expect(reloaded.status).toBe(InvoiceStatus.FECHADA)
   })
 })
