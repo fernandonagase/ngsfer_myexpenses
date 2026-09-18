@@ -34,13 +34,13 @@ const operationStore = useOperationStore()
 async function buildPeriods(): Promise<HeaderChip<string>[]> {
   const monthGroups = await operationStore.getMonthGroups()
   return [
-    { label: 'Todos', value: ALL_PERIODS },
     ...monthGroups.map((month) => {
       const date = dayjs(month.value)
       const isCurrentYear = date.year() === dayjs().year()
       const label = date.format(isCurrentYear ? 'MMM' : 'MMM YYYY').replace('.', '')
       return { label: label.charAt(0).toUpperCase() + label.slice(1), value: month.value }
     }),
+    { label: 'Todos', value: ALL_PERIODS },
   ]
 }
 
