@@ -50,25 +50,33 @@ async function loadCategories(period: string) {
 }
 
 const periods = ref<HeaderChip<string>[]>(await buildPeriods())
-const selectedPeriod = ref<string | undefined>(ALL_PERIODS)
+const selectedPeriod = computed({
+  get: () => operationStore.reportPeriod,
+  set: (period) => {
+    operationStore.reportPeriod = period ?? ALL_PERIODS
+  },
+})
+
+// O período persiste entre navegações (operationStore.reportPeriod); se o mês
+// selecionado deixou de existir na lista atual, volta para "Todos".
+function reconcilePeriod() {
+  if (periods.value.some((period) => period.value === selectedPeriod.value)) return false
+  selectedPeriod.value = ALL_PERIODS
+  return true
+}
+
+reconcilePeriod()
+
 const tab = ref<CategoryType>('Saída')
 const categories = ref<{ income: CategoryRow[]; expenses: CategoryRow[] }>(
-  await loadCategories(ALL_PERIODS),
+  await loadCategories(selectedPeriod.value),
 )
 
 async function reloadReport() {
   periods.value = await buildPeriods()
-  const current = selectedPeriod.value ?? ALL_PERIODS
-  const nextPeriod = periods.value.some((period) => period.value === current)
-    ? current
-    : ALL_PERIODS
+  if (reconcilePeriod()) return
 
-  if (nextPeriod !== selectedPeriod.value) {
-    selectedPeriod.value = nextPeriod
-    return
-  }
-
-  categories.value = await loadCategories(current)
+  categories.value = await loadCategories(selectedPeriod.value)
 }
 
 watch(selectedPeriod, async (period) => {

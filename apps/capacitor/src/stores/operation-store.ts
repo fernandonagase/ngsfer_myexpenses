@@ -173,6 +173,7 @@ export const useOperationStore = defineStore('operation', () => {
   const month = ref<string>()
   const hasLoadedFirstTime = ref(false)
   const dataRevision = ref(0)
+  const reportPeriod = ref('Todos')
 
   function bumpDataRevision() {
     dataRevision.value += 1
@@ -756,6 +757,7 @@ export const useOperationStore = defineStore('operation', () => {
     months,
     hasLoadedFirstTime,
     dataRevision,
+    reportPeriod,
     summaryByMonth,
     monthOperations,
     hasLoadedSelectedMonthSummary,
